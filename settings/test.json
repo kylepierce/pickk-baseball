@@ -1,0 +1,13 @@
+{
+  "isDebug": true,
+  "logger": {
+    "transports": {
+      "Console": {
+        "silent": false
+      }
+    }
+  },
+  "mongodb": {
+    "url": "mongodb://localhost/%database%"
+  }
+}

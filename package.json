@@ -1,0 +1,43 @@
+{
+  "name": "pickk-import",
+  "version": "1.0.0",
+  "description": "",
+  "readme": "README.md",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Aleksandr Kuzmenko <aleksandr.v.kuzmenko@gmail.com>",
+  "devDependencies": {
+    "chai": "^3.0.0",
+    "chai-as-promised": "^5.1.0",
+    "chai-things": "^0.2.0",
+    "coffee-script": "^1.9.3",
+    "mocha": "=2.1.0",
+    "sinon": "^1.15.4",
+    "sinon-chai": "^2.8.0"
+  },
+  "dependencies": {
+    "bluebird": "^2.9.33",
+    "dargs": "^4.0.1",
+    "errors": "^0.3.0",
+    "fantasydata-api": "^1.3.3",
+    "knex": "^0.8.6",
+    "moment": "^2.10.3",
+    "mtr-match": "0.0.4",
+    "object-path": "^0.9.2",
+    "path-parse": "^1.0.5",
+    "promise-retry": "^0.2.9",
+    "promised-mongo": "^1.2.0",
+    "typecast": "0.0.1",
+    "underscore": "^1.8.3",
+    "underscore.deep": "^0.5.1",
+    "underscore.string": "^3.1.1",
+    "v8-profiler": "^5.2.9",
+    "winston": "^1.0.1",
+    "winston-loggly": "^1.1.0",
+    "yargs": "^3.15.0"
+  }
+}

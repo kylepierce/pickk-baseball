@@ -1,0 +1,19 @@
+{
+  "isDebug": false,
+  "logger": {
+    "transports": {
+      "Console": {
+        "silent": true,
+        "level": "verbose",
+        "timestamp": true,
+        "handleExceptions": false,
+        "prettyPrint": true,
+        "colorize": true,
+        "showLevel": false
+      }
+    }
+  },
+  "mongodb": {
+    "url": "Define_this_key_in_environment_settings"
+  }
+}
