@@ -5,7 +5,7 @@ Promise = require "bluebird"
 describe "Fantasy API", ->
   dependencies = createDependencies settings, "PickkImport"
 
-  it 'should check whether "areAnyGamesInProgress" works for MBL', ->
+  it 'should check whether "areAnyGamesInProgress" works for MLB', ->
     @timeout(60000) if process.env.NOCK_BACK_MODE in ["record", "wild"]
 
     new Promise (resolve, reject) ->
