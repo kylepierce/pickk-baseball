@@ -17,3 +17,7 @@ global.sinon = require("sinon")
 
 Promise = require "bluebird"
 process.env.BLUEBIRD_DEBUG=1
+
+global.nock = require "nock"
+global.nock.back.fixtures = "#{process.env.ROOT_DIR}"
+# run "rm test/fixtures/[path-to-your-fixture].json; NOCK_BACK_MODE=record mocha test/[path-to-your-test]Spec.coffee" manually to record API responses

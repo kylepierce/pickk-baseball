@@ -9,5 +9,11 @@
   },
   "mongodb": {
     "url": "mongodb://localhost/%database%"
+  },
+  "fantasy": {
+    "mlb": {
+      "key": "8ee229f2371d4591886f2683758d4b56"
+    }
   }
+
 }

@@ -15,5 +15,12 @@
   },
   "mongodb": {
     "url": "Define_this_key_in_environment_settings"
+  },
+  "fantasy": {
+    "timeout": 15000,
+    "mlb": {
+      "version": "mlb/v2",
+      "key": "Pass in your mlb key here"
+    }
   }
 }
