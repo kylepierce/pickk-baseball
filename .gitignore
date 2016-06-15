@@ -1,0 +1,4 @@
+node_modules
+settings-specific
+settings/*.specific.json
+settings/*.local.json
