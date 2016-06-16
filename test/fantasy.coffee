@@ -13,7 +13,7 @@ describe "Fantasy API", ->
     @timeout(60000) if process.env.NOCK_BACK_MODE in ["record", "wild"]
 
     new Promise (resolve, reject) ->
-      nock.back "test/fixtures/mbl/areAnyGamesInProgress.json", (recordingDone) ->
+      nock.back "test/fixtures/fantasy/mlb/areAnyGamesInProgress.json", (recordingDone) ->
         Promise.bind @
         .then -> dependencies.fantasy.mlb.areAnyGamesInProgressAsync()
         .then (result) ->
@@ -27,7 +27,7 @@ describe "Fantasy API", ->
     @timeout(60000) if process.env.NOCK_BACK_MODE in ["record", "wild"]
 
     new Promise (resolve, reject) ->
-      nock.back "test/fixtures/mbl/activeTeamsAsync.json", (recordingDone) ->
+      nock.back "test/fixtures/fantasy/mlb/activeTeamsAsync.json", (recordingDone) ->
         Promise.bind @
         .then -> dependencies.fantasy.mlb.activeTeamsAsync()
         .then (result) ->
@@ -41,7 +41,7 @@ describe "Fantasy API", ->
     @timeout(60000) if process.env.NOCK_BACK_MODE in ["record", "wild"]
 
     new Promise (resolve, reject) ->
-      nock.back "test/fixtures/mbl/playByPlayDelta.json", (recordingDone) ->
+      nock.back "test/fixtures/fantasy/mlb/playByPlayDelta.json", (recordingDone) ->
         Promise.bind @
         .then -> dependencies.fantasy.mlb.playByPlayDeltaAsync(date, minutes)
         .then (result) ->

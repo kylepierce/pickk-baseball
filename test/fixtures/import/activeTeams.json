@@ -1,0 +1,646 @@
+[
+    {
+        "scope": "http://api.fantasydata.net:80",
+        "method": "get",
+        "path": "/mlb/v2/json/Teams?key=8ee229f2371d4591886f2683758d4b56",
+        "body": "",
+        "status": 200,
+        "response": [
+            {
+                "TeamID": 14,
+                "Key": "ARI",
+                "Active": true,
+                "City": "Arizona",
+                "Name": "Diamondbacks",
+                "StadiumID": 54,
+                "League": "NL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 26,
+                "Key": "ATL",
+                "Active": true,
+                "City": "Atlanta",
+                "Name": "Braves",
+                "StadiumID": 2,
+                "League": "NL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 19,
+                "Key": "BAL",
+                "Active": true,
+                "City": "Baltimore",
+                "Name": "Orioles",
+                "StadiumID": 22,
+                "League": "AL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 25,
+                "Key": "BOS",
+                "Active": true,
+                "City": "Boston",
+                "Name": "Red Sox",
+                "StadiumID": 50,
+                "League": "AL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 9,
+                "Key": "CHC",
+                "Active": true,
+                "City": "Chicago",
+                "Name": "Cubs",
+                "StadiumID": 27,
+                "League": "NL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 16,
+                "Key": "CHW",
+                "Active": true,
+                "City": "Chicago",
+                "Name": "White Sox",
+                "StadiumID": 25,
+                "League": "AL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 2,
+                "Key": "CIN",
+                "Active": true,
+                "City": "Cincinnati",
+                "Name": "Reds",
+                "StadiumID": 64,
+                "League": "NL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 10,
+                "Key": "CLE",
+                "Active": true,
+                "City": "Cleveland",
+                "Name": "Indians",
+                "StadiumID": 10,
+                "League": "AL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 23,
+                "Key": "COL",
+                "Active": true,
+                "City": "Colorado",
+                "Name": "Rockies",
+                "StadiumID": 44,
+                "League": "NL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 17,
+                "Key": "DET",
+                "Active": true,
+                "City": "Detroit",
+                "Name": "Tigers",
+                "StadiumID": 62,
+                "League": "AL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 30,
+                "Key": "HOU",
+                "Active": true,
+                "City": "Houston",
+                "Name": "Astros",
+                "StadiumID": 63,
+                "League": "AL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 5,
+                "Key": "KC",
+                "Active": true,
+                "City": "Kansas City",
+                "Name": "Royals",
+                "StadiumID": 33,
+                "League": "AL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 21,
+                "Key": "LAA",
+                "Active": true,
+                "City": "Los Angeles",
+                "Name": "Angels",
+                "StadiumID": 28,
+                "League": "AL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 1,
+                "Key": "LAD",
+                "Active": true,
+                "City": "Los Angeles",
+                "Name": "Dodgers",
+                "StadiumID": 31,
+                "League": "NL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 22,
+                "Key": "MIA",
+                "Active": true,
+                "City": "Miami",
+                "Name": "Marlins",
+                "StadiumID": 57,
+                "League": "NL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 32,
+                "Key": "MIL",
+                "Active": true,
+                "City": "Milwaukee",
+                "Name": "Brewers",
+                "StadiumID": 19,
+                "League": "NL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 20,
+                "Key": "MIN",
+                "Active": true,
+                "City": "Minnesota",
+                "Name": "Twins",
+                "StadiumID": 14,
+                "League": "AL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 18,
+                "Key": "NYM",
+                "Active": true,
+                "City": "New York",
+                "Name": "Mets",
+                "StadiumID": 8,
+                "League": "NL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 29,
+                "Key": "NYY",
+                "Active": true,
+                "City": "New York",
+                "Name": "Yankees",
+                "StadiumID": 35,
+                "League": "AL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 24,
+                "Key": "OAK",
+                "Active": true,
+                "City": "Oakland",
+                "Name": "Athletics",
+                "StadiumID": 23,
+                "League": "AL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 12,
+                "Key": "PHI",
+                "Active": true,
+                "City": "Philadelphia",
+                "Name": "Phillies",
+                "StadiumID": 51,
+                "League": "NL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 4,
+                "Key": "PIT",
+                "Active": true,
+                "City": "Pittsburgh",
+                "Name": "Pirates",
+                "StadiumID": 29,
+                "League": "NL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 33,
+                "Key": "SD",
+                "Active": true,
+                "City": "San Diego",
+                "Name": "Padres",
+                "StadiumID": 1,
+                "League": "NL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 13,
+                "Key": "SEA",
+                "Active": true,
+                "City": "Seattle",
+                "Name": "Mariners",
+                "StadiumID": 65,
+                "League": "AL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 15,
+                "Key": "SF",
+                "Active": true,
+                "City": "San Francisco",
+                "Name": "Giants",
+                "StadiumID": 13,
+                "League": "NL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 31,
+                "Key": "STL",
+                "Active": true,
+                "City": "St. Louis",
+                "Name": "Cardinals",
+                "StadiumID": 41,
+                "League": "NL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 11,
+                "Key": "TB",
+                "Active": true,
+                "City": "Tampa Bay",
+                "Name": "Rays",
+                "StadiumID": 18,
+                "League": "AL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 28,
+                "Key": "TEX",
+                "Active": true,
+                "City": "Texas",
+                "Name": "Rangers",
+                "StadiumID": 21,
+                "League": "AL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 3,
+                "Key": "TOR",
+                "Active": true,
+                "City": "Toronto",
+                "Name": "Blue Jays",
+                "StadiumID": 42,
+                "League": "AL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 35,
+                "Key": "WSH",
+                "Active": true,
+                "City": "Washington",
+                "Name": "Nationals",
+                "StadiumID": 53,
+                "League": "NL",
+                "Division": "East"
+            }
+        ],
+        "headers": {
+            "cache-control": "must-revalidate, max-age=5, private",
+            "content-length": "3688",
+            "content-type": "application/json; charset=utf-8",
+            "expires": "Thu, 16 Jun 2016 09:50:45 GMT",
+            "last-modified": "Thu, 16 Jun 2016 09:50:40 GMT",
+            "vary": "Accept,Accept-Charset",
+            "x-aspnet-version": "4.0.30319",
+            "x-powered-by": "ASP.NET",
+            "x-mashape-billing": "Call Limit=1",
+            "date": "Thu, 16 Jun 2016 09:50:39 GMT",
+            "connection": "close"
+        }
+    },
+    {
+        "scope": "http://api.fantasydata.net:80",
+        "method": "get",
+        "path": "/mlb/v2/json/Teams?key=8ee229f2371d4591886f2683758d4b56",
+        "body": "",
+        "status": 200,
+        "response": [
+            {
+                "TeamID": 14,
+                "Key": "ARI",
+                "Active": true,
+                "City": "Arizona",
+                "Name": "Diamondbacks",
+                "StadiumID": 54,
+                "League": "NL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 26,
+                "Key": "ATL",
+                "Active": true,
+                "City": "Atlanta",
+                "Name": "Braves",
+                "StadiumID": 2,
+                "League": "NL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 19,
+                "Key": "BAL",
+                "Active": true,
+                "City": "Baltimore",
+                "Name": "Orioles",
+                "StadiumID": 22,
+                "League": "AL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 25,
+                "Key": "BOS",
+                "Active": true,
+                "City": "Boston",
+                "Name": "Red Sox",
+                "StadiumID": 50,
+                "League": "AL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 9,
+                "Key": "CHC",
+                "Active": true,
+                "City": "Chicago",
+                "Name": "Cubs",
+                "StadiumID": 27,
+                "League": "NL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 16,
+                "Key": "CHW",
+                "Active": true,
+                "City": "Chicago",
+                "Name": "White Sox",
+                "StadiumID": 25,
+                "League": "AL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 2,
+                "Key": "CIN",
+                "Active": true,
+                "City": "Cincinnati",
+                "Name": "Reds",
+                "StadiumID": 64,
+                "League": "NL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 10,
+                "Key": "CLE",
+                "Active": true,
+                "City": "Cleveland",
+                "Name": "Indians",
+                "StadiumID": 10,
+                "League": "AL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 23,
+                "Key": "COL",
+                "Active": true,
+                "City": "Colorado",
+                "Name": "Rockies",
+                "StadiumID": 44,
+                "League": "NL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 17,
+                "Key": "DET",
+                "Active": true,
+                "City": "Detroit",
+                "Name": "Tigers",
+                "StadiumID": 62,
+                "League": "AL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 30,
+                "Key": "HOU",
+                "Active": true,
+                "City": "Houston",
+                "Name": "Astros",
+                "StadiumID": 63,
+                "League": "AL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 5,
+                "Key": "KC",
+                "Active": true,
+                "City": "Kansas City",
+                "Name": "Royals",
+                "StadiumID": 33,
+                "League": "AL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 21,
+                "Key": "LAA",
+                "Active": true,
+                "City": "Los Angeles",
+                "Name": "Angels",
+                "StadiumID": 28,
+                "League": "AL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 1,
+                "Key": "LAD",
+                "Active": true,
+                "City": "Los Angeles",
+                "Name": "Dodgers",
+                "StadiumID": 31,
+                "League": "NL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 22,
+                "Key": "MIA",
+                "Active": true,
+                "City": "Miami",
+                "Name": "Marlins",
+                "StadiumID": 57,
+                "League": "NL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 32,
+                "Key": "MIL",
+                "Active": true,
+                "City": "Milwaukee",
+                "Name": "Brewers",
+                "StadiumID": 19,
+                "League": "NL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 20,
+                "Key": "MIN",
+                "Active": true,
+                "City": "Minnesota",
+                "Name": "Twins",
+                "StadiumID": 14,
+                "League": "AL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 18,
+                "Key": "NYM",
+                "Active": true,
+                "City": "New York",
+                "Name": "Mets",
+                "StadiumID": 8,
+                "League": "NL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 29,
+                "Key": "NYY",
+                "Active": true,
+                "City": "New York",
+                "Name": "Yankees",
+                "StadiumID": 35,
+                "League": "AL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 24,
+                "Key": "OAK",
+                "Active": true,
+                "City": "Oakland",
+                "Name": "Athletics",
+                "StadiumID": 23,
+                "League": "AL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 12,
+                "Key": "PHI",
+                "Active": true,
+                "City": "Philadelphia",
+                "Name": "Phillies",
+                "StadiumID": 51,
+                "League": "NL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 4,
+                "Key": "PIT",
+                "Active": true,
+                "City": "Pittsburgh",
+                "Name": "Pirates",
+                "StadiumID": 29,
+                "League": "NL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 33,
+                "Key": "SD",
+                "Active": true,
+                "City": "San Diego",
+                "Name": "Padres",
+                "StadiumID": 1,
+                "League": "NL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 13,
+                "Key": "SEA",
+                "Active": true,
+                "City": "Seattle",
+                "Name": "Mariners",
+                "StadiumID": 65,
+                "League": "AL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 15,
+                "Key": "SF",
+                "Active": true,
+                "City": "San Francisco",
+                "Name": "Giants",
+                "StadiumID": 13,
+                "League": "NL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 31,
+                "Key": "STL",
+                "Active": true,
+                "City": "St. Louis",
+                "Name": "Cardinals",
+                "StadiumID": 41,
+                "League": "NL",
+                "Division": "Central"
+            },
+            {
+                "TeamID": 11,
+                "Key": "TB",
+                "Active": true,
+                "City": "Tampa Bay",
+                "Name": "Rays",
+                "StadiumID": 18,
+                "League": "AL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 28,
+                "Key": "TEX",
+                "Active": true,
+                "City": "Texas",
+                "Name": "Rangers",
+                "StadiumID": 21,
+                "League": "AL",
+                "Division": "West"
+            },
+            {
+                "TeamID": 3,
+                "Key": "TOR",
+                "Active": true,
+                "City": "Toronto",
+                "Name": "Blue Jays",
+                "StadiumID": 42,
+                "League": "AL",
+                "Division": "East"
+            },
+            {
+                "TeamID": 35,
+                "Key": "WSH",
+                "Active": true,
+                "City": "Washington",
+                "Name": "Nationals",
+                "StadiumID": 53,
+                "League": "NL",
+                "Division": "East"
+            }
+        ],
+        "headers": {
+            "cache-control": "must-revalidate, max-age=5, private",
+            "content-length": "3688",
+            "content-type": "application/json; charset=utf-8",
+            "expires": "Thu, 16 Jun 2016 09:50:45 GMT",
+            "last-modified": "Thu, 16 Jun 2016 09:50:40 GMT",
+            "vary": "Accept,Accept-Charset",
+            "x-aspnet-version": "4.0.30319",
+            "x-powered-by": "ASP.NET",
+            "x-mashape-billing": "Call Limit=1",
+            "date": "Thu, 16 Jun 2016 09:50:39 GMT",
+            "connection": "close"
+        }
+    }
+]
