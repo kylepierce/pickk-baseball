@@ -12,15 +12,15 @@ module.exports = class extends Task
       fantasy: Match.Any
       mongodb: Match.Any
 
-  execute: (date = new Date()) ->
+  execute: (date = new Date(), minutes = 1) ->
     api = @dependencies.fantasy.mlb
 
     Promise.bind @
-    .then -> api.boxScoresAsync(date)
+    .then -> api.playByPlayDeltaAsync(date, minutes)
     .map @upsertGame
 
-  upsertGame: (team) ->
-    fantasyGame = new FantasyGame team
+  upsertGame: (game) ->
+    fantasyGame = new FantasyGame game
     collection = @dependencies.mongodb.collection("FantasyGames")
     collection.update fantasyGame.getSelector(), {$set: fantasyGame}, {upsert: true}
 

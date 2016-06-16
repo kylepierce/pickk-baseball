@@ -3,7 +3,7 @@ settings = (require "../helper/settings")("#{process.env.ROOT_DIR}/settings/test
 Promise = require "bluebird"
 moment = require "moment"
 ImportActiveTeams = require "../lib/task/ImportActiveTeams"
-ImportGamesForDate = require "../lib/task/ImportGamesForDate"
+ImportGames = require "../lib/task/ImportGames"
 loadFixtures = require "../helper/loadFixtures"
 fantasyTeamsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/import/data/FantasyTeams.json"
 fantasyGamesFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/import/data/FantasyGames.json"
@@ -13,7 +13,7 @@ describe "Import data from Fantasy to Mongo", ->
   mongodb = dependencies.mongodb
 
   importActiveTeams = new ImportActiveTeams dependencies
-  importGamesForDate = new ImportGamesForDate dependencies
+  importGames = new ImportGames dependencies
   FantasyGames = mongodb.collection("FantasyGames")
   FantasyTeams = mongodb.collection("FantasyTeams")
 
@@ -95,9 +95,9 @@ describe "Import data from Fantasy to Mongo", ->
     new Promise (resolve, reject) ->
       nock.back "test/fixtures/import/games.json", (recordingDone) ->
         Promise.bind @
-        .then -> dependencies.fantasy.mlb.boxScoresAsync(date)
+        .then -> dependencies.fantasy.mlb.playByPlayDeltaAsync(date, minutes)
         .then (result) -> gameNumber = result.length
-        .then -> importGamesForDate.execute(date)
+        .then -> importGames.execute(date, minutes)
         .then -> FantasyGames.count()
         .then (count) ->
           # ensure amount of games is right
@@ -132,9 +132,9 @@ describe "Import data from Fantasy to Mongo", ->
           game = result["Game"]
           should.exist game["Status"]
           game["Status"].should.be.equal "InProgress"
-        .then -> dependencies.fantasy.mlb.boxScoresAsync(date)
+        .then -> dependencies.fantasy.mlb.playByPlayDeltaAsync(date, minutes)
         .then (result) -> gameNumber = result.length
-        .then -> importGamesForDate.execute(date)
+        .then -> importGames.execute(date, minutes)
         .then -> FantasyGames.count()
         .then (count) ->
           # ensure amount of games is right
@@ -147,10 +147,6 @@ describe "Import data from Fantasy to Mongo", ->
           game = result["Game"]
           should.exist game["Status"]
           game["Status"].should.be.equal "Final"
-          # ensure "Innings" has been updated
-          should.exist result["Innings"]
-          result["Innings"].should.be.an "array"
-          result["Innings"].length.should.be.equal 9
         .then -> FantasyGames.findOne({"Game.GameID": 45851})
         .then (result) ->
           # ensure some game has been added properly
