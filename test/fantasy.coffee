@@ -52,3 +52,18 @@ describe "Fantasy API", ->
         .catch reject
         .finally recordingDone
 
+  it 'should check whether "boxScores" works for MLB', ->
+    @timeout(60000) if process.env.NOCK_BACK_MODE in ["record", "wild"]
+
+    new Promise (resolve, reject) ->
+      nock.back "test/fixtures/fantasy/mlb/boxScores.json", (recordingDone) ->
+        Promise.bind @
+        .then -> dependencies.fantasy.mlb.boxScoresAsync(date)
+        .then (result) ->
+          result.should.be.an "array"
+          result.length.should.be.equal 15
+        .then @assertScopesFinished
+        .then resolve
+        .catch reject
+        .finally recordingDone
+
