@@ -1,0 +1,42 @@
+{
+  "FantasyGames": [
+    {
+      "Game": {
+        "GameID": 45848,
+        "Season": 2016,
+        "SeasonType": 1,
+        "Status": "InProgress",
+        "Day": "2016-06-11T00:00:00",
+        "DateTime": "2016-06-11T12:05:00",
+        "AwayTeam": "PHI",
+        "HomeTeam": "WSH"
+      },
+      "Innings": [
+        {
+          "InningID": 279048,
+          "GameID": 45848,
+          "InningNumber": 1,
+          "AwayTeamRuns": 0,
+          "HomeTeamRuns": 0
+        }
+      ]
+    },
+    {
+      "Game": {
+        "GameID": 45850,
+        "Season": 2016,
+        "SeasonType": 1,
+        "Status": "Final",
+        "Day": "2016-06-11T00:00:00",
+        "DateTime": "2016-06-11T14:10:00",
+        "AwayTeam": "KC",
+        "HomeTeam": "CHW",
+        "AwayTeamID": 5,
+        "HomeTeamID": 16,
+        "RescheduledGameID": null,
+        "StadiumID": 25,
+        "Channel": null
+      }
+    }
+  ]
+}
