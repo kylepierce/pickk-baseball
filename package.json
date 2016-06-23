@@ -33,6 +33,7 @@
     "path-parse": "^1.0.5",
     "promise-retry": "^0.2.9",
     "promised-mongo": "^1.2.0",
+    "request-promise": "^3.0.0",
     "typecast": "0.0.1",
     "underscore": "^1.8.3",
     "underscore.deep": "^0.5.1",
