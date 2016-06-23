@@ -2,7 +2,6 @@ _ = require "underscore"
 Match = require "mtr-match"
 createMongoDB = require "./mongodb"
 createLogger = require "./logger"
-createFantasy = require "./fantasy"
 createSportRadar = require "./sportRadar"
 
 module.exports = (settings, handle) ->
@@ -13,6 +12,5 @@ module.exports = (settings, handle) ->
   _.extend dependencies,
     mongodb: createMongoDB dependencies.settings.mongodb
     logger: createLogger dependencies.settings.logger
-    fantasy: createFantasy dependencies.settings.fantasy
     sportRadar: createSportRadar dependencies.settings.sportRadar
   dependencies

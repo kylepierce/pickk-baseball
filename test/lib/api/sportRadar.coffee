@@ -13,7 +13,7 @@ describe "SportRadar API", ->
     @timeout(60000) if process.env.NOCK_BACK_MODE in ["record", "wild"]
 
     new Promise (resolve, reject) ->
-      nock.back "test/fixtures/sportRadar/mlb/getScheduledGames.json", (recordingDone) ->
+      nock.back "test/fixtures/api/sportRadar/getScheduledGames.json", (recordingDone) ->
         Promise.bind @
         .then -> dependencies.sportRadar.getScheduledGames(date)
         .then (result) ->

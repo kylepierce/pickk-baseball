@@ -4,7 +4,7 @@ Promise = require "bluebird"
 moment = require "moment"
 ImportGames = require "../../../../lib/task/sportRadar/ImportGames"
 loadFixtures = require "../../../../helper/loadFixtures"
-sportRadarGamesFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/importGames/collections/SportRadarGames.json"
+sportRadarGamesFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/importGames/collection/SportRadarGames.json"
 
 describe "Import data from SportRadar to Mongo", ->
   dependencies = createDependencies settings, "PickkImport"
@@ -26,7 +26,7 @@ describe "Import data from SportRadar to Mongo", ->
     gameNumber = undefined
 
     new Promise (resolve, reject) ->
-      nock.back "test/fixtures/task/sportRadar/importGames/games.json", (recordingDone) ->
+      nock.back "test/fixtures/task/sportRadar/importGames/request/games.json", (recordingDone) ->
         Promise.bind @
         .then -> dependencies.sportRadar.getScheduledGames(date)
         .then (result) -> gameNumber = result.league.games.length
@@ -60,7 +60,7 @@ describe "Import data from SportRadar to Mongo", ->
     gameNumber = undefined
 
     new Promise (resolve, reject) ->
-      nock.back "test/fixtures/task/sportRadar/importGames/games.json", (recordingDone) ->
+      nock.back "test/fixtures/task/sportRadar/importGames/request/games.json", (recordingDone) ->
         Promise.bind @
         .then -> loadFixtures sportRadarGamesFixtures, mongodb
         .then -> SportRadarGames.findOne({"id": "fec58a7a-eff7-4eec-9535-f64c42cc4870"})
