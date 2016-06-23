@@ -1,5 +1,5 @@
-createDependencies = require "../helper/dependencies"
-settings = (require "../helper/settings")("#{process.env.ROOT_DIR}/settings/test.json")
+createDependencies = require "../../../helper/dependencies"
+settings = (require "../../../helper/settings")("#{process.env.ROOT_DIR}/settings/test.json")
 Promise = require "bluebird"
 moment = require "moment"
 _ = require "underscore"
@@ -8,7 +8,6 @@ describe "SportRadar API", ->
   dependencies = createDependencies settings, "PickkImport"
 
   date = moment("2016-06-11").toDate()
-  minutes = 10
 
   it 'should check whether scheduled games are fetched', ->
     @timeout(60000) if process.env.NOCK_BACK_MODE in ["record", "wild"]
