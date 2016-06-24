@@ -1,0 +1,56 @@
+#!/usr/bin/env coffee
+
+_ = require "underscore"
+path = require "path"
+parse = require "path-parse"
+yargs = require "yargs"
+Promise = require "bluebird"
+Worker = require "../lib/Worker"
+settingsLoader = require "../helper/settings"
+createDependencies = require "../helper/dependencies"
+
+Promise.longStackTraces() # slows down execution but simplifies debugging
+
+argv = yargs
+  .usage('Usage: $0 [options] taskPath')
+  .options(
+    "s":
+      alias: "settings"
+      type: "string"
+      description: "Settings for dependencies (MongoDB, logger, etc)"
+      demand: true
+    "m":
+      alias: "max-loops"
+      type: "number"
+      description: "Execute that many loops and exit (useful for testing)"
+      demand: false
+      default: 0
+    "d":
+      alias: "delay"
+      type: "number"
+      description: "Delay between executions (in milliseconds)"
+      demand: true
+  )
+  .demand(1)
+  .strict()
+  .argv
+
+settings = settingsLoader path.resolve(process.cwd(), argv.settings)
+taskPath = argv._[0]
+taskClass = require path.resolve(process.cwd(), taskPath)
+name = path.basename(taskPath, ".coffee")
+
+dependencies = createDependencies(settings, "worker")
+
+worker = new Worker
+  name: name
+  maxLoops: argv.maxLoops
+  delay: argv.delay
+  taskClass: taskClass
+,
+  dependencies
+
+worker.start()
+.then ->
+    # see http://stackoverflow.com/questions/24045414/node-program-with-promises-doesnt-finish
+    dependencies.mongodb.close()
