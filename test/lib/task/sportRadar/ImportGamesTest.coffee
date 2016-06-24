@@ -5,6 +5,7 @@ moment = require "moment"
 ImportGames = require "../../../../lib/task/sportRadar/ImportGames"
 loadFixtures = require "../../../../helper/loadFixtures"
 sportRadarGamesFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/importGames/collection/SportRadarGames.json"
+sportRadarGamesWithInningsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/importGames/collection/SportRadarGamesWithInnings.json"
 
 describe "Import brief information about games for date specified from SportRadar to Mongo", ->
   dependencies = createDependencies settings, "PickkImport"
@@ -14,6 +15,7 @@ describe "Import brief information about games for date specified from SportRada
   SportRadarGames = mongodb.collection("SportRadarGames")
 
   date = moment("2016-06-11").toDate()
+  gameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"
 
   beforeEach ->
     Promise.bind @
@@ -28,14 +30,14 @@ describe "Import brief information about games for date specified from SportRada
     new Promise (resolve, reject) ->
       nock.back "test/fixtures/task/sportRadar/importGames/request/games.json", (recordingDone) ->
         Promise.bind @
-        .then -> dependencies.sportRadar.getScheduledGames(date)
+        .then -> dependencies.sportRadar.getScheduledGames date
         .then (result) -> gameNumber = result.league.games.length
         .then -> importGames.execute(date)
         .then -> SportRadarGames.count()
         .then (count) ->
           # ensure amount of games is right
           count.should.be.equal gameNumber
-        .then -> SportRadarGames.findOne({"id": "fec58a7a-eff7-4eec-9535-f64c42cc4870"})
+        .then -> SportRadarGames.findOne({"id": gameId})
         .then (result) ->
           # ensure some game has been added properly
           should.exist result
@@ -63,7 +65,7 @@ describe "Import brief information about games for date specified from SportRada
       nock.back "test/fixtures/task/sportRadar/importGames/request/games.json", (recordingDone) ->
         Promise.bind @
         .then -> loadFixtures sportRadarGamesFixtures, mongodb
-        .then -> SportRadarGames.findOne({"id": "fec58a7a-eff7-4eec-9535-f64c42cc4870"})
+        .then -> SportRadarGames.findOne({"id": gameId})
         .then (result) ->
           # ensure "Key" is corrupted
           should.exist result
@@ -71,14 +73,14 @@ describe "Import brief information about games for date specified from SportRada
           {status} = result
           should.exist status
           status.should.be.equal "InProgress"
-        .then -> dependencies.sportRadar.getScheduledGames(date)
+        .then -> dependencies.sportRadar.getScheduledGames date
         .then (result) -> gameNumber = result.league.games.length
         .then -> importGames.execute(date)
         .then -> SportRadarGames.count()
         .then (count) ->
           # ensure amount of games is right
           count.should.be.equal gameNumber
-        .then -> SportRadarGames.findOne({"id": "fec58a7a-eff7-4eec-9535-f64c42cc4870"})
+        .then -> SportRadarGames.findOne({"id": gameId})
         .then (result) ->
           # ensure some game has been added properly
           should.exist result
@@ -94,6 +96,35 @@ describe "Import brief information about games for date specified from SportRada
           {name} = home
           should.exist name
           name.should.be.equal "White Sox"
+        .then @assertScopesFinished
+        .then resolve
+        .catch reject
+        .finally recordingDone
+
+  it 'shouldn\'t drop data fetched by other calls before', ->
+    new Promise (resolve, reject) ->
+      nock.back "test/fixtures/task/sportRadar/importGames/request/single.json", (recordingDone) ->
+        Promise.bind @
+        .then -> loadFixtures sportRadarGamesWithInningsFixtures, mongodb
+        .then -> SportRadarGames.findOne({"id": gameId})
+        .then (game) ->
+          # ensure the game contains innings
+          should.exist game
+
+          {innings} = game
+          should.exist innings
+          innings.should.be.an "array"
+          innings.length.should.be.equal 1
+        .then -> importGames.execute(date)
+        .then -> SportRadarGames.findOne({"id": gameId})
+        .then (game) ->
+          # ensure innings hasn't been override
+          should.exist game
+
+          {innings} = game
+          should.exist innings
+          innings.should.be.an "array"
+          innings.length.should.be.equal 1
         .then @assertScopesFinished
         .then resolve
         .catch reject
