@@ -17,7 +17,7 @@ module.exports = class
     @mlb = MLB
     @key = options.apiKey
 
-  _mlbRequest: (path, options) ->
+  _mlbRequest: (path, options = {}) ->
     @_request @mlb + path, options
 
   _request: (path, options = {}) ->
@@ -41,4 +41,12 @@ module.exports = class
 
     formattedDate = dateFormat(date, "yyyy/mm/dd")
     path = "games/#{formattedDate}/schedule.#{format}"
+    @_mlbRequest path
+
+  # game -> innings -> halfs -> events -> {at_bat} -> events
+  getPlayByPlay: (gameId, format = "json") ->
+    Match.check gameId, String
+    Match.check format, formatPattern
+
+    path = "games/#{gameId}/pbp.#{format}"
     @_mlbRequest path
