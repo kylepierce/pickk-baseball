@@ -1,0 +1,17 @@
+{
+  "apps": [
+    {
+      "name": "ImportGames",
+      "script": "./bin/worker",
+      "args": [
+        "--settings", "settings/dev.json",
+        "--delay=60000",
+        "lib/task/sportRadar/ImportGames.coffee"
+      ],
+      "exec_interpreter": "coffee",
+      "exec_mode": "fork",
+      "instances": 1,
+      "max_memory_restart": "256M"
+    }
+  ]
+}

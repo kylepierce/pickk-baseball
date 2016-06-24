@@ -1,0 +1,17 @@
+{
+  "isDebug": true,
+  "logger": {
+    "transports": {
+      "Console": {
+        "silent": false
+      }
+    }
+  },
+  "mongodb": {
+    "url": "mongodb://localhost:3001/meteor"
+  },
+  "sportRadar": {
+    "apiKey": "kw3k3f8n9zcy92ufe7g8gwy4"
+  }
+
+}
