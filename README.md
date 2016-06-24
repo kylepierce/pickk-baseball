@@ -57,7 +57,7 @@ In order to see active tasks call:
 ```
 #!bash
 
-pm2 logs
+pm2 status
 ```
 
 Open [this](http://localhost:3000/sportRadarGames) URL to show games for today.
