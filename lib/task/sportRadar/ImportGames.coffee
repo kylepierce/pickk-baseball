@@ -3,6 +3,7 @@ Match = require "mtr-match"
 Promise = require "bluebird"
 Task = require "../Task"
 SportRadarGame = require "../../model/sportRadar/SportRadarGame"
+dateFormat = require 'dateformat'
 
 module.exports = class extends Task
   constructor: (dependencies) ->
@@ -12,13 +13,17 @@ module.exports = class extends Task
       sportRadar: Match.Any
       mongodb: Match.Any
 
-  execute: (date = new Date()) ->
-    api = @dependencies.sportRadar
+    @api = @dependencies.sportRadar
+    @logger = @dependencies.logger
 
+  execute: (date = new Date()) ->
     Promise.bind @
-    .then -> api.getScheduledGames(date)
+    .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
+    .then -> @api.getScheduledGames(date)
     .then (result) -> result.league.games
     .map @upsertGame
+    .tap (results) -> @logger.verbose "#{results.length} games have been upserted"
+    .return true
 
   upsertGame: (game) ->
     sportRadarGame = new SportRadarGame game
