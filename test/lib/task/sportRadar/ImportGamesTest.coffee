@@ -6,7 +6,7 @@ ImportGames = require "../../../../lib/task/sportRadar/ImportGames"
 loadFixtures = require "../../../../helper/loadFixtures"
 sportRadarGamesFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/importGames/collection/SportRadarGames.json"
 
-describe "Import data from SportRadar to Mongo", ->
+describe "Import brief information about games for date specified from SportRadar to Mongo", ->
   dependencies = createDependencies settings, "PickkImport"
   mongodb = dependencies.mongodb
 
