@@ -35,7 +35,7 @@ module.exports = class
   loop: (resolve, reject) ->
     Promise.bind @
     .then -> @iteration++
-    .tap -> @logger.verbose "Start iteration #{@iteration}"
+    .tap -> @logger.verbose "Start iteration #{@iteration}" if @iteration
     .then -> @instance.execute()
     .then ->
       if @maxLoops and (@iteration is @maxLoops)
