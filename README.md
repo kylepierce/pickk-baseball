@@ -46,7 +46,14 @@ In order to stop tasks started before prompt:
 pm2 delete pm2/actors.dev.json
 ```
 
-If you'd like to see logs call:
+In order to see logs call:
+```
+#!bash
+
+pm2 logs
+```
+
+In order to see active tasks call:
 ```
 #!bash
 
