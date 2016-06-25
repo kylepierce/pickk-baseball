@@ -2,11 +2,12 @@
 
 This application was developed to import data from Sport Radar API.
 
-First of all it's necessary to install *pm2* package in order to use process manager:
+First of all it's necessary to install *pm2* and coffeescript packages:
 
 ```
 #!bash
 
+sudo npm install -g coffee-script
 sudo npm install -g pm2
 ```
 Then install packages required by the application: 
