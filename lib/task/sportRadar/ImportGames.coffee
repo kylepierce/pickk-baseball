@@ -20,6 +20,7 @@ module.exports = class extends Task
     Promise.bind @
     .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
     .then -> @api.getScheduledGames(date)
+    .tap (result) -> @logger.verbose "#{result.league.games.length} results have been fetched"
     .then (result) -> result.league.games
     .map @upsertGame
     .tap (results) -> @logger.verbose "#{results.length} games have been upserted"
