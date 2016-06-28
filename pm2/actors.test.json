@@ -12,7 +12,7 @@
       "exec_interpreter": "coffee",
       "exec_mode": "fork",
       "instances": 1,
-      "max_memory_restart": "256M"
+      "max_memory_restart": "512M"
     }
   ]
 }
