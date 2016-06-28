@@ -1,0 +1,41 @@
+{
+  "SportRadarGames": [
+    {
+      "id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "status": "inprogress",
+      "coverage": "full",
+      "attendance": 31183,
+      "duration": "2:37",
+      "game_number": 1,
+      "day_night": "D"
+    },
+    {
+      "id": "2b0ba18a-41f5-46d7-beb3-1e86b9a4acc0",
+      "status": "closed",
+      "coverage": "full",
+      "attendance": 38050,
+      "duration": "3:17",
+      "game_number": 1,
+      "day_night": "N",
+      "scheduled": "2016-06-11T23:15:00+00:00"
+    },
+    {
+      "id": "fec58a7a-eff7-4eec-9535-f64c42cc4871",
+      "status": "inprogress",
+      "coverage": "full",
+      "attendance": 31183,
+      "duration": "2:37",
+      "game_number": 1,
+      "day_night": "D"
+    },
+    {
+      "id": "fec58a7a-eff7-4eec-9535-f64c42cc4872",
+      "status": "scheduled",
+      "coverage": "full",
+      "attendance": 31183,
+      "duration": "2:37",
+      "game_number": 1,
+      "day_night": "D"
+    }
+  ]
+}

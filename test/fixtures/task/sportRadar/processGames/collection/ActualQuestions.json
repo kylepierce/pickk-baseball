@@ -1,0 +1,28 @@
+{
+  "questions": [
+    {
+      "id": "active_question_for_active_game",
+      "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "play_id": "72cac512-f8c3-4465-97fd-c2212092679c",
+      "active": true
+    },
+    {
+      "id": "inactive_question_for_active_game",
+      "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "play_id": "fd6d670f-dc68-4431-bfd2-1d95c85cfe93",
+      "active": false
+    },
+    {
+      "id": "active_pitch_question_for_active_game",
+      "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "pitch_id": "33c5d1c5-a077-4383-af67-f9fb603dae5e",
+      "active": true
+    },
+    {
+      "id": "inactive_pitch_question_for_active_game",
+      "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "pitch_id": "9a57463a-147e-43a1-9090-67c725f5f40d",
+      "active": false
+    }
+  ]
+}

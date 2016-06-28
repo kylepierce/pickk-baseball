@@ -1,0 +1,52 @@
+{
+  "SportRadarGames": [
+    {
+      "id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "status": "inprogress",
+      "coverage": "full",
+      "attendance": 31183,
+      "duration": "2:37",
+      "game_number": 1,
+      "day_night": "D",
+      "scheduled": "2016-06-11T18:10:00+00:00",
+      "home_team": "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8",
+      "away_team": "833a51a9-0d84-410f-bd77-da08c3e5e26e",
+      "venue": {
+        "id": "4a550fc1-c03d-4294-b63a-30ff197bedc4",
+        "name": "U.S. Cellular Field",
+        "market": "Chicago",
+        "capacity": 40615,
+        "surface": "grass",
+        "address": "333 West 35th Street",
+        "city": "Chicago",
+        "state": "IL",
+        "zip": "60616",
+        "country": "USA"
+      },
+      "broadcast": {
+        "network": "WGN"
+      },
+      "scoring": {
+        "home": {
+          "name": "White Sox",
+          "market": "Chicago",
+          "abbr": "CWS",
+          "id": "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8",
+          "runs": 1,
+          "hits": 5,
+          "errors": 0
+        },
+        "away": {
+          "name": "Royals",
+          "market": "Kansas City",
+          "abbr": "KC",
+          "id": "833a51a9-0d84-410f-bd77-da08c3e5e26e",
+          "runs": 4,
+          "hits": 9,
+          "errors": 0
+        }
+      },
+    "innings": []
+    }
+  ]
+}

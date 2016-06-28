@@ -1,0 +1,24 @@
+{
+  "questions": [
+    {
+      "id": "active_question_for_active_game",
+      "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "active": true
+    },
+    {
+      "id": "inactive_question_for_active_game",
+      "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "active": false
+    },
+    {
+      "id": "active_question_for_inactive_game",
+      "game_id": "2b0ba18a-41f5-46d7-beb3-1e86b9a4acc0",
+      "active": true
+    },
+    {
+      "id": "inactive_question_for_inactive_game",
+      "game_id": "2b0ba18a-41f5-46d7-beb3-1e86b9a4acc0",
+      "active": false
+    }
+  ]
+}
