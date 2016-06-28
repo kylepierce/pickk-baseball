@@ -11,13 +11,15 @@ describe "Import brief information about games for date specified from SportRada
   dependencies = createDependencies settings, "PickkImport"
   mongodb = dependencies.mongodb
 
-  importGames = new ImportGames dependencies
+  importGames = undefined
   SportRadarGames = mongodb.collection("SportRadarGames")
 
   date = moment("2016-06-11").toDate()
   gameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"
 
   beforeEach ->
+    importGames = new ImportGames dependencies
+
     Promise.bind @
     .then ->
       Promise.all [
@@ -125,6 +127,21 @@ describe "Import brief information about games for date specified from SportRada
           should.exist innings
           innings.should.be.an "array"
           innings.length.should.be.equal 1
+        .then @assertScopesFinished
+        .then resolve
+        .catch reject
+        .finally recordingDone
+
+  it 'should emit event for each upserted game', ->
+    spy = sinon.spy()
+    importGames.observe "upserted", spy
+
+    new Promise (resolve, reject) ->
+      nock.back "test/fixtures/task/sportRadar/importGames/request/single.json", (recordingDone) ->
+        Promise.bind @
+        .then -> importGames.execute(date)
+        .then ->
+          spy.should.have.callCount 15
         .then @assertScopesFinished
         .then resolve
         .catch reject

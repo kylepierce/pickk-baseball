@@ -16,6 +16,8 @@ module.exports = class extends Task
     @api = @dependencies.sportRadar
     @logger = @dependencies.logger
 
+    @registerEvents ['upserted']
+
   execute: (date = new Date()) ->
     Promise.bind @
     .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
@@ -30,4 +32,4 @@ module.exports = class extends Task
     sportRadarGame = new SportRadarGame game
     collection = @dependencies.mongodb.collection("SportRadarGames")
     collection.update sportRadarGame.getSelector(), {$set: sportRadarGame}, {upsert: true}
-
+    .then => @emit "upserted", sportRadarGame
