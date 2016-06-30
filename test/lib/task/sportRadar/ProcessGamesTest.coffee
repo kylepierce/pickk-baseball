@@ -11,17 +11,20 @@ QuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRad
 ActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActualQuestions.json"
 NonActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/NonActualQuestions.json"
 ActiveFullGameFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveFullGame.json"
+ActiveFullGameWithLineUp = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveFullGameWithLineUp.json"
 ActiveGameNoInningsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameNoInnings.json"
-ActiveGameNoHalfsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameNoHalfs.json"
 ActiveGameNoPlaysFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameNoPlays.json"
-ActiveGameNoPitchesFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameNoPitches.json"
+ActiveGameEndOfInningFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameEndOfInning.json"
+ActiveGameEndOfHalfFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameEndOfHalf.json"
+ActiveGameEndOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameEndOfPlay.json"
+ActiveGameMiddleOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameMiddleOfPlay.json"
 
 describe "Process imported games and question management", ->
   dependencies = createDependencies settings, "PickkImport"
   mongodb = dependencies.mongodb
 
   processGames = undefined
-  
+
   SportRadarGames = mongodb.collection("SportRadarGames")
   Questions = mongodb.collection("questions")
 
@@ -88,121 +91,12 @@ describe "Process imported games and question management", ->
       should.exist active
       active.should.be.equal false
 
-  it 'should select the last inning', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveFullGameFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) ->
-      should.exist game
-      game.should.be.an "object"
-      processGames.getLastInning game
-    .then (inning) ->
-      should.exist inning
-      inning.should.be.an "object"
-
-      {number} = inning
-      should.exist number
-      number.should.equal 4
-
-  it 'should work correctly when there is no innings', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveGameNoInningsFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) ->
-      should.exist game
-      game.should.be.an "object"
-      processGames.getLastInning game
-    .then (inning) ->
-      should.not.exist inning
-
-  it 'should select the last half', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveFullGameFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) ->
-      should.exist half
-      half.should.be.an "object"
-
-      {fixture_right_half} = half
-      should.exist fixture_right_half
-
-  it 'should work correctly when there is no halfs', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveGameNoHalfsFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) ->
-      should.not.exist half
-
-  it 'should select the last play', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveFullGameFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) -> processGames.getLastPlay half
-    .then (play) ->
-      should.exist play
-      play.should.be.an "object"
-
-      {id} = play
-      should.exist id
-      id.should.be.equal "72cac512-f8c3-4465-97fd-c2212092679c"
-
-  it 'should work correctly when there is no plays', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveGameNoPlaysFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) -> processGames.getLastPlay half
-    .then (play) ->
-      should.not.exist play
-
-  it 'should select the last pitch', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveFullGameFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) -> processGames.getLastPlay half
-    .then (play) -> processGames.getLastPitch play
-    .then (pitch) ->
-      should.exist pitch
-      pitch.should.be.an "object"
-
-      {id} = pitch
-      should.exist id
-      id.should.be.equal "33c5d1c5-a077-4383-af67-f9fb603dae5e"
-
-  it 'should work correctly when there is no pitches', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveGameNoPitchesFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) -> processGames.getLastPlay half
-    .then (play) -> processGames.getLastPitch play
-    .then (pitch) ->
-      should.not.exist pitch
-
   it 'should create new play question', ->
-    game = undefined
-    players = undefined
-    play = undefined
-
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .tap (game) -> players = processGames.getPlayers game
-    .then (_game) -> game = _game; processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) -> processGames.getLastPlay half
-    .then (_play) -> play = _play; processGames.handlePlay game, players, play
-    .then -> Questions.findOne({game_id: activeGameId, play_id: "72cac512-f8c3-4465-97fd-c2212092679c", atBatQuestion: true})
+    .then (game) -> processGames.handleGame game
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "abbda8e1-2274-4bf0-931c-691cf8bf24c6", atBatQuestion: true})
     .then (question) ->
       should.exist question
       question.should.be.an "object"
@@ -212,19 +106,11 @@ describe "Process imported games and question management", ->
       active.should.be.equal true
 
   it 'should update actual play question', ->
-    game = undefined
-    players = undefined
-    play = undefined
-
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures ActualQuestionsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .tap (game) -> players = processGames.getPlayers game
-    .then (_game) -> game = _game; processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) -> processGames.getLastPlay half
-    .then (_play) -> play = _play; processGames.handlePlay game, players, play
+    .then (game) -> processGames.handleGame game
     .then -> Questions.findOne({id: "active_question_for_active_game"})
     .then (question) ->
       should.exist question
@@ -239,19 +125,11 @@ describe "Process imported games and question management", ->
       should.exist options
 
   it 'should disable non-actual play question', ->
-    game = undefined
-    players = undefined
-    play = undefined
-
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualQuestionsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .tap (game) -> players = processGames.getPlayers game
-    .then (_game) -> game = _game; processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) -> processGames.getLastPlay half
-    .then (_play) -> play = _play; processGames.handlePlay game, players, play
+    .then (game) -> processGames.handleGame game
     .then -> Questions.findOne({id: "non_actual_question_for_active_game"})
     .then (question) ->
       should.exist question
@@ -262,21 +140,11 @@ describe "Process imported games and question management", ->
       active.should.be.equal false
 
   it 'should create new pitch question', ->
-    game = undefined
-    players = undefined
-    play = undefined
-    pitch = undefined
-
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .tap (game) -> players = processGames.getPlayers game
-    .then (_game) -> game = _game; processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) -> processGames.getLastPlay half
-    .then (_play) -> play = _play; processGames.getLastPitch play
-    .then (_pitch) -> pitch = _pitch; processGames.handlePitch game, players, play, pitch
-    .then -> Questions.findOne({game_id: activeGameId, pitch_id: "33c5d1c5-a077-4383-af67-f9fb603dae5e", atBatQuestion: {$exists: false}})
+    .then (game) -> processGames.handleGame game
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "abbda8e1-2274-4bf0-931c-691cf8bf24c6", atBatQuestion: {$exists: false}})
     .then (question) ->
       should.exist question
       question.should.be.an "object"
@@ -286,21 +154,11 @@ describe "Process imported games and question management", ->
       active.should.be.equal true
 
   it 'should update actual pitch question', ->
-    game = undefined
-    players = undefined
-    play = undefined
-    pitch = undefined
-
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures ActualQuestionsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .tap (game) -> players = processGames.getPlayers game
-    .then (_game) -> game = _game; processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) -> processGames.getLastPlay half
-    .then (_play) -> play = _play; processGames.getLastPitch play
-    .then (_pitch) -> pitch = _pitch; processGames.handlePitch game, players, play, pitch
+    .then (game) -> processGames.handleGame game
     .then -> Questions.findOne({id: "active_pitch_question_for_active_game"})
     .then (question) ->
       should.exist question
@@ -314,22 +172,12 @@ describe "Process imported games and question management", ->
       # check options have been updated
       should.exist options
 
-  it 'should disable non-actual play question', ->
-    game = undefined
-    players = undefined
-    play = undefined
-    pitch = undefined
-
+  it 'should disable non-actual pitch question', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualQuestionsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .tap (game) -> players = processGames.getPlayers game
-    .then (_game) -> game = _game; processGames.getLastInning game
-    .then (inning) -> processGames.getLastHalf inning
-    .then (half) -> processGames.getLastPlay half
-    .then (_play) -> play = _play; processGames.getLastPitch play
-    .then (_pitch) -> pitch = _pitch; processGames.handlePitch game, players, play, pitch
+    .then (game) -> processGames.handleGame game
     .then -> Questions.findOne({id: "non_actual_pitch_question_for_active_game"})
     .then (question) ->
       should.exist question
@@ -340,18 +188,122 @@ describe "Process imported games and question management", ->
       # should be still active
       active.should.be.equal false
 
-  it 'should parse information about players', ->
+  it 'should works correctly when no innings are present', ->
     Promise.bind @
-    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures ActiveGameNoInningsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.getPlayers game
-    .then (players) ->
-      should.exist players
-      players.should.be.an "object"
+    .then (game) -> processGames.handleGame game
+    .then -> Questions.count()
+    .then (result) ->
+      should.exist result
+      result.should.be.equal 0
 
-      player = players['abbda8e1-2274-4bf0-931c-691cf8bf24c6']
-      should.exist player
-      should.exist player.first_name
-      player.first_name.should.be.equal 'Avisail'
-      should.exist player.last_name
-      player.last_name.should.be.equal 'Garcia'
+  it 'should works correctly when no plays are present', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameNoPlaysFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "92500d32-2314-4c7c-91c5-110f95229f9a", atBatQuestion: {$exists: false}})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active} = question
+      should.exist active
+      active.should.be.equal true
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "92500d32-2314-4c7c-91c5-110f95229f9a", atBatQuestion: true})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active} = question
+      should.exist active
+      active.should.be.equal true
+
+  it 'should works correctly when a half is finished', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfHalfFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "1a0bef4b-f97b-453d-80ed-5fde2c80acc8", atBatQuestion: {$exists: false}})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active} = question
+      should.exist active
+      active.should.be.equal true
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "1a0bef4b-f97b-453d-80ed-5fde2c80acc8", atBatQuestion: true})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active} = question
+      should.exist active
+      active.should.be.equal true
+
+  it 'should works correctly when an inning is finished', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "3cfaa9a7-8dea-4590-8ea5-c8e1b51232cf", atBatQuestion: {$exists: false}})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active} = question
+      should.exist active
+      active.should.be.equal true
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "3cfaa9a7-8dea-4590-8ea5-c8e1b51232cf", atBatQuestion: true})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active} = question
+      should.exist active
+      active.should.be.equal true
+
+  it 'should works correctly when a play is finished', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "6ac6fa53-ea9b-467d-87aa-6429a6bcb90c", atBatQuestion: {$exists: false}})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active} = question
+      should.exist active
+      active.should.be.equal true
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "6ac6fa53-ea9b-467d-87aa-6429a6bcb90c", atBatQuestion: true})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active} = question
+      should.exist active
+      active.should.be.equal true
+
+  it 'should works correctly when a play is in progress', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameMiddleOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "c401dbb6-2208-45f4-9947-db11881daf4f", atBatQuestion: {$exists: false}})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active} = question
+      should.exist active
+      active.should.be.equal true
+    .then -> Questions.findOne({game_id: activeGameId, player_id: "c401dbb6-2208-45f4-9947-db11881daf4f", atBatQuestion: true})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active} = question
+      should.exist active
+      active.should.be.equal true

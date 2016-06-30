@@ -3,13 +3,15 @@
     {
       "id": "non_actual_question_for_active_game",
       "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
-      "play_id": "fd6d670f-dc68-4431-bfd2-1d95c85cfe93",
+      "player_id": "abbda8e1-2274-4bf0-931c-691cf8bf24c7",
+      "atBatQuestion": true,
       "active": true
     },
     {
       "id": "inactive_question_for_active_game",
       "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
-      "play_id": "fd6d670f-dc68-4431-bfd2-1d95c85cfe92",
+      "player_id": "abbda8e1-2274-4bf0-931c-691cf8bf24c7",
+      "atBatQuestion": true,
       "active": false
     },
     {
