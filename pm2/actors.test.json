@@ -7,7 +7,7 @@
         "--settings", "settings/test.json",
         "--max-loops=5",
         "--delay=3000",
-        "lib/task/sportRadar/ImportGames.coffee"
+        "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
       ],
       "exec_interpreter": "coffee",
       "exec_mode": "fork",

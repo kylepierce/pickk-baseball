@@ -6,7 +6,7 @@
       "args": [
         "--settings", "settings/dev.json",
         "--delay=60000",
-        "lib/task/sportRadar/ImportGames.coffee"
+        "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
       ],
       "exec_interpreter": "coffee",
       "exec_mode": "fork",
