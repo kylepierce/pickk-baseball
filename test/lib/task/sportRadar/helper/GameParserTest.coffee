@@ -20,7 +20,7 @@ describe "Process imported games and question management", ->
 
   gameParser = undefined
   
-  SportRadarGames = mongodb.collection("SportRadarGames")
+  SportRadarGames = mongodb.collection("games")
   Questions = mongodb.collection("questions")
 
   beforeEach ->
@@ -165,7 +165,7 @@ describe "Process imported games and question management", ->
       should.exist result
       result.should.be.an "object"
 
-      {hitter, balls, strikes} = result
+      {hitter, balls, strikes, pitch} = result
 
       should.exist hitter
       hitter.should.be.an "object"
@@ -178,3 +178,19 @@ describe "Process imported games and question management", ->
 
       should.exist strikes
       strikes.should.be.equal 2
+
+      should.exist pitch
+
+  it 'should provide pitch by its Id', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameMiddleOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPitchById game, '2a587da9-9b2c-4082-90d3-515e2ef6d010'
+    .then (pitch) ->
+      should.exist pitch
+      pitch.should.be.an "object"
+
+      {outcome_id} = pitch
+
+      should.exist outcome_id
+      outcome_id.should.equal "bB"

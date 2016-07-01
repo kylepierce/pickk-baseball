@@ -12,7 +12,7 @@ describe "Import details information about a game specified to Mongo", ->
   mongodb = dependencies.mongodb
 
   importGameDetails = new ImportGameDetails dependencies
-  SportRadarGames = mongodb.collection("SportRadarGames")
+  SportRadarGames = mongodb.collection("games")
 
   gameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"
 

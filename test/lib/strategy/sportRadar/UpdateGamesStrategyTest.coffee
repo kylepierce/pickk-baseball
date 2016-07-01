@@ -16,7 +16,7 @@ describe "Import brief information about games for date specified from SportRada
   mongodb = dependencies.mongodb
 
   updateGamesStrategy = new UpdateGamesStrategy dependencies
-  SportRadarGames = mongodb.collection("SportRadarGames")
+  SportRadarGames = mongodb.collection("games")
 
   beforeEach ->
     Promise.bind @

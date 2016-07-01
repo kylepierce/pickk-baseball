@@ -14,7 +14,7 @@ module.exports = class extends Task
       mongodb: Match.Any
 
     @logger = @dependencies.logger
-    @SportRadarGames = dependencies.mongodb.collection("SportRadarGames")
+    @SportRadarGames = dependencies.mongodb.collection("games")
     @Questions = dependencies.mongodb.collection("questions")
     @gameParser = new GameParser dependencies
 
@@ -24,7 +24,7 @@ module.exports = class extends Task
     .then -> @getActiveGames()
     .tap (games) -> @logger.verbose "ProcessGames: There are #{games.length} active game(s)"
     .tap @closeQuestionsForInactiveGames
-    .map @handleGame
+    .map @handleGame, {concurrency: 1} # to sort questions properly on the client
     .return true
 
   getActiveGames: ->
@@ -66,6 +66,7 @@ module.exports = class extends Task
           dateCreated: new Date()
           gameId: game['_id']
           active: true
+          player: player
           commercial: false
           que: question
           options: options
@@ -124,6 +125,7 @@ module.exports = class extends Task
           dateCreated: new Date()
           gameId: game['_id']
           active: true
+          player: player
           commercial: false
           que: question
           options: options

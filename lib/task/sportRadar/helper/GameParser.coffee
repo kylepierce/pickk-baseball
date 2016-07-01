@@ -11,6 +11,15 @@ module.exports = class
     @teamsByOrder = {}
     @teamsById = {}
 
+  getPitchById: (game, id) ->
+    innings = game['innings']
+    halfs = _.flatten _.pluck innings, 'halfs'
+    events = _.flatten _.pluck halfs, 'events'
+    plays = _.pluck _.filter(events, @isPlay), 'at_bat'
+    playEvents = _.flatten _.pluck plays, 'events'
+    pitches = _.filter playEvents, @isPitch
+    _.indexBy(pitches, 'id')[id]
+
   getPlay: (game) ->
     innings = game['innings']
     @logger.verbose "Number of innings - #{innings.length}"
@@ -117,6 +126,7 @@ module.exports = class
           pitch = @getLastPitch lastPlay
 
           hitter: hitter
+          pitch: pitch
           balls: pitch['count'].balls
           strikes: pitch['count'].strikes
       else
@@ -133,10 +143,11 @@ module.exports = class
 
   isLineup: (event) -> event['lineup']
   isPlay: (event) -> event['at_bat']
+  isPitch: (event) -> event['type'] is 'pitch'
   isFinishedPlay: (play) -> @getLastPitch(play)['flags']['is_ab_over']
   isFinishedHalf: (play) -> @getLastPitch(play)['count']['outs'] is 3
   byTeam: (half) -> half['half']
-  byDate: (play) -> play['events'][0]['created_at']
+  byDate: (play) -> moment(play['events'][0]['created_at']).toDate()
   byNumber: (inning) -> inning['number']
 
   buildTeam: (marker, lineups) ->
@@ -148,6 +159,6 @@ module.exports = class
   getLastPlay: (plays) -> _.sortBy(plays, @byDate).pop()
 
   getLastPitch: (play) ->
-    pitches = _.sortBy(_.filter(play['events'], (event) -> event['type'] is 'pitch'), (pitch) -> moment(pitch['created_at']).toDate())
+    pitches = _.sortBy(_.filter(play['events'], @isPitch), (pitch) -> moment(pitch['created_at']).toDate())
     @logger.verbose "Number of pitches - #{pitches.length}"
     pitches.pop()

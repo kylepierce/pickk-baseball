@@ -9,6 +9,8 @@ module.exports = class
     _.extend @, data
 
     @scheduled = moment(@scheduled).toDate()
+    @live = @status is 'inprogress'
+    @commercial = false
 
   getSelector: ->
     "id": @id

@@ -25,7 +25,7 @@ describe "Process imported games and question management", ->
 
   processGames = undefined
 
-  SportRadarGames = mongodb.collection("SportRadarGames")
+  SportRadarGames = mongodb.collection("games")
   Questions = mongodb.collection("questions")
 
   activeGameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"

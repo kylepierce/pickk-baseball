@@ -29,7 +29,8 @@ module.exports = class
       @loop(resolve, reject)
     .bind @
     .catch (error) ->
-      @logger.error "En error occurred for worker \"#{@name}\"", error
+      @logger.error "An error occurred for worker \"#{@name}\"", error
+      throw error
     .finally -> @logger.info "Finish worker \"#{@name}\""
 
   loop: (resolve, reject) ->

@@ -24,6 +24,6 @@ module.exports = class extends Task
 
   upsertGame: (game) ->
     sportRadarGame = new SportRadarGame game
-    collection = @dependencies.mongodb.collection("SportRadarGames")
+    collection = @dependencies.mongodb.collection("games")
     collection.update sportRadarGame.getSelector(), {$set: sportRadarGame}, {upsert: true}
 

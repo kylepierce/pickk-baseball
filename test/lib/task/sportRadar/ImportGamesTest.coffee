@@ -12,7 +12,7 @@ describe "Import brief information about games for date specified from SportRada
   mongodb = dependencies.mongodb
 
   importGames = undefined
-  SportRadarGames = mongodb.collection("SportRadarGames")
+  SportRadarGames = mongodb.collection("games")
 
   date = moment("2016-06-11").toDate()
   gameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"

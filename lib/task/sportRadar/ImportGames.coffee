@@ -4,6 +4,7 @@ Promise = require "bluebird"
 Task = require "../Task"
 SportRadarGame = require "../../model/sportRadar/SportRadarGame"
 dateFormat = require 'dateformat'
+moment = require "moment"
 
 module.exports = class extends Task
   constructor: (dependencies) ->
@@ -18,7 +19,7 @@ module.exports = class extends Task
 
     @registerEvents ['upserted']
 
-  execute: (date = new Date()) ->
+  execute: (date = moment().subtract(8, "hours").toDate()) ->
     Promise.bind @
     .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
     .then -> @api.getScheduledGames(date)
@@ -30,6 +31,6 @@ module.exports = class extends Task
 
   upsertGame: (game) ->
     sportRadarGame = new SportRadarGame game
-    collection = @dependencies.mongodb.collection("SportRadarGames")
+    collection = @dependencies.mongodb.collection("games")
     collection.update sportRadarGame.getSelector(), {$set: sportRadarGame}, {upsert: true}
     .then => @emit "upserted", sportRadarGame
