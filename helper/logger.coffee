@@ -13,7 +13,7 @@ module.exports = (options) ->
     transports: transports
   )
 
-  logger.addRewriter (level, msg, meta) ->
-    sanitize(meta, options.sanitizedProperties)
+#  logger.addRewriter (level, msg, meta) ->
+#    sanitize(meta, options.sanitizedProperties)
 
   logger

@@ -22,68 +22,68 @@ module.exports = class
 
   getPlay: (game) ->
     innings = game['innings']
-    @logger.verbose "Number of innings - #{innings.length}"
+    @logger.log "Number of innings - #{innings.length}"
 
     if innings.length
       # perhaps _.sort for innings is needed!
       halfs = _.flatten _.pluck _.sortBy(innings, @byNumber), 'halfs'
-      @logger.verbose "Number of halfs - #{halfs.length}"
+      @logger.log "Number of halfs - #{halfs.length}"
   
       groupedHalfs = _.groupBy halfs, @byTeam
-      @logger.verbose "Number of (#{@HOME_TEAM_MARKER}) halfs - #{groupedHalfs[@HOME_TEAM_MARKER].length}"
-      @logger.verbose "Number of (#{@AWAY_TEAM_MARKER}) halfs - #{groupedHalfs[@AWAY_TEAM_MARKER].length}"
+      @logger.log "Number of (#{@HOME_TEAM_MARKER}) halfs - #{groupedHalfs[@HOME_TEAM_MARKER].length}"
+      @logger.log "Number of (#{@AWAY_TEAM_MARKER}) halfs - #{groupedHalfs[@AWAY_TEAM_MARKER].length}"
   
       homeEvents = _.flatten _.pluck groupedHalfs[@HOME_TEAM_MARKER], 'events'
-      @logger.verbose "Number of home events - #{homeEvents.length}"
+      @logger.log "Number of home events - #{homeEvents.length}"
       awayEvents = _.flatten _.pluck groupedHalfs[@AWAY_TEAM_MARKER], 'events'
-      @logger.verbose "Number of away events - #{awayEvents.length}"
+      @logger.log "Number of away events - #{awayEvents.length}"
   
       homePlays = _.sortBy _.pluck(_.filter(homeEvents, @isPlay), 'at_bat'), @byDate
-      @logger.verbose "Number of home plays - #{homePlays.length}"
+      @logger.log "Number of home plays - #{homePlays.length}"
       homeLineups = _.pluck(_.filter(homeEvents, @isLineup), 'lineup')
-      @logger.verbose "Number of home lineups - #{homeLineups.length}"
+      @logger.log "Number of home lineups - #{homeLineups.length}"
       awayPlays = _.sortBy _.pluck(_.filter(awayEvents, @isPlay), 'at_bat'), @byDate
-      @logger.verbose "Number of away plays - #{awayPlays.length}"
+      @logger.log "Number of away plays - #{awayPlays.length}"
       awayLineups = _.pluck(_.filter(awayEvents, @isLineup), 'lineup')
-      @logger.verbose "Number of away lineups - #{awayLineups.length}"
+      @logger.log "Number of away lineups - #{awayLineups.length}"
   
       @buildTeam @HOME_TEAM_MARKER, homeLineups
       @buildTeam @AWAY_TEAM_MARKER, awayLineups
-      @logger.verbose @teamsByOrder
-      @logger.verbose @teamsById
+      @logger.log @teamsByOrder
+      @logger.log @teamsById
   
       lastPlay = @getLastPlay(homePlays.concat awayPlays)
 
       if lastPlay
-        @logger.verbose "lastPlay", lastPlay
+        @logger.log "lastPlay", lastPlay
         lastPlays = {}
         lastPlays[@HOME_TEAM_MARKER] = @getLastPlay homePlays
         lastPlays[@AWAY_TEAM_MARKER] = @getLastPlay awayPlays
-        @logger.verbose "lastPlays", lastPlays
+        @logger.log "lastPlays", lastPlays
 
         if @isFinishedPlay lastPlay
           if @isFinishedHalf lastPlay
-            @logger.verbose "Play is finished, half as well"
+            @logger.log "Play is finished, half as well"
 
             oppositeMarker = if lastPlay.id is lastPlays[@AWAY_TEAM_MARKER].id then @HOME_TEAM_MARKER else @AWAY_TEAM_MARKER
-            @logger.verbose "oppositeMarker", oppositeMarker
+            @logger.log "oppositeMarker", oppositeMarker
 
             oppositeLastPlay = lastPlays[oppositeMarker]
-            @logger.verbose "oppositeLastPlay", oppositeLastPlay
+            @logger.log "oppositeLastPlay", oppositeLastPlay
 
 
             if oppositeLastPlay
               hitterId = oppositeLastPlay['hitter_id']
-              @logger.verbose "hitterId", hitterId
+              @logger.log "hitterId", hitterId
 
               hitter = @teamsById[oppositeMarker][hitterId]
-              @logger.verbose "hitter", hitter
+              @logger.log "hitter", hitter
 
               nextOrder = ((hitter.order) % 8) + 1
-              @logger.verbose "nextOrder", nextOrder
+              @logger.log "nextOrder", nextOrder
 
               nextPlayer = @teamsByOrder[oppositeMarker][nextOrder]
-              @logger.verbose "nextPlayer", nextPlayer
+              @logger.log "nextPlayer", nextPlayer
 
               hitter: nextPlayer
               balls: 0
@@ -93,35 +93,35 @@ module.exports = class
               balls: 0
               strikes: 0
           else
-            @logger.verbose "Play is finished, half is not"
+            @logger.log "Play is finished, half is not"
 
             marker = if lastPlay.id is lastPlays[@HOME_TEAM_MARKER].id then @HOME_TEAM_MARKER else @AWAY_TEAM_MARKER
-            @logger.verbose "marker", marker
+            @logger.log "marker", marker
 
             hitterId = lastPlay['hitter_id']
-            @logger.verbose "hitterId", hitterId
+            @logger.log "hitterId", hitterId
 
             hitter = @teamsById[marker][hitterId]
-            @logger.verbose "hitter", hitter
+            @logger.log "hitter", hitter
 
             nextOrder = ((hitter.order) % 8) + 1
-            @logger.verbose "nextOrder", nextOrder
+            @logger.log "nextOrder", nextOrder
 
             nextPlayer = @teamsByOrder[marker][nextOrder]
-            @logger.verbose "nextPlayer", nextPlayer
+            @logger.log "nextPlayer", nextPlayer
 
             hitter: nextPlayer
             balls: 0
             strikes: 0
         else
-          @logger.verbose "Play is in progress"
+          @logger.log "Play is in progress"
 
-          marker = if lastPlay.id is lastPlays[@HOME_TEAM_MARKER].id then @HOME_TEAM_MARKER else @AWAY_TEAM_MARKER
+          marker = if lastPlays[@HOME_TEAM_MARKER] and (lastPlay.id is lastPlays[@HOME_TEAM_MARKER].id) then @HOME_TEAM_MARKER else @AWAY_TEAM_MARKER
           hitterId = lastPlay['hitter_id']
-          @logger.verbose "hitterId", hitterId
+          @logger.log "hitterId", hitterId
 
           hitter = @teamsById[marker][hitterId]
-          @logger.verbose "hitter", hitter
+          @logger.log "hitter", hitter
 
           pitch = @getLastPitch lastPlay
 
@@ -130,7 +130,7 @@ module.exports = class
           balls: pitch['count'].balls
           strikes: pitch['count'].strikes
       else
-        @logger.verbose "It's the first play of the match"
+        @logger.log "It's the first play of the match"
 
         # no plays, select first player for "guest" team
         hitter: @getFirstPlayerForTeam @AWAY_TEAM_MARKER
@@ -160,5 +160,5 @@ module.exports = class
 
   getLastPitch: (play) ->
     pitches = _.sortBy(_.filter(play['events'], @isPitch), (pitch) -> moment(pitch['created_at']).toDate())
-    @logger.verbose "Number of pitches - #{pitches.length}"
+    @logger.log "Number of pitches - #{pitches.length}"
     pitches.pop()
