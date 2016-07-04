@@ -52,12 +52,12 @@ module.exports = class extends Task
     question = "End of #{player['first_name']} #{player['last_name']}'s at bat."
 
     options =
-      option1: {title: "Out", usersPicked: [], multiplier: 2.1 }
-      option2: {title: "Walk", usersPicked: [], multiplier: 2.2 }
-      option3: {title: "Single", usersPicked: [], multiplier: 2.3 }
-      option4: {title: "Double", usersPicked: [], multiplier: 2.4 }
-      option5: {title: "Triple", usersPicked: [], multiplier: 2.3 }
-      option6: {title: "Home Run", usersPicked: [], multiplier: 2.4 }
+      option1: {title: "Out", multiplier: 2.1 }
+      option2: {title: "Walk", multiplier: 2.2 }
+      option3: {title: "Single", multiplier: 2.3 }
+      option4: {title: "Double", multiplier: 2.4 }
+      option5: {title: "Triple", multiplier: 2.3 }
+      option6: {title: "Home Run", multiplier: 2.4 }
 
     Promise.bind @
     .then ->
@@ -111,12 +111,12 @@ module.exports = class extends Task
       title5 = "Out"
 
     options =
-      option1: { title: title1, usersPicked: [], multiplier: 1.45 }
-      option2: { title: title2, usersPicked: [], multiplier: 1.65 }
-      option3: { title: title3, usersPicked: [], multiplier: 7.35 }
-      option4: { title: title4, usersPicked: [], multiplier: 3.23 }
+      option1: { title: title1, multiplier: 1.45 }
+      option2: { title: title2, multiplier: 1.65 }
+      option3: { title: title3, multiplier: 7.35 }
+      option4: { title: title4, multiplier: 3.23 }
 
-    options.option5 = {title: title5, usersPicked: [], multiplier: 1 } if title5
+    options.option5 = {title: title5, multiplier: 1 } if title5
 
     Promise.bind @
     .then ->
