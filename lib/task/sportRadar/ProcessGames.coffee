@@ -20,6 +20,7 @@ module.exports = class extends Task
     @Teams = dependencies.mongodb.collection("teams")
     @Players = dependencies.mongodb.collection("players")
     @Questions = dependencies.mongodb.collection("questions")
+    @AtBats = dependencies.mongodb.collection("atBat")
     @gameParser = new GameParser dependencies
 
   execute: ->
@@ -51,6 +52,12 @@ module.exports = class extends Task
       .then -> @handlePlayers game, result.players
       .then -> @handlePlay game, result
       .then -> @handlePitch game, result
+      .then -> @handleAtBat game, result
+
+  handleAtBat: (game, result) ->
+    Promise.bind @
+    .then -> @AtBats.update {gameId: game._id, playerId: result.hitter['player_id'], active: true}, {$set: {ballCount: result.balls, strikeCount: result.strikes, dateCreated: new Date()}}, {upsert: true}
+    .then -> @AtBats.update {gameId: game._id, playerId: {$ne: result.hitter['player_id']}}, {$set: {active: false}}, {multi: true}
 
   handleTeams: (game, teams) ->
     @logger.verbose "Handle teams of game (#{game.id})"

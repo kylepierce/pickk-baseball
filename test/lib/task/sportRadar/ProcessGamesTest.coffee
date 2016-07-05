@@ -21,6 +21,7 @@ ActiveGameEndOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/tas
 ActiveGameMiddleOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameMiddleOfPlay.json"
 TeamsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Teams.json"
 PlayersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Players.json"
+AtBatsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/AtBats.json"
 
 describe "Process imported games and question management", ->
   dependencies = createDependencies settings, "PickkImport"
@@ -32,6 +33,7 @@ describe "Process imported games and question management", ->
   Teams = mongodb.collection("teams")
   Players = mongodb.collection("players")
   Questions = mongodb.collection("questions")
+  AtBats = mongodb.collection("atBat")
 
   activeGameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"
   inactiveGameId = "2b0ba18a-41f5-46d7-beb3-1e86b9a4acc0"
@@ -48,6 +50,7 @@ describe "Process imported games and question management", ->
         Teams.remove()
         Players.remove()
         Questions.remove()
+        AtBats.remove()
       ]
 
   it 'should fetch only active games', ->
@@ -417,6 +420,67 @@ describe "Process imported games and question management", ->
 
       should.exist position
       position.should.equal 7
+
+  it 'should create atBat for active batter', ->
+    game = undefined
+
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (_game) -> game = _game; processGames.handleGame game
+    .then -> AtBats.find()
+    .then (bats) ->
+      should.exist bats
+      bats.should.be.an "array"
+      bats.length.should.equal 1
+
+      bat = bats[0]
+      should.exist bat
+      bat.should.be.an "object"
+
+      {active, playerId, gameId, ballCount, strikeCount} = bat
+
+      should.exist active
+      active.should.equal true
+
+      should.exist playerId
+      playerId.should.equal "6ac6fa53-ea9b-467d-87aa-6429a6bcb90c"
+
+      should.exist gameId
+      gameId.toString().should.equal game._id.toString()
+
+      should.exist ballCount
+      ballCount.should.equal 0
+
+      should.exist strikeCount
+      strikeCount.should.equal 0
+
+#  it 'should create new atBat and close another one', ->
+#    game = undefined
+#
+#    Promise.bind @
+#    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+#    .then -> loadFixtures AtBatsFixtures, mongodb
+#    .then -> SportRadarGames.findOne({id: activeGameId})
+#    .then (_game) -> game = _game; processGames.handleGame game
+#    .then -> AtBats.find()
+#    .then (bats) ->
+#      should.exist bats
+#      bats.should.be.an "array"
+#      bats.length.should.equal 2
+#      console.log bats
+#
+#      activeBat = _.findWhere bats, {active: true}
+#      should.exist activeBat
+#      activeBat.should.be.an "object"
+#
+#      {playerId} = activeBat
+#
+#      should.exist playerId
+#      playerId.should.equal "6ac6fa53-ea9b-467d-87aa-6429a6bcb90c"
+#
+#      inactiveBat = _.findWhere bats, {active: false}
+#      should.exist inactiveBat
 
   it 'should enrich the game by new fields', ->
     Promise.bind @
