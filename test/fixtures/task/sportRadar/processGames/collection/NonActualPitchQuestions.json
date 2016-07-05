@@ -15,10 +15,10 @@
       "active": false
     },
     {
-      "id": "active_pitch_question_for_active_game",
+      "id": "active_non_actual_pitch_question_for_active_game",
       "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
       "player_id": "abbda8e1-2274-4bf0-931c-691cf8bf24c6",
-      "balls": 2,
+      "balls": 1,
       "strikes": 2,
       "active": true
     },

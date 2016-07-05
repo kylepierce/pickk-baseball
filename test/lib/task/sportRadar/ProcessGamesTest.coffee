@@ -11,6 +11,7 @@ TwoActiveGamesFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/spo
 QuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Questions.json"
 ActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActualQuestions.json"
 NonActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/NonActualQuestions.json"
+NonActualPitchQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/NonActualPitchQuestions.json"
 ActiveFullGameFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveFullGame.json"
 ActiveFullGameWithLineUp = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveFullGameWithLineUp.json"
 ActiveGameNoInningsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameNoInnings.json"
@@ -160,11 +161,17 @@ describe "Process imported games and question management", ->
       should.exist question
       question.should.be.an "object"
 
-      {active} = question
+      {active, balls, strikes} = question
       should.exist active
       active.should.be.equal true
 
-  it 'should update actual pitch question', ->
+      should.exist balls
+      balls.should.be.equal 2
+
+      should.exist strikes
+      strikes.should.be.equal 2
+
+  it 'should update actual pitch question with the same count', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures ActualQuestionsFixtures, mongodb
@@ -175,10 +182,56 @@ describe "Process imported games and question management", ->
       should.exist question
       question.should.be.an "object"
 
-      {active, options} = question
+      {active, balls, strikes, options} = question
       should.exist active
       # should be still active
       active.should.be.equal true
+
+      should.exist balls
+      balls.should.be.equal 2
+
+      should.exist strikes
+      strikes.should.be.equal 2
+
+      # check options have been updated
+      should.exist options
+
+  it 'should create new pitch question if count is different', ->
+    game = undefined
+
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures NonActualPitchQuestionsFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (_game) -> game = _game; processGames.handleGame game
+    .then -> Questions.findOne({id: "active_non_actual_pitch_question_for_active_game"})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {active, balls, strikes} = question
+
+      should.exist active
+      active.should.be.equal false
+
+      should.exist balls
+      balls.should.be.equal 1
+
+      should.exist strikes
+      strikes.should.be.equal 2
+
+    .then -> Questions.findOne({gameId: game._id, active: true, atBatQuestion: {$exists: false}})
+    .then (question) ->
+      should.exist question
+      question.should.be.an "object"
+
+      {balls, strikes, options} = question
+
+      should.exist balls
+      balls.should.be.equal 2
+
+      should.exist strikes
+      strikes.should.be.equal 2
 
       # check options have been updated
       should.exist options

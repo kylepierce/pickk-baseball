@@ -155,7 +155,7 @@ module.exports = class extends Task
 
     Promise.bind @
     .then ->
-      @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}},
+      @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}, balls: balls, strikes: strikes},
         $set:
           dateCreated: new Date()
           gameId: game['_id']
@@ -166,12 +166,15 @@ module.exports = class extends Task
           options: options
       , {upsert: true}
     .tap -> @logger.verbose "Upsert pitch question \"#{question}\" with game(#{game.id}) and playerId(#{player['player_id']})"
-    .then -> @closeInactivePitches game, player
+    .then -> @closeInactivePitches game, result
 
-  closeInactivePitches: (game, player) ->
+  closeInactivePitches: (game, result) ->
+    player = result['hitter']
+    balls = result.balls
+    strikes = result.strikes
     Promise.bind @
     .then ->
-      @Questions.update {game_id: game.id, player_id: {$ne: player['player_id']}, active: true, atBatQuestion: {$exists: false}},
+      @Questions.update {game_id: game.id, active: true, atBatQuestion: {$exists: false}, $or: [{player_id: {$ne: player['player_id']}}, {balls: {$ne: balls}}, {strikes: {$ne: strikes}}]},
         $set: {active: false},
         {multi: true}
     .tap (updated) -> @logger.verbose "ProcessGames: #{updated['nModified']} pitch questions have been closed as inactive"
