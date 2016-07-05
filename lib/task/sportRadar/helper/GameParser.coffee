@@ -59,6 +59,7 @@ module.exports = class
         strikes: 0
 
       result.teams = @getTeams game
+      result.players = @getPlayers()
 
       if lastPlay
         @logger.log "lastPlay", lastPlay
@@ -166,3 +167,6 @@ module.exports = class
 
   getTeams: (game) ->
     game['scoring']
+
+  getPlayers: ->
+    _.flatten _.map _.values(@teamsById), (team) -> _.values team

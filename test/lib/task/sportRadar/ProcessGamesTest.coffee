@@ -20,6 +20,7 @@ ActiveGameEndOfHalfFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/tas
 ActiveGameEndOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameEndOfPlay.json"
 ActiveGameMiddleOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameMiddleOfPlay.json"
 TeamsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Teams.json"
+PlayersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Players.json"
 
 describe "Process imported games and question management", ->
   dependencies = createDependencies settings, "PickkImport"
@@ -29,6 +30,7 @@ describe "Process imported games and question management", ->
 
   SportRadarGames = mongodb.collection("games")
   Teams = mongodb.collection("teams")
+  Players = mongodb.collection("players")
   Questions = mongodb.collection("questions")
 
   activeGameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"
@@ -44,6 +46,7 @@ describe "Process imported games and question management", ->
       Promise.all [
         SportRadarGames.remove()
         Teams.remove()
+        Players.remove()
         Questions.remove()
       ]
 
@@ -364,3 +367,53 @@ describe "Process imported games and question management", ->
 
       should.exist city
       city.should.equal "Chicago"
+  
+  it 'should store players into database', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Players.find()
+    .then (players) ->
+      should.exist players
+      players.should.be.an "array"
+      players.length.should.equal 20
+
+      player = _.findWhere players, {_id: "92500d32-2314-4c7c-91c5-110f95229f9a"}
+      should.exist player
+      player.should.be.an "object"
+      
+      {playerId, name, team, position} = player
+
+      should.exist playerId
+      playerId.should.equal "92500d32-2314-4c7c-91c5-110f95229f9a"
+
+      should.exist name
+      name.should.equal "Whitley Merrifield"
+
+      should.exist team
+      team.should.equal "833a51a9-0d84-410f-bd77-da08c3e5e26e"
+
+      should.exist position
+      position.should.equal 7
+
+  it 'should update existing player', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> loadFixtures PlayersFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Players.find()
+    .then (players) ->
+      should.exist players
+      players.should.be.an "array"
+      players.length.should.equal 20
+
+      player = _.findWhere players, {_id: "92500d32-2314-4c7c-91c5-110f95229f9a"}
+      should.exist player
+      player.should.be.an "object"
+
+      {position} = player
+
+      should.exist position
+      position.should.equal 7

@@ -1,4 +1,5 @@
 createDependencies = require "../../../../../helper/dependencies"
+_ = require "underscore"
 settings = (require "../../../../../helper/settings")("#{process.env.ROOT_DIR}/settings/test.json")
 Promise = require "bluebird"
 moment = require "moment"
@@ -214,4 +215,24 @@ describe "Process imported games and question management", ->
       {name} = home
       should.exist name
       name.should.be.equal "White Sox"
+
+  it 'should parse players', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {players} = result
+
+      should.exist players
+      players.should.be.an "array"
+      players.length.should.equal 20
+      player = _.findWhere players, {player_id: "92500d32-2314-4c7c-91c5-110f95229f9a"}
+
+      {first_name} = player
+      should.exist first_name
+      first_name.should.be.equal "Whitley"
 
