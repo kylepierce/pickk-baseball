@@ -16,11 +16,11 @@ module.exports = class extends Strategy
     
     @logger = dependencies.logger
 
-  execute: ->
     @importGames.observe "upserted", (game) =>
       if game.status is "inprogress"
         @importGameDetails.execute game.id
 
+  execute: ->
     Promise.bind @
     .then -> @importGames.execute()
     .then -> @processGames.execute()
