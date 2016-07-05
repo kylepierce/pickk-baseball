@@ -25,10 +25,10 @@ module.exports = class
     @logger.log "Number of innings - #{innings.length}"
 
     if innings.length
-      # perhaps _.sort for innings is needed!
+      @innings = innings = _.sortBy(innings, @byNumber)
       halfs = _.flatten _.pluck _.sortBy(innings, @byNumber), 'halfs'
       @logger.log "Number of halfs - #{halfs.length}"
-  
+
       groupedHalfs = _.groupBy halfs, @byTeam
       @logger.log "Number of (#{@HOME_TEAM_MARKER}) halfs - #{groupedHalfs[@HOME_TEAM_MARKER].length}"
       @logger.log "Number of (#{@AWAY_TEAM_MARKER}) halfs - #{groupedHalfs[@AWAY_TEAM_MARKER].length}"
@@ -52,18 +52,15 @@ module.exports = class
       @logger.log @teamsByOrder
       @logger.log @teamsById
   
-      lastPlay = @getLastPlay(homePlays.concat awayPlays)
+      @lastPlay = lastPlay = @getLastPlay(homePlays.concat awayPlays)
+      @lastPlays = lastPlays = {}
 
       result =
         balls: 0
         strikes: 0
 
-      result.teams = @getTeams game
-      result.players = @getPlayers()
-
       if lastPlay
         @logger.log "lastPlay", lastPlay
-        lastPlays = {}
         lastPlays[@HOME_TEAM_MARKER] = @getLastPlay homePlays
         lastPlays[@AWAY_TEAM_MARKER] = @getLastPlay awayPlays
         @logger.log "lastPlays", lastPlays
@@ -124,7 +121,7 @@ module.exports = class
           hitter = @teamsById[marker][hitterId]
           @logger.log "hitter", hitter
 
-          pitch = @getLastPitch lastPlay
+          @lastPitch = pitch = @getLastPitch lastPlay
 
           _.extend result,
             hitter: hitter
@@ -136,10 +133,14 @@ module.exports = class
 
         # no plays, select first player for "guest" team
         result.hitter = @getFirstPlayerForTeam @AWAY_TEAM_MARKER
+
+      result.teams = @getTeams game
+      result.players = @getPlayers()
+      result.details = @getDetails game
+
+      result
     else
       # no innings, no line ups, nothing to do
-
-    result
 
   getFirstPlayerForTeam: (team) -> @teamsByOrder[team][1]
 
@@ -170,3 +171,56 @@ module.exports = class
 
   getPlayers: ->
     _.flatten _.map _.values(@teamsById), (team) -> _.values team
+
+  getDetails: (game) ->
+    lastInning = @innings[@innings.length - 1]
+
+    home = @buildTeamInfo game, @HOME_TEAM_MARKER
+    away = @buildTeamInfo game, @AWAY_TEAM_MARKER
+
+    bases =
+      first: false
+      seconds: false
+      third: false
+
+    outs = 0
+    if @lastPlay
+      lastPitch = @getLastPitch @lastPlay
+      outs = lastPitch['count']['outs'] % 3
+
+      if not @isFinishedHalf @lastPlay
+        runners = lastPitch['runners']
+        bases.first = !!(_.findWhere runners, {ending_base: 1, out: 'false'})
+        bases.second = !!(_.findWhere runners, {ending_base: 2, out: 'false'})
+        bases.third = !!(_.findWhere runners, {ending_base: 3, out: 'false'})
+
+    dateCreated: moment.utc(game.scheduled).startOf('day').toDate()
+    name: "#{game['scoring']['home']['name']} vs #{game['scoring']['away']['name']}"
+    live: game.status is 'inprogress'
+    completed: game.status is 'closed'
+    commercial: false
+    gameDate: moment.utc(game.scheduled).format('MMM Do LT')
+    tv: game['broadcast']['network']
+    teams: [home, away]
+    outs: outs
+    inning: lastInning['number']
+    topOfInning: lastInning.halfs.length isnt 2
+    playersOnBase: bases
+    users: game.users or []
+    nonActive: game.nonActive or []
+
+  buildTeamInfo: (game, marker) ->
+    teamKey = if marker is @HOME_TEAM_MARKER then 'home' else 'away'
+
+    team =
+      teamId: game.scoring[teamKey].id
+      pitcher: []
+      battingLineUp: _.keys @teamsById[marker]
+
+    lastPlay = @lastPlays[marker]
+    if lastPlay
+      lastBatter = @teamsById[marker][lastPlay['hitter_id']]
+      team.batterNum = lastBatter['order']
+      team.batterNum-- if not @isFinishedPlay lastPlay
+
+    team

@@ -417,3 +417,155 @@ describe "Process imported games and question management", ->
 
       should.exist position
       position.should.equal 7
+
+  it 'should enrich the game by new fields', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) ->
+      should.exist game
+      game.should.be.an "object"
+
+      {dateCreated, name, live, completed, commercial, gameDate, tv, teams, outs, inning, topOfInning, playersOnBase, users, nonActive} = game
+
+      should.exist dateCreated
+      dateCreated.getTime().should.equal moment.utc("2016-06-11").toDate().getTime()
+
+      should.exist name
+      name.should.equal "White Sox vs Royals"
+
+      should.exist live
+      live.should.equal true
+
+      should.exist completed
+      completed.should.equal false
+
+      should.exist commercial
+      commercial.should.equal false
+
+      should.exist gameDate
+      gameDate.should.equal "Jun 11th 6:10 PM"
+
+      should.exist tv
+      tv.should.equal "WGN"
+
+      should.exist teams
+      teams.should.be.an "array"
+
+      home = _.findWhere teams, {teamId: "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8"}
+      should.exist home
+      home.should.be.an "object"
+      
+      {batterNum, pitcher, battingLineUp} = home
+
+      should.exist batterNum
+      batterNum.should.equal (5 - 1)
+
+      should.exist pitcher
+      pitcher.should.be.an "array"
+
+      should.exist battingLineUp
+      battingLineUp.should.be.an "array"
+      battingLineUp.length.should.equal 10
+      ("cbfa52c5-ef2e-4d7c-8e28-0ec6a63c6c6f" in battingLineUp).should.equal true
+      
+      away = _.findWhere teams, {teamId: "833a51a9-0d84-410f-bd77-da08c3e5e26e"}
+      should.exist away
+      away.should.be.an "object"
+      
+      {batterNum, pitcher, battingLineUp} = away
+
+      should.exist batterNum
+      batterNum.should.equal (4 - 1)
+
+      should.exist pitcher
+      pitcher.should.be.an "array"
+
+      should.exist battingLineUp
+      battingLineUp.should.be.an "array"
+      battingLineUp.length.should.equal 10
+      ("92500d32-2314-4c7c-91c5-110f95229f9a" in battingLineUp).should.equal true
+
+      should.exist outs
+      outs.should.equal 2
+      
+      should.exist inning
+      inning.should.equal 1
+      
+      should.exist topOfInning
+      topOfInning.should.equal false
+
+      should.exist playersOnBase
+      playersOnBase.should.be.an "object"
+
+      {first, second, third} = playersOnBase
+
+      should.exist first
+      first.should.equal false
+
+      should.exist second
+      second.should.equal true
+
+      should.exist third
+      third.should.equal true
+
+      should.exist users
+      users.should.be.an "array"
+
+      should.exist nonActive
+      nonActive.should.be.an "array"
+
+#  it 'should enrich the game by new fields, case 2', ->
+#    Promise.bind @
+#    .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
+#    .then -> SportRadarGames.findOne({id: activeGameId})
+#    .then (game) -> processGames.handleGame game
+#    .then -> SportRadarGames.findOne({id: activeGameId})
+#    .then (game) ->
+#      should.exist game
+#      game.should.be.an "object"
+#
+#      {dateCreated, name, live, completed, commercial, gameDate, tv, teams, outs, inning, topOfInning, playersOnBase, users, nonActive} = game
+#
+#      home = _.findWhere teams, {teamId: "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8"}
+#      should.exist home
+#      home.should.be.an "object"
+#
+#      {batterNum} = home
+#
+#      should.exist batterNum
+#      batterNum.should.equal (6 - 1)
+#
+#      away = _.findWhere teams, {teamId: "833a51a9-0d84-410f-bd77-da08c3e5e26e"}
+#      should.exist away
+#      away.should.be.an "object"
+#
+#      {batterNum} = away
+#
+#      should.exist batterNum
+#      batterNum.should.equal (1 - 1)
+#
+#      should.exist outs
+#      outs.should.equal 0
+#
+#      should.exist inning
+#      inning.should.equal 2
+#
+#      should.exist topOfInning
+#      topOfInning.should.equal true
+#
+#      should.exist playersOnBase
+#      playersOnBase.should.be.an "object"
+#
+#      {first, second, third} = playersOnBase
+#
+#      should.exist first
+#      first.should.equal false
+#
+#      should.exist second
+#      second.should.equal false
+#
+#      should.exist third
+#      third.should.equal false

@@ -47,6 +47,7 @@ module.exports = class extends Task
     if result
       Promise.bind @
       .then -> @handleTeams game, result.teams
+      .then -> @enrichGame game, result.details
       .then -> @handlePlayers game, result.players
       .then -> @handlePlay game, result
       .then -> @handlePitch game, result
@@ -58,6 +59,11 @@ module.exports = class extends Task
       team = new Team data
       @Teams.update team.getSelector(), {$set: team}, {upsert: true}
     )
+
+  enrichGame: (game, details) ->
+    @logger.verbose "Enrich game (#{game.id})"
+
+    @SportRadarGames.update {_id: game._id}, {$set: details}
 
   handlePlayers: (game, players) ->
     @logger.verbose "Handle players of game (#{game.id})"
