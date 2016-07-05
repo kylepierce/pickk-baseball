@@ -110,6 +110,8 @@ module.exports = class extends Task
           commercial: false
           que: question
           options: options
+        $setOnInsert:
+          usersAnswered: []
       , {upsert: true}
     .tap -> @logger.verbose "Upsert play question \"#{question}\" with game(#{game.id}) and playerId(#{player['player_id']})"
     .then -> @closeInactivePlays game, player
@@ -169,6 +171,8 @@ module.exports = class extends Task
           commercial: false
           que: question
           options: options
+        $setOnInsert:
+          usersAnswered: []
       , {upsert: true}
     .tap -> @logger.verbose "Upsert pitch question \"#{question}\" with game(#{game.id}) and playerId(#{player['player_id']})"
     .then -> @closeInactivePitches game, result
