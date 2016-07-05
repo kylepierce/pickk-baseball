@@ -2,6 +2,8 @@ Match = require "mtr-match"
 request = require "request-promise"
 dateFormat = require 'dateformat'
 _ = require "underscore"
+Promise = require "bluebird"
+promiseRetry = require 'promise-retry'
 
 HOST = "http://api.sportradar.us/"
 MLB = "mlb-t5/"
@@ -33,7 +35,14 @@ module.exports = class
     _.defaults options.qs,
       api_key: @key
 
-    request options
+
+    promiseRetry (retry, number) =>
+      Promise.bind @
+      .then -> request options
+      .catch (error) ->
+        # TODO @logger
+        console.log error.message #, _.extend({stack: error.stack}, error.details)
+        retry(error)
 
   getScheduledGames: (date, format = "json") ->
     Match.check date, Date
