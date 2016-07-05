@@ -7,6 +7,7 @@ Team = require "../../model/Team"
 Player = require "../../model/Player"
 GameParser = require "./helper/GameParser"
 moment = require "moment"
+promiseRetry = require 'promise-retry'
 
 module.exports = class extends Task
   constructor: (dependencies) ->
@@ -24,13 +25,17 @@ module.exports = class extends Task
     @gameParser = new GameParser dependencies
 
   execute: ->
-    Promise.bind @
-    .tap -> @logger.verbose "Start ProcessGames task"
-    .then -> @getActiveGames()
-    .tap (games) -> @logger.verbose "ProcessGames: There are #{games.length} active game(s)"
-    .tap @closeQuestionsForInactiveGames
-    .map @handleGame, {concurrency: 1} # to sort questions properly on the client
-    .return true
+    promiseRetry (retry, number) =>
+      Promise.bind @
+      .tap -> @logger.verbose "Start ProcessGames task"
+      .then -> @getActiveGames()
+      .tap (games) -> @logger.verbose "ProcessGames: There are #{games.length} active game(s)"
+      .tap @closeQuestionsForInactiveGames
+      .map @handleGame, {concurrency: 1} # to sort questions properly on the client
+      .return true
+      .catch (error) =>
+        @logger.error error.message, _.extend({stack: error.stack}, error.details)
+        retry(error)
 
   getActiveGames: ->
     @SportRadarGames.find({status: "inprogress"})
