@@ -54,6 +54,12 @@ module.exports = class
   
       lastPlay = @getLastPlay(homePlays.concat awayPlays)
 
+      result =
+        balls: 0
+        strikes: 0
+
+      result.teams = @getTeams game
+
       if lastPlay
         @logger.log "lastPlay", lastPlay
         lastPlays = {}
@@ -85,13 +91,9 @@ module.exports = class
               nextPlayer = @teamsByOrder[oppositeMarker][nextOrder]
               @logger.log "nextPlayer", nextPlayer
 
-              hitter: nextPlayer
-              balls: 0
-              strikes: 0
+              result.hitter = nextPlayer
             else
-              hitter: @getFirstPlayerForTeam oppositeMarker
-              balls: 0
-              strikes: 0
+              result.hitter = @getFirstPlayerForTeam oppositeMarker
           else
             @logger.log "Play is finished, half is not"
 
@@ -110,9 +112,7 @@ module.exports = class
             nextPlayer = @teamsByOrder[marker][nextOrder]
             @logger.log "nextPlayer", nextPlayer
 
-            hitter: nextPlayer
-            balls: 0
-            strikes: 0
+            result.hitter = nextPlayer
         else
           @logger.log "Play is in progress"
 
@@ -125,19 +125,20 @@ module.exports = class
 
           pitch = @getLastPitch lastPlay
 
-          hitter: hitter
-          pitch: pitch
-          balls: pitch['count'].balls
-          strikes: pitch['count'].strikes
+          _.extend result,
+            hitter: hitter
+            pitch: pitch
+            balls: pitch['count'].balls
+            strikes: pitch['count'].strikes
       else
         @logger.log "It's the first play of the match"
 
         # no plays, select first player for "guest" team
-        hitter: @getFirstPlayerForTeam @AWAY_TEAM_MARKER
-        balls: 0
-        strikes: 0
+        result.hitter = @getFirstPlayerForTeam @AWAY_TEAM_MARKER
     else
       # no innings, no line ups, nothing to do
+
+    result
 
   getFirstPlayerForTeam: (team) -> @teamsByOrder[team][1]
 
@@ -162,3 +163,6 @@ module.exports = class
     pitches = _.sortBy(_.filter(play['events'], @isPitch), (pitch) -> moment(pitch['created_at']).toDate())
     @logger.log "Number of pitches - #{pitches.length}"
     pitches.pop()
+
+  getTeams: (game) ->
+    game['scoring']

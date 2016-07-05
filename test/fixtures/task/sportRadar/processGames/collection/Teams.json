@@ -1,0 +1,12 @@
+{
+  "teams": [
+    {
+      "_id": "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8",
+      "fullName": "Chicago White Sox",
+      "nickname": "White Sox",
+      "computerName": "computerName",
+      "city": "New York",
+      "state": ""
+    }
+  ]
+}

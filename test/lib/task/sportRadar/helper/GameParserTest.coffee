@@ -194,3 +194,24 @@ describe "Process imported games and question management", ->
 
       should.exist outcome_id
       outcome_id.should.equal "bB"
+
+  it 'should parse teams', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {teams} = result
+
+      should.exist teams
+      teams.should.be.an "object"
+      {home} = teams
+      should.exist home
+
+      {name} = home
+      should.exist name
+      name.should.be.equal "White Sox"
+

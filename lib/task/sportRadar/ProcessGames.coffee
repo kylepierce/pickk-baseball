@@ -3,6 +3,7 @@ Match = require "mtr-match"
 Promise = require "bluebird"
 Task = require "../Task"
 SportRadarGame = require "../../model/sportRadar/SportRadarGame"
+Team = require "../../model/Team"
 GameParser = require "./helper/GameParser"
 moment = require "moment"
 
@@ -15,6 +16,7 @@ module.exports = class extends Task
 
     @logger = @dependencies.logger
     @SportRadarGames = dependencies.mongodb.collection("games")
+    @Teams = dependencies.mongodb.collection("teams")
     @Questions = dependencies.mongodb.collection("questions")
     @gameParser = new GameParser dependencies
 
@@ -42,8 +44,17 @@ module.exports = class extends Task
 
     if result
       Promise.bind @
+      .then -> @handleTeams game, result.teams
       .then -> @handlePlay game, result
       .then -> @handlePitch game, result
+
+  handleTeams: (game, teams) ->
+    @logger.verbose "Handle teams of game (#{game.id})"
+
+    Promise.all (for data in _.values teams
+      team = new Team data
+      @Teams.update team.getSelector(), {$set: team}, {upsert: true}
+    )
 
   handlePlay: (game, result) ->
     @logger.verbose "Handle play of game (#{game.id}) for player(#{result['hitter']['player_id']})"

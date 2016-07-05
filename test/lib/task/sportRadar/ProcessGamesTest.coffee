@@ -2,6 +2,7 @@ createDependencies = require "../../../../helper/dependencies"
 settings = (require "../../../../helper/settings")("#{process.env.ROOT_DIR}/settings/test.json")
 Promise = require "bluebird"
 moment = require "moment"
+_ = require "underscore"
 ImportGames = require "../../../../lib/task/sportRadar/ImportGames"
 loadFixtures = require "../../../../helper/loadFixtures"
 ProcessGames = require "../../../../lib/task/sportRadar/ProcessGames"
@@ -18,6 +19,7 @@ ActiveGameEndOfInningFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/t
 ActiveGameEndOfHalfFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameEndOfHalf.json"
 ActiveGameEndOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameEndOfPlay.json"
 ActiveGameMiddleOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameMiddleOfPlay.json"
+TeamsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Teams.json"
 
 describe "Process imported games and question management", ->
   dependencies = createDependencies settings, "PickkImport"
@@ -26,6 +28,7 @@ describe "Process imported games and question management", ->
   processGames = undefined
 
   SportRadarGames = mongodb.collection("games")
+  Teams = mongodb.collection("teams")
   Questions = mongodb.collection("questions")
 
   activeGameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"
@@ -40,6 +43,7 @@ describe "Process imported games and question management", ->
     .then ->
       Promise.all [
         SportRadarGames.remove()
+        Teams.remove()
         Questions.remove()
       ]
 
@@ -307,3 +311,56 @@ describe "Process imported games and question management", ->
       {active} = question
       should.exist active
       active.should.be.equal true
+
+  it 'should store teams into database', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Teams.find()
+    .then (teams) ->
+      should.exist teams
+      teams.should.be.an "array"
+      teams.length.should.equal 2
+
+      home = _.findWhere teams, {_id: "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8"}
+      should.exist home
+      home.should.be.an "object"
+      
+      {fullName, nickname, computerName, city, state} = home
+
+      should.exist fullName
+      fullName.should.equal "Chicago White Sox"
+
+      should.exist nickname
+      nickname.should.equal "White Sox"
+
+      should.exist computerName
+      computerName.should.equal "cws"
+
+      should.exist city
+      city.should.equal "Chicago"
+
+      should.exist state
+      state.should.equal ""
+
+  it 'should update existing team', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> loadFixtures TeamsFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Teams.find()
+    .then (teams) ->
+      should.exist teams
+      teams.should.be.an "array"
+      teams.length.should.equal 2
+
+      home = _.findWhere teams, {_id: "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8"}
+      should.exist home
+      home.should.be.an "object"
+
+      {city} = home
+
+      should.exist city
+      city.should.equal "Chicago"
