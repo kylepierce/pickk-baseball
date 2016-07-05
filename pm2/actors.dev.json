@@ -5,7 +5,7 @@
       "script": "./bin/worker",
       "args": [
         "--settings", "settings/dev.json",
-        "--delay=60000",
+        "--delay=3000",
         "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
       ],
       "exec_interpreter": "coffee",
