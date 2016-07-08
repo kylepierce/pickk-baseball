@@ -52,12 +52,15 @@ module.exports = class
       @logger.log @teamsByOrder
       @logger.log @teamsById
   
-      @lastPlay = lastPlay = @getLastPlay(homePlays.concat awayPlays)
+      plays = _.sortBy homePlays.concat(awayPlays), @byDate
+      @lastPlay = lastPlay = @getLastPlay(plays)
       @lastPlays = lastPlays = {}
 
       result =
         balls: 0
         strikes: 0
+        playNumber: plays.length
+        pitchNumber: 1
 
       if lastPlay
         @logger.log "lastPlay", lastPlay
@@ -66,6 +69,8 @@ module.exports = class
         @logger.log "lastPlays", lastPlays
 
         if @isFinishedPlay lastPlay
+          result.playNumber++
+
           if @isFinishedHalf lastPlay
             @logger.log "Play is finished, half as well"
 
@@ -126,6 +131,7 @@ module.exports = class
           _.extend result,
             hitter: hitter
             pitch: pitch
+            pitchNumber: @getPitches(lastPlay).length + 1
             balls: pitch['count'].balls
             strikes: pitch['count'].strikes
       else
@@ -133,10 +139,12 @@ module.exports = class
 
         # no plays, select first player for "guest" team
         result.hitter = @getFirstPlayerForTeam @AWAY_TEAM_MARKER
+        result.playNumber = 1
 
       result.teams = @getTeams game
       result.players = @getPlayers()
       result.details = @getDetails game
+      result.plays = @getPlayResults plays
 
       result
     else
@@ -161,8 +169,10 @@ module.exports = class
 
   getLastPlay: (plays) -> _.sortBy(plays, @byDate).pop()
 
+  getPitches: (play) -> _.sortBy(_.filter(play['events'], @isPitch), (pitch) -> moment(pitch['created_at']).toDate())
+
   getLastPitch: (play) ->
-    pitches = _.sortBy(_.filter(play['events'], @isPitch), (pitch) -> moment(pitch['created_at']).toDate())
+    pitches = @getPitches play
     @logger.log "Number of pitches - #{pitches.length}"
     pitches.pop()
 
@@ -224,3 +234,37 @@ module.exports = class
       team.batterNum-- if not @isFinishedPlay lastPlay
 
     team
+
+  getPlayResults: (plays) ->
+    for play in plays
+      pitches = @getPitches play
+
+      pitches: (@getPitchOutcome pitches.slice(0, number) for number in [1..pitches.length])
+      outcome: @getPlayOutcomeByPlay play
+
+  getPlayOutcomeByPlay: (play) ->
+    pitch = @getLastPitch play
+    
+    return 'walk' if pitch['count']['balls'] is 4
+
+    runners = pitch['runners']
+    batter = _.findWhere runners, {starting_base: 0}
+    return 'out' if not batter
+
+    end = batter['ending_base']
+
+    switch end
+      when 1 then 'single'
+      when 2 then 'double'
+      when 3 then 'triple'
+      when 4 then 'homerun'
+
+  getPitchOutcome: (pitches) ->
+    last = pitches.pop()
+    previous = pitches.pop() or {count: {balls: 0, strikes: 0, outs: 0}}
+    
+    return 'foulball' if last['outcome_id'] is 'kF'
+    return 'ball' if last['count']['balls'] isnt previous['count']['balls']
+    return 'strike' if last['count']['strike'] isnt previous['count']['strike']
+    return 'out' if last['count']['outs'] isnt previous['count']['outs']
+    'hit'

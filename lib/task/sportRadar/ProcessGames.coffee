@@ -105,6 +105,7 @@ module.exports = class extends Task
         $set:
           dateCreated: new Date()
           gameId: game['_id']
+          playNumber: result.playNumber
           active: true
           player: player
           commercial: false
@@ -143,8 +144,6 @@ module.exports = class extends Task
 
     if balls is 3
       title2 = "Walk"
-      title3 = "Hit"
-      title4 = "Out"
 
     if strikes is 2
       title1 = "Strike Out"
@@ -166,6 +165,8 @@ module.exports = class extends Task
         $set:
           dateCreated: new Date()
           gameId: game['_id']
+          play: result.playNumber
+          pitch: result.pitchNumber
           active: true
           player: player
           commercial: false

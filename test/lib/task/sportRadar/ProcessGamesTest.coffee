@@ -161,7 +161,7 @@ describe "Process imported games and question management", ->
       should.exist question
       question.should.be.an "object"
 
-      {active, balls, strikes} = question
+      {active, balls, strikes, play, pitch} = question
       should.exist active
       active.should.be.equal true
 
@@ -170,6 +170,12 @@ describe "Process imported games and question management", ->
 
       should.exist strikes
       strikes.should.be.equal 2
+
+      should.exist play
+      play.should.be.equal 28
+
+      should.exist pitch
+      pitch.should.be.equal 6
 
   it 'should update actual pitch question with the same count', ->
     Promise.bind @

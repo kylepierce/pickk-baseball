@@ -196,6 +196,122 @@ describe "Process imported games and question management", ->
       should.exist outcome_id
       outcome_id.should.equal "bB"
 
+  it 'should calculate play and pitch number correctly for the beginning of the match', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameNoPlaysFixtures, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {playNumber, pitchNumber} = result
+
+      should.exist playNumber
+      playNumber.should.equal 1
+
+      should.exist pitchNumber
+      pitchNumber.should.equal 1
+
+  it 'should calculate play and pitch number correctly for an unfinished play', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameMiddleOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {playNumber, pitchNumber} = result
+
+      should.exist playNumber
+      playNumber.should.equal 7
+
+      should.exist pitchNumber
+      pitchNumber.should.equal 3
+
+  it 'should calculate play and pitch number correctly for an finished play', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {playNumber, pitchNumber} = result
+
+      should.exist playNumber
+      playNumber.should.equal 8
+
+      should.exist pitchNumber
+      pitchNumber.should.equal 1
+
+  it 'should return correct outcome for play and pitch specified', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {plays} = result
+
+      should.exist plays
+      plays.should.be.an "array"
+
+      play = plays[3]
+
+      should.exist play
+      play.should.be.an "object"
+
+      {pitches, outcome} = play
+
+      should.exist outcome
+      outcome.should.equal "walk"
+
+      should.exist pitches
+      pitches.should.be.an "array"
+
+      outcome = pitches[1]
+
+      should.exist outcome
+      outcome.should.equal "foulball"
+
+  it 'should return another correct outcome for play and pitch specified', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {plays} = result
+
+      should.exist plays
+      plays.should.be.an "array"
+
+      play = plays[4]
+
+      should.exist play
+      play.should.be.an "object"
+
+      {pitches, outcome} = play
+
+      should.exist outcome
+      outcome.should.equal "single"
+
+      should.exist pitches
+      pitches.should.be.an "array"
+
+      console.log pitches
+      outcome = pitches[3]
+
+      should.exist outcome
+      outcome.should.equal "hit"
+
   it 'should parse teams', ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
