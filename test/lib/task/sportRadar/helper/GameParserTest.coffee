@@ -306,7 +306,6 @@ describe "Process imported games and question management", ->
       should.exist pitches
       pitches.should.be.an "array"
 
-      console.log pitches
       outcome = pitches[3]
 
       should.exist outcome

@@ -245,26 +245,27 @@ module.exports = class
   getPlayOutcomeByPlay: (play) ->
     pitch = @getLastPitch play
     
-    return 'walk' if pitch['count']['balls'] is 4
+    return 'Walk' if pitch['count']['balls'] is 4
 
     runners = pitch['runners']
     batter = _.findWhere runners, {starting_base: 0}
-    return 'out' if not batter
+    return 'Out' if not batter
 
     end = batter['ending_base']
 
     switch end
-      when 1 then 'single'
-      when 2 then 'double'
-      when 3 then 'triple'
-      when 4 then 'homerun'
+      when 1 then 'Single'
+      when 2 then 'Double'
+      when 3 then 'Triple'
+      when 4 then 'Home Run'
 
   getPitchOutcome: (pitches) ->
     last = pitches.pop()
     previous = pitches.pop() or {count: {balls: 0, strikes: 0, outs: 0}}
     
-    return 'foulball' if last['outcome_id'] is 'kF'
-    return 'ball' if last['count']['balls'] isnt previous['count']['balls']
-    return 'strike' if last['count']['strike'] isnt previous['count']['strike']
-    return 'out' if last['count']['outs'] isnt previous['count']['outs']
-    'hit'
+    return 'Foul Ball' if last['outcome_id'] is 'kF'
+    return 'Ball' if last['count']['balls'] isnt previous['count']['balls']
+    return 'Strike Out' if (last['count']['strike'] is 2) and (last['count']['outs'] isnt previous['count']['outs'])
+    return 'Strike' if last['count']['strike'] isnt previous['count']['strike']
+    return 'Out' if last['count']['outs'] isnt previous['count']['outs']
+    'Hit'

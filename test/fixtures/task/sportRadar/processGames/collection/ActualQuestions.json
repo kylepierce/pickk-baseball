@@ -1,32 +1,68 @@
 {
   "questions": [
     {
+      "_id": "active_question_for_active_game",
       "id": "active_question_for_active_game",
       "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
       "player_id": "abbda8e1-2274-4bf0-931c-691cf8bf24c6",
       "atBatQuestion": true,
-      "active": true
+      "play": 28,
+      "active": true,
+      "options": {
+        "option1": { "title": "Out", "multiplier": 1.45 },
+        "option2": { "title": "Walk", "multiplier": 1.65 },
+        "option3": { "title": "Single", "multiplier": 7.35 },
+        "option4": { "title": "Double", "multiplier": 3.23 },
+        "option5": { "title": "Triple", "multiplier": 4.73 },
+        "option6": { "title": "Home Run", "multiplier": 5.15 }
+      }
     },
     {
+      "_id": "inactive_question_for_active_game",
       "id": "inactive_question_for_active_game",
       "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
       "player_id": "abbda8e1-2274-4bf0-931c-691cf8bf24c7",
       "atBatQuestion": true,
-      "active": false
+      "play": 27,
+      "active": false,
+      "options": {
+        "option1": { "title": "Out", "multiplier": 1.45 },
+        "option2": { "title": "Walk", "multiplier": 1.65 },
+        "option3": { "title": "Single", "multiplier": 7.35 },
+        "option4": { "title": "Double", "multiplier": 3.23 },
+        "option5": { "title": "Triple", "multiplier": 4.73 },
+        "option6": { "title": "Home Run", "multiplier": 5.15 }
+      }
     },
     {
+      "_id": "active_pitch_question_for_active_game",
       "id": "active_pitch_question_for_active_game",
       "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
       "player_id": "abbda8e1-2274-4bf0-931c-691cf8bf24c6",
-      "balls": 2,
-      "strikes": 2,
-      "active": true
+      "play": 28,
+      "pitch": 6,
+      "active": true,
+      "options": {
+        "option1": { "title": "Strike Out", "multiplier": 1.45 },
+        "option2": { "title": "Foul Ball", "multiplier": 1.65 },
+        "option3": { "title": "Hit", "multiplier": 7.35 },
+        "option4": { "title": "Out", "multiplier": 3.23 }
+      }
     },
     {
+      "_id": "inactive_pitch_question_for_active_game",
       "id": "inactive_pitch_question_for_active_game",
       "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
       "player_id": "abbda8e1-2274-4bf0-931c-691cf8bf24c7",
-      "active": false
+      "play": 28,
+      "pitch": 5,
+      "active": false,
+      "options": {
+        "option1": { "title": "Strike Out", "multiplier": 1.45 },
+        "option2": { "title": "Foul Ball", "multiplier": 1.65 },
+        "option3": { "title": "Hit", "multiplier": 7.35 },
+        "option4": { "title": "Out", "multiplier": 3.23 }
+      }
     }
   ]
 }

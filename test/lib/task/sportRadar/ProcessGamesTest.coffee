@@ -24,6 +24,9 @@ TeamsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/p
 PlayersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Players.json"
 AtBatsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/AtBats.json"
 ActiveAtBatFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveAtBat.json"
+UsersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Users.json"
+AnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Answers.json"
+WrongAnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/WrongAnswers.json"
 
 describe "Process imported games and question management", ->
   dependencies = createDependencies settings, "PickkImport"
@@ -36,6 +39,8 @@ describe "Process imported games and question management", ->
   Players = mongodb.collection("players")
   Questions = mongodb.collection("questions")
   AtBats = mongodb.collection("atBat")
+  Users = mongodb.collection("users")
+  Answers = mongodb.collection("answers")
 
   activeGameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"
   inactiveGameId = "2b0ba18a-41f5-46d7-beb3-1e86b9a4acc0"
@@ -53,6 +58,8 @@ describe "Process imported games and question management", ->
         Players.remove()
         Questions.remove()
         AtBats.remove()
+        Users.remove()
+        Answers.remove()
       ]
 
   it 'should fetch only active games', ->
@@ -161,15 +168,9 @@ describe "Process imported games and question management", ->
       should.exist question
       question.should.be.an "object"
 
-      {active, balls, strikes, play, pitch} = question
+      {active, play, pitch} = question
       should.exist active
       active.should.be.equal true
-
-      should.exist balls
-      balls.should.be.equal 2
-
-      should.exist strikes
-      strikes.should.be.equal 2
 
       should.exist play
       play.should.be.equal 28
@@ -177,7 +178,7 @@ describe "Process imported games and question management", ->
       should.exist pitch
       pitch.should.be.equal 6
 
-  it 'should update actual pitch question with the same count', ->
+  it 'should update actual pitch question with the same play and pitch number', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures ActualQuestionsFixtures, mongodb
@@ -188,21 +189,19 @@ describe "Process imported games and question management", ->
       should.exist question
       question.should.be.an "object"
 
-      {active, balls, strikes, options} = question
+      {active, play, pitch} = question
+
       should.exist active
       # should be still active
       active.should.be.equal true
 
-      should.exist balls
-      balls.should.be.equal 2
+      should.exist play
+      play.should.be.equal 28
 
-      should.exist strikes
-      strikes.should.be.equal 2
+      should.exist pitch
+      pitch.should.be.equal 6
 
-      # check options have been updated
-      should.exist options
-
-  it 'should create new pitch question if count is different', ->
+  it 'should create new pitch question if play and pitch number is different', ->
     game = undefined
 
     Promise.bind @
@@ -215,32 +214,29 @@ describe "Process imported games and question management", ->
       should.exist question
       question.should.be.an "object"
 
-      {active, balls, strikes} = question
+      {active, play, pitch} = question
 
       should.exist active
       active.should.be.equal false
 
-      should.exist balls
-      balls.should.be.equal 1
+      should.exist play
+      play.should.be.equal 28
 
-      should.exist strikes
-      strikes.should.be.equal 2
+      should.exist pitch
+      pitch.should.be.equal
 
     .then -> Questions.findOne({gameId: game._id, active: true, atBatQuestion: {$exists: false}})
     .then (question) ->
       should.exist question
       question.should.be.an "object"
 
-      {balls, strikes, options} = question
+      {play, pitch} = question
 
-      should.exist balls
-      balls.should.be.equal 2
+      should.exist play
+      play.should.be.equal 28
 
-      should.exist strikes
-      strikes.should.be.equal 2
-
-      # check options have been updated
-      should.exist options
+      should.exist pitch
+      pitch.should.be.equal 6
 
   it 'should disable non-actual pitch question', ->
     Promise.bind @
@@ -257,6 +253,48 @@ describe "Process imported games and question management", ->
       should.exist active
       # should be still active
       active.should.be.equal false
+
+  it 'should reward the user for right answer', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures NonActualPitchQuestionsFixtures, mongodb
+    .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures AnswersFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Users.findOne({_id: "Charlie"})
+    .then (user) ->
+      should.exist user
+      user.should.be.an "object"
+
+      {profile} = user
+      should.exist profile
+      profile.should.be.an "object"
+
+      {coins} = profile
+      should.exist coins
+      coins.should.be.equal 10435
+
+  it 'shouldn\'t reward the user for wrong answer', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures NonActualQuestionsFixtures, mongodb
+    .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures WrongAnswersFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Users.findOne({_id: "Charlie"})
+    .then (user) ->
+      should.exist user
+      user.should.be.an "object"
+
+      {profile} = user
+      should.exist profile
+      profile.should.be.an "object"
+
+      {coins} = profile
+      should.exist coins
+      coins.should.be.equal 10000
 
   it 'should works correctly when no innings are present', ->
     Promise.bind @

@@ -1,0 +1,13 @@
+{
+  "answers": [
+    {
+      "userId": "Charlie",
+      "gameId": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "questionId": "active_non_actual_pitch_question_for_active_game",
+      "answered": "option1",
+      "wager": 300,
+      "multiplier": 2.45,
+      "description": ""
+    }
+  ]
+}

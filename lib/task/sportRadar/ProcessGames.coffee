@@ -22,6 +22,8 @@ module.exports = class extends Task
     @Players = dependencies.mongodb.collection("players")
     @Questions = dependencies.mongodb.collection("questions")
     @AtBats = dependencies.mongodb.collection("atBat")
+    @Answers = dependencies.mongodb.collection("answers")
+    @Users = dependencies.mongodb.collection("users")
     @gameParser = new GameParser dependencies
 
   execute: ->
@@ -89,6 +91,7 @@ module.exports = class extends Task
     @logger.verbose "Handle play of game (#{game.id}) for player(#{result['hitter']['player_id']})"
 
     player = result['hitter']
+    play = result.playNumber
     question = "End of #{player['first_name']} #{player['last_name']}'s at bat."
 
     options =
@@ -101,7 +104,7 @@ module.exports = class extends Task
 
     Promise.bind @
     .then ->
-      @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: true},
+      @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play},
         $set:
           dateCreated: new Date()
           gameId: game['_id']
@@ -114,16 +117,29 @@ module.exports = class extends Task
         $setOnInsert:
           usersAnswered: []
       , {upsert: true}
-    .tap -> @logger.verbose "Upsert play question \"#{question}\" with game(#{game.id}) and playerId(#{player['player_id']})"
-    .then -> @closeInactivePlays game, player
+    .tap -> @logger.verbose "Upsert play question \"#{question}\" with game(#{game.id}) and playerId(#{player['player_id']}, play(#{play}))"
+    .then -> @closeInactivePlays game, result
 
-  closeInactivePlays: (game, player) ->
+  closeInactivePlays: (game, result) ->
+    playNumber = result.playNumber
+    play = result['plays'][playNumber - 1]
+    outcome = play.outcome
+
     Promise.bind @
-    .then ->
-      @Questions.update {game_id: game.id, player_id: {$ne: player['player_id']}, active: true, atBatQuestion: true},
-        $set: {active: false},
-        {multi: true}
-    .tap (updated) -> @logger.verbose "ProcessGames: #{updated['nModified']} play questions have been closed as inactive"
+    .then -> @Questions.find {game_id: game.id, active: true, atBatQuestion: true, play: {$ne: playNumber}}
+    .map (question) ->
+      map = _.invert _.mapObject question['options'], (option) -> option['title']
+      outcomeOption = map[outcome]
+
+      Promise.bind @
+      .then -> @Questions.update {_id: question._id}, $set: {active: false, play: outcomeOption}
+      .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
+      .map (answer) ->
+        reward = Math.floor answer['wager'] * answer['multiplier']
+        Promise.bind @
+        .then -> @Users.update {_id: answer['userId']}, {$inc: {"profile.coins": reward}}
+        .tap -> @logger.verbose "ProcessGames: reward user(#{answer['userId']}) with coins(#{reward})" 
+      .tap -> @logger.verbose "ProcessGames: play question(#{question.que}) have been closed as inactive"
 
   handlePitch: (game, result) ->
     @logger.verbose "Handle pitch of game (#{game.id}) for player(#{result['hitter']['player_id']})"
@@ -131,6 +147,8 @@ module.exports = class extends Task
     player = result['hitter']
     balls = result.balls
     strikes = result.strikes
+    play = result.playNumber
+    pitch = result.pitchNumber
 
     balls = result.balls
     strikes = result.strikes
@@ -161,12 +179,10 @@ module.exports = class extends Task
 
     Promise.bind @
     .then ->
-      @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}, balls: balls, strikes: strikes},
+      @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}, play: play, pitch: pitch},
         $set:
           dateCreated: new Date()
           gameId: game['_id']
-          play: result.playNumber
-          pitch: result.pitchNumber
           active: true
           player: player
           commercial: false
@@ -175,16 +191,27 @@ module.exports = class extends Task
         $setOnInsert:
           usersAnswered: []
       , {upsert: true}
-    .tap -> @logger.verbose "Upsert pitch question \"#{question}\" with game(#{game.id}) and playerId(#{player['player_id']})"
+    .tap -> @logger.verbose "Upsert pitch question \"#{question}\" with game(#{game.id}) and playerId(#{player['player_id']}), play(#{play}), pitch(#{pitch})"
     .then -> @closeInactivePitches game, result
 
   closeInactivePitches: (game, result) ->
-    player = result['hitter']
-    balls = result.balls
-    strikes = result.strikes
+    playNumber = result.playNumber
+    pitchNumber = result.pitchNumber
+
     Promise.bind @
-    .then ->
-      @Questions.update {game_id: game.id, active: true, atBatQuestion: {$exists: false}, $or: [{player_id: {$ne: player['player_id']}}, {balls: {$ne: balls}}, {strikes: {$ne: strikes}}]},
-        $set: {active: false},
-        {multi: true}
-    .tap (updated) -> @logger.verbose "ProcessGames: #{updated['nModified']} pitch questions have been closed as inactive"
+    .then -> @Questions.find {game_id: game.id, active: true, atBatQuestion: {$exists: false}, $or: [{play: {$ne: playNumber}}, {pitch: {$ne: pitchNumber}}, ]}
+    .map (question) ->
+      play = result['plays'][question['play'] - 1]
+      outcome = play.pitches[question['pitch'] - 1]
+      map = _.invert _.mapObject question['options'], (option) -> option['title']
+      outcomeOption = map[outcome]
+
+      Promise.bind @
+      .then -> @Questions.update {_id: question._id}, $set: {active: false, play: outcomeOption}
+      .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
+      .map (answer) ->
+        reward = Math.floor answer['wager'] * answer['multiplier']
+        Promise.bind @
+        .then -> @Users.update {_id: answer['userId']}, {$inc: {"profile.coins": reward}}
+        .tap -> @logger.verbose "ProcessGames: reward user(#{answer['userId']}) with coins(#{reward})"
+      .tap -> @logger.verbose "ProcessGames: pitch question(#{question._id}) have been closed as inactive"
