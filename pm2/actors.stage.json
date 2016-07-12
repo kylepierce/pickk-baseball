@@ -1,0 +1,18 @@
+{
+  "apps": [
+    {
+      "name": "ImportGames",
+      "script": "./bin/worker",
+      "args": [
+        "--settings", "settings/stage.json",
+        "--max-loops=5",
+        "--delay=3000",
+        "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
+      ],
+      "exec_interpreter": "coffee",
+      "exec_mode": "fork",
+      "instances": 1,
+      "max_memory_restart": "512M"
+    }
+  ]
+}

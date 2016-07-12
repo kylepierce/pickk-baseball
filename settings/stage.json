@@ -1,0 +1,17 @@
+{
+  "isDebug": true,
+  "logger": {
+    "transports": {
+      "Console": {
+        "silent": false
+      }
+    }
+  },
+  "mongodb": {
+    "url": "mongodb://getpickk:xEZMosrpQRqg@candidate.11.mongolayer.com:11179/pickk-stag"
+  },
+  "sportRadar": {
+    "apiKey": "kw3k3f8n9zcy92ufe7g8gwy4"
+  }
+
+}
