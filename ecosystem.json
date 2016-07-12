@@ -1,0 +1,35 @@
+{
+  "apps": [
+    {
+      "script": "./bin/worker",
+      "args": [
+        "--settings", "settings/dev.json",
+        "--delay=3000",
+        "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
+      ],
+      "exec_interpreter": "coffee",
+      "exec_mode": "fork",
+      "instances": 1,
+      "max_memory_restart": "1024M"
+    }
+  ],
+
+  "deploy": {
+//    production: {
+//      user: "node",
+//      host: "212.83.163.1",
+//      ref: "origin/master",
+//      repo: "git@github.com:repo.git",
+//      path: "/var/www/production",
+//      "post-deploy": "npm install && pm2 startOrRestart ecosystem.json --env production"
+//    },
+    "stage": {
+      "user": "root",
+      "host": "do.pickk-stag",
+      "ref": "origin/master",
+      "repo": "git@bitbucket.org:IcyEagle/pickk-import.git",
+      "path": "/opt/pickk-import",
+      "post-deploy": "npm install && pm2 startOrRestart ecosystem.json --env dev"
+    }
+  }
+}
