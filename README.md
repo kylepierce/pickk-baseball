@@ -61,4 +61,11 @@ In order to see active tasks call:
 pm2 status
 ```
 
+In order to deploy the application on the stage server call:
+```
+#!bash
+
+pm2 deploy stage
+```
+
 Open [this](http://localhost:3000/sportRadarGames) URL to show games for today.
