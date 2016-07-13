@@ -122,23 +122,28 @@ module.exports = class extends Task
 
   closeInactivePlays: (game, result) ->
     playNumber = result.playNumber
-    play = result['plays'][playNumber - 1]
-    outcome = play.outcome
+    @logger.info "Trying to close plays differ from play(#{playNumber})"
 
     Promise.bind @
     .then -> @Questions.find {game_id: game.id, active: true, atBatQuestion: true, play: {$ne: playNumber}}
     .map (question) ->
+      play = result['plays'][question['play'] - 1]
+      @logger.info "Close a play(#{question['play']})"
+      @logger.info "Plays number", result['plays'].length
+      @logger.info "Play", play
+      outcome = play.outcome
+
       map = _.invert _.mapObject question['options'], (option) -> option['title']
       outcomeOption = map[outcome]
 
       Promise.bind @
-      .then -> @Questions.update {_id: question._id}, $set: {active: false, play: outcomeOption}
+      .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
       .map (answer) ->
         reward = Math.floor answer['wager'] * answer['multiplier']
         Promise.bind @
         .then -> @Users.update {_id: answer['userId']}, {$inc: {"profile.coins": reward}}
-        .tap -> @logger.verbose "ProcessGames: reward user(#{answer['userId']}) with coins(#{reward})" 
+        .tap -> @logger.verbose "ProcessGames: reward user(#{answer['userId']}) with coins(#{reward})"
       .tap -> @logger.verbose "ProcessGames: play question(#{question.que}) have been closed as inactive"
 
   handlePitch: (game, result) ->
@@ -197,17 +202,20 @@ module.exports = class extends Task
   closeInactivePitches: (game, result) ->
     playNumber = result.playNumber
     pitchNumber = result.pitchNumber
+    @logger.info "Trying to close pitches differ from play(#{playNumber}) and pitch(#{pitchNumber})"
 
     Promise.bind @
     .then -> @Questions.find {game_id: game.id, active: true, atBatQuestion: {$exists: false}, $or: [{play: {$ne: playNumber}}, {pitch: {$ne: pitchNumber}}, ]}
     .map (question) ->
-      play = result['plays'][question['play'] - 1]
+      play = result['plays'][question['play'] - 1] # current play
+      @logger.info "Close pitch with play(#{question['play']})"
       outcome = play.pitches[question['pitch'] - 1]
+      @logger.info "Close pitch with play", play, outcome
       map = _.invert _.mapObject question['options'], (option) -> option['title']
       outcomeOption = map[outcome]
 
       Promise.bind @
-      .then -> @Questions.update {_id: question._id}, $set: {active: false, play: outcomeOption}
+      .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
       .map (answer) ->
         reward = Math.floor answer['wager'] * answer['multiplier']

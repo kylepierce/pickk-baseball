@@ -265,7 +265,7 @@ module.exports = class
     
     return 'Foul Ball' if last['outcome_id'] is 'kF'
     return 'Ball' if last['count']['balls'] isnt previous['count']['balls']
-    return 'Strike Out' if (last['count']['strike'] is 2) and (last['count']['outs'] isnt previous['count']['outs'])
-    return 'Strike' if last['count']['strike'] isnt previous['count']['strike']
+    return 'Strike Out' if (last['count']['strikes'] is 2) and (last['count']['outs'] isnt previous['count']['outs'])
+    return 'Strike' if last['count']['strikes'] isnt previous['count']['strikes']
     return 'Out' if last['count']['outs'] isnt previous['count']['outs']
     'Hit'
