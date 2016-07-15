@@ -269,7 +269,7 @@ describe "Process imported games and question management", ->
       {pitches, outcome} = play
 
       should.exist outcome
-      outcome.should.equal "walk"
+      outcome.should.equal "Walk"
 
       should.exist pitches
       pitches.should.be.an "array"
@@ -277,7 +277,7 @@ describe "Process imported games and question management", ->
       outcome = pitches[1]
 
       should.exist outcome
-      outcome.should.equal "foulball"
+      outcome.should.equal "Foul Ball"
 
   it 'should return another correct outcome for play and pitch specified', ->
     Promise.bind @
@@ -301,7 +301,7 @@ describe "Process imported games and question management", ->
       {pitches, outcome} = play
 
       should.exist outcome
-      outcome.should.equal "single"
+      outcome.should.equal "Single"
 
       should.exist pitches
       pitches.should.be.an "array"
@@ -309,7 +309,7 @@ describe "Process imported games and question management", ->
       outcome = pitches[3]
 
       should.exist outcome
-      outcome.should.equal "hit"
+      outcome.should.equal "Hit"
 
   it 'should parse teams', ->
     Promise.bind @

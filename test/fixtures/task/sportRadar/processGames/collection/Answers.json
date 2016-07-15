@@ -8,6 +8,15 @@
       "wager": 300,
       "multiplier": 1.45,
       "description": ""
+    },
+    {
+      "userId": "Charlie",
+      "gameId": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "questionId": "non_actual_question_for_active_game",
+      "answered": "option1",
+      "wager": 300,
+      "multiplier": 2.45,
+      "description": ""
     }
   ]
 }

@@ -201,7 +201,7 @@ describe "Process imported games and question management", ->
       should.exist pitch
       pitch.should.be.equal 6
 
-  it 'should create new pitch question if play and pitch number is different', ->
+  it 'should create a pitch question if play and pitch number is different', ->
     game = undefined
 
     Promise.bind @
@@ -254,7 +254,7 @@ describe "Process imported games and question management", ->
       # should be still active
       active.should.be.equal false
 
-  it 'should reward the user for right answer', ->
+  it 'should reward the user for right answer on pitch question', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualPitchQuestionsFixtures, mongodb
@@ -275,7 +275,49 @@ describe "Process imported games and question management", ->
       should.exist coins
       coins.should.be.equal 10435
 
-  it 'shouldn\'t reward the user for wrong answer', ->
+  it 'should reward the user for right answer on play question', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures NonActualQuestionsFixtures, mongodb
+    .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures AnswersFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Users.findOne({_id: "Charlie"})
+    .then (user) ->
+      should.exist user
+      user.should.be.an "object"
+
+      {profile} = user
+      should.exist profile
+      profile.should.be.an "object"
+
+      {coins} = profile
+      should.exist coins
+      coins.should.be.equal 10735
+
+  it 'shouldn\'t reward the user for wrong answer on pitch question', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures NonActualQuestionsFixtures, mongodb
+    .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures WrongAnswersFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGames.handleGame game
+    .then -> Users.findOne({_id: "Charlie"})
+    .then (user) ->
+      should.exist user
+      user.should.be.an "object"
+
+      {profile} = user
+      should.exist profile
+      profile.should.be.an "object"
+
+      {coins} = profile
+      should.exist coins
+      coins.should.be.equal 10000
+
+  it 'shouldn\'t reward the user for wrong answer on play question', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualQuestionsFixtures, mongodb
