@@ -41,8 +41,8 @@ module.exports = class extends Task
 
     if result
       Promise.bind @
-      .then -> @handleTeams game, result.teams
       .then -> @enrichGame game, result.details
+      .then -> @handleTeams game, result.teams
       .then -> @handlePlayers game, result.players
       .then -> @handlePlay game, result
       .then -> @handlePitch game, result
@@ -57,8 +57,17 @@ module.exports = class extends Task
     @logger.verbose "Handle teams of game (#{game.id})"
 
     Promise.all (for data in _.values teams
-      team = new Team data
-      @Teams.update team.getSelector(), {$set: team}, {upsert: true}
+      Promise.bind @
+      .return new Team(data)
+      .then (team) ->
+        Promise.bind @
+        .then -> @Teams.update team.getSelector(), {$set: team}, {upsert: true}
+        .tap (result) ->
+          if result['updatedExisting']
+            @logger.verbose "Update team (#{team.fullName})", {gameId: game.id}
+          else
+            teamId = result.upserted?[0]?._id
+            @logger.info "Create team (#{team.fullName})", {gameId: game.id, teamId: teamId}
     )
 
   enrichGame: (game, details) ->
@@ -70,16 +79,26 @@ module.exports = class extends Task
     @logger.verbose "Handle players of game (#{game.id})"
 
     Promise.all (for data in players
-      player = new Player data
-      @Players.update player.getSelector(), {$set: player}, {upsert: true}
+      Promise.bind @
+      .return new Player(data)
+      .then (player) ->
+        Promise.bind @
+        .then -> @Players.update player.getSelector(), {$set: player}, {upsert: true}
+        .tap (result) ->
+          if result['updatedExisting']
+            @logger.verbose "Update player (#{player.name})", {gameId: game.id}
+          else
+            playerId = result.upserted?[0]?._id
+            @logger.info "Create player (#{player.name})", {gameId: game.id, playerId: playerId}
     )
 
   handlePlay: (game, result) ->
-    @logger.verbose "Handle play of game (#{game.id}) for player(#{result['hitter']['player_id']})"
-
     player = result['hitter']
+    playerId = player['player_id']
     play = result.playNumber
     question = "End of #{player['first_name']} #{player['last_name']}'s at bat."
+
+    @logger.verbose "Handle play of hitter (#{player['first_name']} #{player['last_name']})", {gameId: game.id, playerId: playerId}
 
     options =
       option1: {title: "Out", multiplier: 2.1 }
@@ -91,20 +110,13 @@ module.exports = class extends Task
 
     Promise.bind @
     .then ->
-      @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play},
-        $set:
-          dateCreated: new Date()
-          gameId: game['_id']
-          playNumber: result.playNumber
-          active: true
-          player: player
-          commercial: false
-          que: question
-          options: options
-        $setOnInsert:
-          usersAnswered: []
-      , {upsert: true}
-    .tap -> @logger.verbose "Upsert play question \"#{question}\" with game(#{game.id}) and playerId(#{player['player_id']}, play(#{play}))"
+      @Questions.insert {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play}
+    .tap (result) ->
+      if result['updatedExisting']
+        @logger.verbose "Update play question (#{question})", {gameId: game.id, playerId: playerId, play: play}
+      else
+        playId = result.upserted?[0]?._id
+        @logger.info "Create play question (#{question})", {gameId: game.id, playerId: playerId, play: play, playId: playId}
     .then -> @closeInactivePlays game, result
 
   closeInactivePlays: (game, result) ->
