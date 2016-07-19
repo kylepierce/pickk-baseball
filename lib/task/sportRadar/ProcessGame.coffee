@@ -110,7 +110,19 @@ module.exports = class extends Task
 
     Promise.bind @
     .then ->
-      @Questions.insert {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play}
+      @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play},
+        $set:
+          dateCreated: new Date()
+          gameId: game['_id']
+          playNumber: result.playNumber
+          active: true
+          player: player
+          commercial: false
+          que: question
+          options: options
+        $setOnInsert:
+          usersAnswered: []
+      , {upsert: true}
     .tap (result) ->
       if result['updatedExisting']
         @logger.verbose "Update play question (#{question})", {gameId: game.id, playerId: playerId, play: play}
