@@ -3,24 +3,25 @@ Match = require "mtr-match"
 Promise = require "bluebird"
 Strategy = require "../Strategy"
 ImportGames = require "../../task/sportRadar/ImportGames"
+GetActiveGames = require "../../task/GetActiveGames"
 ImportGameDetails = require "../../task/sportRadar/ImportGameDetails"
-ProcessGames = require "../../task/sportRadar/ProcessGames"
+ProcessGame = require "../../task/sportRadar/ProcessGame"
 
 module.exports = class extends Strategy
   constructor: (dependencies) ->
     super
 
     @importGames = new ImportGames dependencies
+    @getActiveGames = new GetActiveGames dependencies
     @importGameDetails = new ImportGameDetails dependencies
-    @processGames = new ProcessGames dependencies
+    @processGame = new ProcessGame dependencies
     
     @logger = dependencies.logger
-
-    @importGames.observe "upserted", (game) =>
-      if game.status is "inprogress"
-        @importGameDetails.execute game.id
 
   execute: ->
     Promise.bind @
     .then -> @importGames.execute()
-    .then -> @processGames.execute()
+    .then -> @getActiveGames.execute()
+    .map (game) ->
+      @importGameDetails.execute game
+      .then -> @processGame.execute game

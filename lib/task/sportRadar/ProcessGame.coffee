@@ -26,28 +26,15 @@ module.exports = class extends Task
     @Users = dependencies.mongodb.collection("users")
     @gameParser = new GameParser dependencies
 
-  execute: ->
-    promiseRetry (retry, number) =>
+  execute: (game) ->
+    promiseRetry (retry) =>
       Promise.bind @
-      .tap -> @logger.verbose "Start ProcessGames task"
-      .then -> @getActiveGames()
-      .tap (games) -> @logger.verbose "ProcessGames: There are #{games.length} active game(s)"
-      .tap @closeQuestionsForInactiveGames
-      .map @handleGame, {concurrency: 1} # to sort questions properly on the client
+      .tap -> @logger.verbose "Start ProcessGames"
+      .then -> @handleGame game
       .return true
       .catch (error) =>
         @logger.error error.message, _.extend({stack: error.stack}, error.details)
         retry(error)
-
-  getActiveGames: ->
-    @SportRadarGames.find({status: "inprogress"})
-
-  closeQuestionsForInactiveGames: (activeGames) ->
-    ids = _.pluck activeGames, "id"
-
-    Promise.bind @
-    .then -> @Questions.update {game_id: {$nin: ids}, active: true}, {$set: {active: false}}, {multi: true}
-    .tap (updated) -> @logger.verbose "ProcessGames: #{updated['nModified']} questions have been closed as inactive"
 
   handleGame: (game) ->
     result = @gameParser.getPlay game

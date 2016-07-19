@@ -24,29 +24,3 @@ describe "Import brief information about games for date specified from SportRada
       Promise.all [
         SportRadarGames.remove()
       ]
-
-  it "should call \"Load Details\" task only for games with status \"In Progress\"", ->
-    game1 = new SportRadarGame
-      status: "inprogress"
-
-    game2 = new SportRadarGame
-      status: "closed"
-
-    game3 = new SportRadarGame
-      status: "inprogress"
-
-    game4 = new SportRadarGame
-      status: "scheduled"
-
-    updateGamesStrategy.importGames.execute = ->
-      @emit "upserted", game1
-      @emit "upserted", game2
-      @emit "upserted", game3
-      @emit "upserted", game4
-
-    spy = sinon.spy()
-    updateGamesStrategy.importGameDetails.execute = spy
-
-    Promise.bind @
-    .then -> updateGamesStrategy.execute()
-    .then -> spy.should.have.callCount 2

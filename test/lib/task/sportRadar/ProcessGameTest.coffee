@@ -5,34 +5,34 @@ moment = require "moment"
 _ = require "underscore"
 ImportGames = require "../../../../lib/task/sportRadar/ImportGames"
 loadFixtures = require "../../../../helper/loadFixtures"
-ProcessGames = require "../../../../lib/task/sportRadar/ProcessGame"
+ProcessGame = require "../../../../lib/task/sportRadar/ProcessGame"
 SportRadarGame = require "../../../../lib/model/sportRadar/SportRadarGame"
-TwoActiveGamesFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/TwoActiveGames.json"
-QuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Questions.json"
-ActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActualQuestions.json"
-NonActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/NonActualQuestions.json"
-NonActualPitchQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/NonActualPitchQuestions.json"
-ActiveFullGameFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveFullGame.json"
-ActiveFullGameWithLineUp = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveFullGameWithLineUp.json"
-ActiveGameNoInningsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameNoInnings.json"
-ActiveGameNoPlaysFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameNoPlays.json"
-ActiveGameEndOfInningFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameEndOfInning.json"
-ActiveGameEndOfHalfFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameEndOfHalf.json"
-ActiveGameEndOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameEndOfPlay.json"
-ActiveGameMiddleOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveGameMiddleOfPlay.json"
-TeamsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Teams.json"
-PlayersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Players.json"
-AtBatsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/AtBats.json"
-ActiveAtBatFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/ActiveAtBat.json"
-UsersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Users.json"
-AnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/Answers.json"
-WrongAnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGames/collection/WrongAnswers.json"
+TwoActiveGamesFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/TwoActiveGames.json"
+QuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Questions.json"
+ActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActualQuestions.json"
+NonActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/NonActualQuestions.json"
+NonActualPitchQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/NonActualPitchQuestions.json"
+ActiveFullGameFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveFullGame.json"
+ActiveFullGameWithLineUp = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveFullGameWithLineUp.json"
+ActiveGameNoInningsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameNoInnings.json"
+ActiveGameNoPlaysFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameNoPlays.json"
+ActiveGameEndOfInningFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameEndOfInning.json"
+ActiveGameEndOfHalfFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameEndOfHalf.json"
+ActiveGameEndOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameEndOfPlay.json"
+ActiveGameMiddleOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameMiddleOfPlay.json"
+TeamsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Teams.json"
+PlayersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Players.json"
+AtBatsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/AtBats.json"
+ActiveAtBatFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveAtBat.json"
+UsersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Users.json"
+AnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Answers.json"
+WrongAnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/WrongAnswers.json"
 
 describe "Process imported games and question management", ->
   dependencies = createDependencies settings, "PickkImport"
   mongodb = dependencies.mongodb
 
-  processGames = undefined
+  processGame = undefined
 
   SportRadarGames = mongodb.collection("games")
   Teams = mongodb.collection("teams")
@@ -48,7 +48,7 @@ describe "Process imported games and question management", ->
   nonActualActiveQuestionId = "active_question_for_inactive_game"
 
   beforeEach ->
-    processGames = new ProcessGames dependencies
+    processGame = new ProcessGame dependencies
 
     Promise.bind @
     .then ->
@@ -62,59 +62,11 @@ describe "Process imported games and question management", ->
         Answers.remove()
       ]
 
-  it 'should fetch only active games', ->
-    Promise.bind @
-    .then -> loadFixtures TwoActiveGamesFixtures, mongodb 
-    .then -> processGames.getActiveGames()
-    .then (games) -> 
-      should.exist games
-      games.should.be.an "array"
-      games.length.should.be.equal 2
-
-  it 'should disable active questions for inactive games', ->
-    Promise.bind @
-    .then -> loadFixtures TwoActiveGamesFixtures, mongodb
-    .then -> loadFixtures QuestionsFixtures, mongodb
-    .then -> Questions.findOne({id: actualActiveQuestionId})
-    .then (question) ->
-      # this question shouldn't be disabled
-      should.exist question
-      question.should.be.an "object"
-      {active} = question
-      should.exist active
-      active.should.be.equal true
-    .then -> Questions.findOne({id: nonActualActiveQuestionId})
-    .then (question) ->
-      # but this should be
-      should.exist question
-      question.should.be.an "object"
-      {active} = question
-      should.exist active
-      active.should.be.equal true
-    .then -> processGames.getActiveGames()
-    .then (games) -> processGames.closeQuestionsForInactiveGames(games)
-    .then -> Questions.findOne({id: actualActiveQuestionId})
-    .then (question) ->
-      # it's still active
-      should.exist question
-      question.should.be.an "object"
-      {active} = question
-      should.exist active
-      active.should.be.equal true
-    .then -> Questions.findOne({id: nonActualActiveQuestionId})
-    .then (question) ->
-      # and this one have had to be disabled
-      should.exist question
-      question.should.be.an "object"
-      {active} = question
-      should.exist active
-      active.should.be.equal false
-
   it 'should create new play question', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({game_id: activeGameId, player_id: "abbda8e1-2274-4bf0-931c-691cf8bf24c6", atBatQuestion: true})
     .then (question) ->
       should.exist question
@@ -129,7 +81,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures ActualQuestionsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({id: "active_question_for_active_game"})
     .then (question) ->
       should.exist question
@@ -148,7 +100,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualQuestionsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({id: "non_actual_question_for_active_game"})
     .then (question) ->
       should.exist question
@@ -162,7 +114,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({game_id: activeGameId, player_id: "abbda8e1-2274-4bf0-931c-691cf8bf24c6", atBatQuestion: {$exists: false}})
     .then (question) ->
       should.exist question
@@ -183,7 +135,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures ActualQuestionsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({id: "active_pitch_question_for_active_game"})
     .then (question) ->
       should.exist question
@@ -208,7 +160,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualPitchQuestionsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (_game) -> game = _game; processGames.handleGame game
+    .then (_game) -> game = _game; processGame.execute game
     .then -> Questions.findOne({id: "active_non_actual_pitch_question_for_active_game"})
     .then (question) ->
       should.exist question
@@ -243,7 +195,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualQuestionsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({id: "non_actual_pitch_question_for_active_game"})
     .then (question) ->
       should.exist question
@@ -261,7 +213,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures UsersFixtures, mongodb
     .then -> loadFixtures AnswersFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Users.findOne({_id: "Charlie"})
     .then (user) ->
       should.exist user
@@ -282,7 +234,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures UsersFixtures, mongodb
     .then -> loadFixtures AnswersFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Users.findOne({_id: "Charlie"})
     .then (user) ->
       should.exist user
@@ -303,7 +255,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures UsersFixtures, mongodb
     .then -> loadFixtures WrongAnswersFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Users.findOne({_id: "Charlie"})
     .then (user) ->
       should.exist user
@@ -324,7 +276,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures UsersFixtures, mongodb
     .then -> loadFixtures WrongAnswersFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Users.findOne({_id: "Charlie"})
     .then (user) ->
       should.exist user
@@ -342,7 +294,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveGameNoInningsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.count()
     .then (result) ->
       should.exist result
@@ -352,7 +304,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveGameNoPlaysFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({game_id: activeGameId, player_id: "92500d32-2314-4c7c-91c5-110f95229f9a", atBatQuestion: {$exists: false}})
     .then (question) ->
       should.exist question
@@ -374,7 +326,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfHalfFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({game_id: activeGameId, player_id: "1a0bef4b-f97b-453d-80ed-5fde2c80acc8", atBatQuestion: {$exists: false}})
     .then (question) ->
       should.exist question
@@ -396,7 +348,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({game_id: activeGameId, player_id: "3cfaa9a7-8dea-4590-8ea5-c8e1b51232cf", atBatQuestion: {$exists: false}})
     .then (question) ->
       should.exist question
@@ -418,7 +370,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({game_id: activeGameId, player_id: "6ac6fa53-ea9b-467d-87aa-6429a6bcb90c", atBatQuestion: {$exists: false}})
     .then (question) ->
       should.exist question
@@ -440,7 +392,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveGameMiddleOfPlayFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Questions.findOne({game_id: activeGameId, player_id: "c401dbb6-2208-45f4-9947-db11881daf4f", atBatQuestion: {$exists: false}})
     .then (question) ->
       should.exist question
@@ -462,7 +414,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Teams.find()
     .then (teams) ->
       should.exist teams
@@ -495,7 +447,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
     .then -> loadFixtures TeamsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Teams.find()
     .then (teams) ->
       should.exist teams
@@ -515,7 +467,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Players.find()
     .then (players) ->
       should.exist players
@@ -545,7 +497,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
     .then -> loadFixtures PlayersFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> Players.find()
     .then (players) ->
       should.exist players
@@ -567,7 +519,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (_game) -> game = _game; processGames.handleGame game
+    .then (_game) -> game = _game; processGame.execute game
     .then -> AtBats.find()
     .then (bats) ->
       should.exist bats
@@ -602,7 +554,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
     .then -> loadFixtures AtBatsFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (_game) -> game = _game; processGames.handleGame game
+    .then (_game) -> game = _game; processGame.execute game
     .then -> AtBats.find()
     .then (bats) ->
       should.exist bats
@@ -628,7 +580,7 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
     .then -> loadFixtures ActiveAtBatFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (_game) -> game = _game; processGames.handleGame game
+    .then (_game) -> game = _game; processGame.execute game
     .then -> AtBats.find()
     .then (bats) ->
       should.exist bats
@@ -651,7 +603,7 @@ describe "Process imported games and question management", ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGames.handleGame game
+    .then (game) -> processGame.execute game
     .then -> SportRadarGames.findOne({id: activeGameId})
     .then (game) ->
       should.exist game
@@ -750,7 +702,7 @@ describe "Process imported games and question management", ->
 #    Promise.bind @
 #    .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
 #    .then -> SportRadarGames.findOne({id: activeGameId})
-#    .then (game) -> processGames.handleGame game
+#    .then (game) -> processGame.execute game
 #    .then -> SportRadarGames.findOne({id: activeGameId})
 #    .then (game) ->
 #      should.exist game
