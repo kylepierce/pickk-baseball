@@ -239,6 +239,7 @@ module.exports = class
     for play in plays
       pitches = @getPitches play
 
+      id: play.id
       pitches: (@getPitchOutcome pitches.slice(0, number) for number in [1..pitches.length])
       outcome: @getPlayOutcomeByPlay play
 

@@ -121,27 +121,24 @@ module.exports = class extends Task
           que: question
           options: options
         $setOnInsert:
+          _id: @Questions.db.ObjectId().toString()
           usersAnswered: []
       , {upsert: true}
     .tap (result) ->
       if result['updatedExisting']
         @logger.verbose "Update play question (#{question})", {gameId: game.id, playerId: playerId, play: play}
       else
-        playId = result.upserted?[0]?._id
-        @logger.info "Create play question (#{question})", {gameId: game.id, playerId: playerId, play: play, playId: playId}
+        questionId = result.upserted?[0]?._id
+        @logger.info "Create play question (#{question})", {gameId: game.id, playerId: playerId, play: play, questionId: questionId}
     .then -> @closeInactivePlays game, result
 
   closeInactivePlays: (game, result) ->
     playNumber = result.playNumber
-    @logger.info "Trying to close plays differ from play(#{playNumber})"
 
     Promise.bind @
     .then -> @Questions.find {game_id: game.id, active: true, atBatQuestion: true, play: {$ne: playNumber}}
     .map (question) ->
       play = result['plays'][question['play'] - 1]
-      @logger.info "Close a play(#{question['play']})"
-      @logger.info "Plays number", result['plays'].length
-      @logger.info "Play", play
       outcome = play.outcome
 
       map = _.invert _.mapObject question['options'], (option) -> option['title']
@@ -149,26 +146,35 @@ module.exports = class extends Task
 
       Promise.bind @
       .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
+      .tap -> @logger.info "Close play question (#{question['que']})", {questionId: question['_id'], outcome: outcomeOption, play: question['play']}
+      .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "loose"}}, {multi: true}
+      .tap (answers) -> @logger.verbose "There are (#{answers.length}) negative answer(s) for question (#{question['que']})"
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
+      .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
       .map (answer) ->
         reward = Math.floor answer['wager'] * answer['multiplier']
         Promise.bind @
+        .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
         .then -> @Users.update {_id: answer['userId']}, {$inc: {"profile.coins": reward}}
-        .tap -> @logger.verbose "ProcessGames: reward user(#{answer['userId']}) with coins(#{reward})"
-      .tap -> @logger.verbose "ProcessGames: play question(#{question.que}) have been closed as inactive"
+        .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
   handlePitch: (game, result) ->
-    @logger.verbose "Handle pitch of game (#{game.id}) for player(#{result['hitter']['player_id']})"
-
     player = result['hitter']
+    playerId = player['player_id']
     balls = result.balls
     strikes = result.strikes
     play = result.playNumber
     pitch = result.pitchNumber
-
     balls = result.balls
     strikes = result.strikes
     question = "#{player['first_name']} #{player['last_name']}: " + balls + " - " + strikes
+
+    @logger.verbose "Handle pitch of hitter (#{player['first_name']} #{player['last_name']}) with count (#{balls} - #{strikes})",
+      gameId: game.id
+      playerId: playerId
+      play: play
+      pitch: pitch
+
 
     title1 = "Strike"
     title2 = "Ball"
@@ -191,7 +197,7 @@ module.exports = class extends Task
       option3: { title: title3, multiplier: 7.35 }
       option4: { title: title4, multiplier: 3.23 }
 
-    options.option5 = {title: title5, multiplier: 1 } if title5
+    options.option5 = { title: title5, multiplier: 1 } if title5
 
     Promise.bind @
     .then ->
@@ -205,32 +211,40 @@ module.exports = class extends Task
           que: question
           options: options
         $setOnInsert:
+          _id: @Questions.db.ObjectId().toString()
           usersAnswered: []
       , {upsert: true}
-    .tap -> @logger.verbose "Upsert pitch question \"#{question}\" with game(#{game.id}) and playerId(#{player['player_id']}), play(#{play}), pitch(#{pitch})"
+    .tap (result) ->
+      if result['updatedExisting']
+        @logger.verbose "Update pitch question (#{question})", {gameId: game.id, playerId: playerId, play: play, pitch: pitch}
+      else
+        questionId = result.upserted?[0]?._id
+        @logger.info "Create pitch question (#{question})", {gameId: game.id, playerId: playerId, play: play, pitch: pitch, questionId: questionId}
     .then -> @closeInactivePitches game, result
 
   closeInactivePitches: (game, result) ->
     playNumber = result.playNumber
     pitchNumber = result.pitchNumber
-    @logger.info "Trying to close pitches differ from play(#{playNumber}) and pitch(#{pitchNumber})"
 
     Promise.bind @
-    .then -> @Questions.find {game_id: game.id, active: true, atBatQuestion: {$exists: false}, $or: [{play: {$ne: playNumber}}, {pitch: {$ne: pitchNumber}}, ]}
+    .then -> @Questions.find {game_id: game.id, active: true, atBatQuestion: {$exists: false}, $or: [{play: {$ne: playNumber}}, {pitch: {$ne: pitchNumber}}]}
     .map (question) ->
-      play = result['plays'][question['play'] - 1] # current play
-      @logger.info "Close pitch with play(#{question['play']})"
+      play = result['plays'][question['play'] - 1]
       outcome = play.pitches[question['pitch'] - 1]
-      @logger.info "Close pitch with play", play, outcome
+
       map = _.invert _.mapObject question['options'], (option) -> option['title']
       outcomeOption = map[outcome]
 
       Promise.bind @
       .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
+      .tap -> @logger.info "Close pitch question (#{question['que']})", {questionId: question['_id'], outcome: outcomeOption, play: question['play'], pitch: question['pitch']}
+      .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "loose"}}, {multi: true}
+      .tap (answers) -> @logger.verbose "There are (#{answers.length}) negative answer(s) for question (#{question['que']})"
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
+      .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
       .map (answer) ->
         reward = Math.floor answer['wager'] * answer['multiplier']
         Promise.bind @
+        .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
         .then -> @Users.update {_id: answer['userId']}, {$inc: {"profile.coins": reward}}
-        .tap -> @logger.verbose "ProcessGames: reward user(#{answer['userId']}) with coins(#{reward})"
-      .tap -> @logger.verbose "ProcessGames: pitch question(#{question._id}) have been closed as inactive"
+        .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
