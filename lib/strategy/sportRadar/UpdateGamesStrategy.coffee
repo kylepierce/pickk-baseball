@@ -6,6 +6,7 @@ ImportGames = require "../../task/sportRadar/ImportGames"
 GetActiveGames = require "../../task/GetActiveGames"
 ImportGameDetails = require "../../task/sportRadar/ImportGameDetails"
 ProcessGame = require "../../task/sportRadar/ProcessGame"
+promiseRetry = require 'promise-retry'
 
 module.exports = class extends Strategy
   constructor: (dependencies) ->
@@ -19,9 +20,14 @@ module.exports = class extends Strategy
     @logger = dependencies.logger
 
   execute: ->
-    Promise.bind @
-    .then -> @importGames.execute()
-    .then -> @getActiveGames.execute()
-    .map (game) ->
-      @importGameDetails.execute game
-      .then -> @processGame.execute game
+    # do not allow it to crash!
+    promiseRetry {retries: 1000}, (retry) =>
+      Promise.bind @
+      .then -> @importGames.execute()
+      .then -> @getActiveGames.execute()
+      .map (game) ->
+        @importGameDetails.execute game
+        .then -> @processGame.execute game
+      .catch (error) =>
+        @logger.error error.message, _.extend({stack: error.stack}, error.details)
+        retry error
