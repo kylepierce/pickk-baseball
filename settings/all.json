@@ -9,7 +9,7 @@
         "handleExceptions": false,
         "prettyPrint": true,
         "colorize": true,
-        "showLevel": false
+        "showLevel": true
       }
     }
   },

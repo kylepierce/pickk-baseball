@@ -4,7 +4,8 @@ loggly = require "winston-loggly"
 sanitize = require "./sanitize"
 
 winston.addColors
-  verbose: "green"
+  verbose: "grey"
+  info: "green"
 
 module.exports = (options) ->
   transports = (new winston.transports[name](config) for name, config of options.transports)
