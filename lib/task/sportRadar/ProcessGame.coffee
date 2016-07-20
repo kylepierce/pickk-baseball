@@ -8,6 +8,7 @@ Player = require "../../model/Player"
 GameParser = require "./helper/GameParser"
 moment = require "moment"
 promiseRetry = require 'promise-retry'
+chance = new (require 'chance')
 
 module.exports = class extends Task
   constructor: (dependencies) ->
@@ -161,7 +162,20 @@ module.exports = class extends Task
         reward = Math.floor answer['wager'] * answer['multiplier']
         Promise.bind @
         .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
-        .then -> @Users.update {_id: answer['userId']}, {$inc: {"profile.coins": reward}}
+        .then ->
+          notificationId = chance.guid()
+          @Users.update {_id: answer['userId']},
+            $inc: {"profile.coins": reward}
+            $push:
+              pendingNotifications:
+                _id: notificationId,
+                type: "score",
+                read: false,
+                notificationId: notificationId,
+                dateCreated: new Date(),
+                message: "Nice Pickk! You got #{reward} Coins!",
+                sharable: false,
+                shareMessage: ""
         .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
   handlePitch: (game, result) ->
@@ -256,5 +270,18 @@ module.exports = class extends Task
         reward = Math.floor answer['wager'] * answer['multiplier']
         Promise.bind @
         .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
-        .then -> @Users.update {_id: answer['userId']}, {$inc: {"profile.coins": reward}}
+        .then ->
+          notificationId = chance.guid()
+          @Users.update {_id: answer['userId']},
+            $inc: {"profile.coins": reward}
+            $push:
+              pendingNotifications:
+                _id: notificationId,
+                type: "score",
+                read: false,
+                notificationId: notificationId,
+                dateCreated: new Date(),
+                message: "Nice Pickk! You got #{reward} Coins!",
+                sharable: false,
+                shareMessage: ""
         .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
