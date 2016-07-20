@@ -100,7 +100,7 @@ module.exports = class
           else
             @logger.log "Play is finished, half is not"
 
-            marker = if lastPlay.id is lastPlays[@HOME_TEAM_MARKER].id then @HOME_TEAM_MARKER else @AWAY_TEAM_MARKER
+            marker = if lastPlay.id is lastPlays[@HOME_TEAM_MARKER]?.id then @HOME_TEAM_MARKER else @AWAY_TEAM_MARKER
             @logger.log "marker", marker
 
             hitterId = lastPlay['hitter_id']
