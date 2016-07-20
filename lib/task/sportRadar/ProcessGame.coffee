@@ -112,28 +112,30 @@ module.exports = class extends Task
 
     Promise.bind @
     .then -> @closeInactivePlays game, result
-    .then ->
-      @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play},
-        $set:
-          dateCreated: new Date()
-          gameId: game['_id']
-          playNumber: result.playNumber
-          active: true
-          player: player
-          commercial: false
-          que: question
-          options: options
-        $setOnInsert:
-          _id: @Questions.db.ObjectId().toString()
-          usersAnswered: []
-      , {upsert: true}
-    .tap (result) ->
-      if not result['upserted']
-        @logger.verbose "Update play question (#{question})", {gameId: game.id, playerId: playerId, play: play}
-      else
-        questionId = result.upserted?[0]?._id
-        @logger.info "Create play question (#{question})"
-        @logger.verbose "Create play question (#{question})", {gameId: game.id, playerId: playerId, play: play, questionId: questionId}
+    .then -> @Questions.count {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play}
+    .then (found) ->
+      if not found
+        Promise.bind @
+        .then ->
+          @Questions.insert
+            game_id: game.id
+            player_id: player['player_id']
+            atBatQuestion: true
+            play: play
+            dateCreated: new Date()
+            gameId: game['_id']
+            playNumber: result.playNumber
+            active: true
+            player: player
+            commercial: false
+            que: question
+            options: options
+            _id: @Questions.db.ObjectId().toString()
+            usersAnswered: []
+        .tap ->
+          questionId = result.upserted?[0]?._id
+          @logger.info "Create play question (#{question})"
+          @logger.verbose "Create play question (#{question})", {gameId: game.id, playerId: playerId, play: play, questionId: questionId}
 
   closeInactivePlays: (game, result) ->
     playNumber = result.playNumber
@@ -205,27 +207,29 @@ module.exports = class extends Task
 
     Promise.bind @
     .then -> @closeInactivePitches game, result
-    .then ->
-      @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}, play: play, pitch: pitch},
-        $set:
-          dateCreated: new Date()
-          gameId: game['_id']
-          active: true
-          player: player
-          commercial: false
-          que: question
-          options: options
-        $setOnInsert:
-          _id: @Questions.db.ObjectId().toString()
-          usersAnswered: []
-      , {upsert: true}
-    .tap (result) ->
-      if not result['upserted']
-        @logger.verbose "Update pitch question (#{question})", {gameId: game.id, playerId: playerId, play: play, pitch: pitch}
-      else
-        questionId = result.upserted?[0]?._id
-        @logger.info "Create pitch question (#{question})"
-        @logger.verbose "Create pitch question (#{question})", {gameId: game.id, playerId: playerId, play: play, pitch: pitch, questionId: questionId}
+    .then -> @Questions.count {game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}, play: play, pitch: pitch}
+    .then (found) ->
+      if not found
+        Promise.bind @
+        .then ->
+          @Questions.insert
+            game_id: game.id
+            player_id: player['player_id']
+            play: play
+            pitch: pitch
+            dateCreated: new Date()
+            gameId: game['_id']
+            active: true
+            player: player
+            commercial: false
+            que: question
+            options: options
+            _id: @Questions.db.ObjectId().toString()
+            usersAnswered: []
+        .tap ->
+          questionId = result.upserted?[0]?._id
+          @logger.info "Create pitch question (#{question})"
+          @logger.verbose "Create pitch question (#{question})", {gameId: game.id, playerId: playerId, play: play, pitch: pitch, questionId: questionId}
 
   closeInactivePitches: (game, result) ->
     playNumber = result.playNumber
