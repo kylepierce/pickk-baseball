@@ -277,7 +277,7 @@ describe "Process imported games and question management", ->
       outcome = pitches[1]
 
       should.exist outcome
-      outcome.should.equal "Foul Ball"
+      outcome.should.equal "Strike"
 
   it 'should return another correct outcome for play and pitch specified', ->
     Promise.bind @
