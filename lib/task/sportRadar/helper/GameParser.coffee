@@ -196,9 +196,9 @@ module.exports = class
     outs = 0
     if @lastPlay
       lastPitch = @getLastPitch @lastPlay
-      outs = lastPitch['count']['outs'] % 3
+      outs = lastPitch['count']['outs'] % 3 if lastPitch
 
-      if not @isFinishedHalf @lastPlay
+      if lastPitch and not @isFinishedHalf @lastPlay
         runners = lastPitch['runners']
         bases.first = !!(_.findWhere runners, {ending_base: 1, out: 'false'})
         bases.second = !!(_.findWhere runners, {ending_base: 2, out: 'false'})
