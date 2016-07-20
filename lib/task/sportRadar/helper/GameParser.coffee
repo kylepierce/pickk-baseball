@@ -264,7 +264,7 @@ module.exports = class
     last = pitches.pop()
     previous = pitches.pop() or {count: {balls: 0, strikes: 0, outs: 0}}
     
-    return 'Foul Ball' if last['outcome_id'] is 'kF'
+    return 'Foul Ball' if last['outcome_id'] is 'kF' and previous['count']['strikes'] is 2
     return 'Ball' if last['count']['balls'] isnt previous['count']['balls']
     return 'Strike Out' if (last['count']['strikes'] is 3) and (last['count']['outs'] isnt previous['count']['outs'])
     return 'Strike' if last['count']['strikes'] isnt previous['count']['strikes']
