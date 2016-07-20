@@ -20,7 +20,7 @@ module.exports = class extends Task
     .then -> @Games.find {status: "inprogress"}, {_id: 1}
     .then (games) -> _.pluck games, "_id"
     .tap (ids) -> @logger.verbose "Close questions related to games not equal [#{ids}]"
-    .then (ids) -> @Questions.update {game_id: {$nin: ids}, active: true}, {$set: {active: false}}, {multi: true}
+    .then (ids) -> @Questions.update {gameId: {$nin: ids}, active: true}, {$set: {active: false}}, {multi: true}
     .tap (result) -> @logger.verbose result, "#{result.nModified} questions have been closed as inactive"
     .tap -> @logger.verbose "End CloseInactiveQuestions"
 
