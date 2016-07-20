@@ -5,6 +5,8 @@ Strategy = require "../Strategy"
 ImportGames = require "../../task/sportRadar/ImportGames"
 GetActiveGames = require "../../task/GetActiveGames"
 ImportGameDetails = require "../../task/sportRadar/ImportGameDetails"
+CloseInactiveAtBats = require "../../task/CloseInactiveAtBats"
+CloseInactiveQuestions = require "../../task/CloseInactiveQuestions"
 ProcessGame = require "../../task/sportRadar/ProcessGame"
 promiseRetry = require 'promise-retry'
 
@@ -15,6 +17,8 @@ module.exports = class extends Strategy
     @importGames = new ImportGames dependencies
     @getActiveGames = new GetActiveGames dependencies
     @importGameDetails = new ImportGameDetails dependencies
+    @closeInactiveAtBats = new CloseInactiveAtBats dependencies
+    @closeInactiveQuestions = new CloseInactiveQuestions dependencies
     @processGame = new ProcessGame dependencies
     
     @logger = dependencies.logger
@@ -24,6 +28,8 @@ module.exports = class extends Strategy
     promiseRetry {retries: 1000}, (retry) =>
       Promise.bind @
       .then -> @importGames.execute()
+      .then -> @closeInactiveQuestions.execute()
+      .then -> @closeInactiveAtBats.execute()
       .then -> @getActiveGames.execute()
       .then (games) -> _.sortBy games, (game) -> game['scheduled']
       .then (games) -> games.slice(0, 1)
