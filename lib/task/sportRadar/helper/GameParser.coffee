@@ -21,7 +21,7 @@ module.exports = class
     _.indexBy(pitches, 'id')[id]
 
   getPlay: (game) ->
-    innings = game['innings']
+    innings = game['innings'] or []
     @logger.log "Number of innings - #{innings.length}"
 
     if innings.length

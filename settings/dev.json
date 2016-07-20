@@ -4,6 +4,9 @@
     "transports": {
       "Console": {
         "silent": false
+      },
+      "File": {
+        "silent": false
       }
     }
   },

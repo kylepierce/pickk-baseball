@@ -4,12 +4,22 @@
     "transports": {
       "Console": {
         "silent": true,
-        "level": "verbose",
+        "level": "info",
         "timestamp": true,
         "handleExceptions": false,
         "prettyPrint": true,
         "colorize": true,
         "showLevel": true
+      },
+      "File": {
+        "silent": true,
+        "level": "verbose",
+        "timestamp": true,
+        "handleExceptions": false,
+        "prettyPrint": true,
+        "colorize": true,
+        "showLevel": true,
+        "filename": "/tmp/pickk/logs"
       }
     }
   },

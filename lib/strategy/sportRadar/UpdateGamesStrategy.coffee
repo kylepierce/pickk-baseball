@@ -25,8 +25,11 @@ module.exports = class extends Strategy
       Promise.bind @
       .then -> @importGames.execute()
       .then -> @getActiveGames.execute()
+      .then (games) -> _.sortBy games, (game) -> game['scheduled']
+      .then (games) -> games.slice(0, 1)
       .map (game) ->
-        @importGameDetails.execute game
+        Promise.bind @
+        .then -> @importGameDetails.execute game['id']
         .then -> @processGame.execute game
       .catch (error) =>
         @logger.error error.message, _.extend({stack: error.stack}, error.details)

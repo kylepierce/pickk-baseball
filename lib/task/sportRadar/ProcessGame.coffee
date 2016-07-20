@@ -63,7 +63,7 @@ module.exports = class extends Task
         Promise.bind @
         .then -> @Teams.update team.getSelector(), {$set: team}, {upsert: true}
         .tap (result) ->
-          if result['updatedExisting']
+          if not result['nModified']
             @logger.verbose "Update team (#{team.fullName})", {gameId: game.id}
           else
             teamId = result.upserted?[0]?._id
@@ -85,7 +85,7 @@ module.exports = class extends Task
         Promise.bind @
         .then -> @Players.update player.getSelector(), {$set: player}, {upsert: true}
         .tap (result) ->
-          if result['updatedExisting']
+          if not result['nModified']
             @logger.verbose "Update player (#{player.name})", {gameId: game.id}
           else
             playerId = result.upserted?[0]?._id
@@ -125,7 +125,7 @@ module.exports = class extends Task
           usersAnswered: []
       , {upsert: true}
     .tap (result) ->
-      if result['updatedExisting']
+      if not result['upserted']
         @logger.verbose "Update play question (#{question})", {gameId: game.id, playerId: playerId, play: play}
       else
         questionId = result.upserted?[0]?._id
@@ -146,9 +146,9 @@ module.exports = class extends Task
 
       Promise.bind @
       .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
-      .tap -> @logger.info "Close play question (#{question['que']})", {questionId: question['_id'], outcome: outcomeOption, play: question['play']}
+      .tap -> @logger.info "Close play question (#{question['que']}) with outcome (#{outcome})", {questionId: question['_id'], outcome: outcomeOption, play: question['play']}
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "loose"}}, {multi: true}
-      .tap (answers) -> @logger.verbose "There are (#{answers.length}) negative answer(s) for question (#{question['que']})"
+      .tap (result) -> @logger.verbose "There are (#{result.n}) negative answer(s) for question (#{question['que']})"
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
       .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
       .map (answer) ->
@@ -215,7 +215,7 @@ module.exports = class extends Task
           usersAnswered: []
       , {upsert: true}
     .tap (result) ->
-      if result['updatedExisting']
+      if not result['upserted']
         @logger.verbose "Update pitch question (#{question})", {gameId: game.id, playerId: playerId, play: play, pitch: pitch}
       else
         questionId = result.upserted?[0]?._id
@@ -237,9 +237,9 @@ module.exports = class extends Task
 
       Promise.bind @
       .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
-      .tap -> @logger.info "Close pitch question (#{question['que']})", {questionId: question['_id'], outcome: outcomeOption, play: question['play'], pitch: question['pitch']}
+      .tap -> @logger.info "Close pitch question (#{question['que']})  with outcome (#{outcome})", {questionId: question['_id'], outcome: outcomeOption, play: question['play'], pitch: question['pitch']}
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "loose"}}, {multi: true}
-      .tap (answers) -> @logger.verbose "There are (#{answers.length}) negative answer(s) for question (#{question['que']})"
+      .tap (result) -> @logger.verbose "There are (#{result.n}) negative answer(s) for question (#{question['que']})"
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
       .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
       .map (answer) ->
