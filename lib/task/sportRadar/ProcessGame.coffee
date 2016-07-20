@@ -111,6 +111,7 @@ module.exports = class extends Task
       option6: {title: "Home Run", multiplier: 2.4 }
 
     Promise.bind @
+    .then -> @closeInactivePlays game, result
     .then ->
       @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play},
         $set:
@@ -133,7 +134,6 @@ module.exports = class extends Task
         questionId = result.upserted?[0]?._id
         @logger.info "Create play question (#{question})"
         @logger.verbose "Create play question (#{question})", {gameId: game.id, playerId: playerId, play: play, questionId: questionId}
-    .then -> @closeInactivePlays game, result
 
   closeInactivePlays: (game, result) ->
     playNumber = result.playNumber
@@ -204,6 +204,7 @@ module.exports = class extends Task
     options.option5 = { title: title5, multiplier: 1 } if title5
 
     Promise.bind @
+    .then -> @closeInactivePitches game, result
     .then ->
       @Questions.update {game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}, play: play, pitch: pitch},
         $set:
@@ -225,7 +226,6 @@ module.exports = class extends Task
         questionId = result.upserted?[0]?._id
         @logger.info "Create pitch question (#{question})"
         @logger.verbose "Create pitch question (#{question})", {gameId: game.id, playerId: playerId, play: play, pitch: pitch, questionId: questionId}
-    .then -> @closeInactivePitches game, result
 
   closeInactivePitches: (game, result) ->
     playNumber = result.playNumber
