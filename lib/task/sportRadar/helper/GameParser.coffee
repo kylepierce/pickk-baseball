@@ -155,8 +155,8 @@ module.exports = class
   isLineup: (event) -> event['lineup']
   isPlay: (event) -> event['at_bat']
   isPitch: (event) -> event['type'] is 'pitch'
-  isFinishedPlay: (play) -> @getLastPitch(play)['flags']['is_ab_over']
-  isFinishedHalf: (play) -> @getLastPitch(play)['count']['outs'] is 3
+  isFinishedPlay: (play) -> @getLastPitch(play)?['flags']['is_ab_over']
+  isFinishedHalf: (play) -> @getLastPitch(play)?['count']['outs'] is 3
   byTeam: (half) -> half['half']
   byDate: (play) -> moment(play['events'][0]['created_at']).toDate()
   byNumber: (inning) -> inning['number']
