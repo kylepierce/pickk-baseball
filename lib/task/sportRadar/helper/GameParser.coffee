@@ -132,8 +132,8 @@ module.exports = class
             hitter: hitter
             pitch: pitch
             pitchNumber: @getPitches(lastPlay).length + 1
-            balls: pitch['count'].balls
-            strikes: pitch['count'].strikes
+            balls: if pitch then pitch['count'].balls else 0
+            strikes: if pitch then pitch['count'].strikes else 0
       else
         @logger.log "It's the first play of the match"
 
