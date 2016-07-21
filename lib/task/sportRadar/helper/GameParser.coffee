@@ -204,13 +204,6 @@ module.exports = class
         bases.second = !!(_.findWhere runners, {ending_base: 2, out: 'false'})
         bases.third = !!(_.findWhere runners, {ending_base: 3, out: 'false'})
 
-    dateCreated: moment.utc(game.scheduled).startOf('day').toDate()
-    name: "#{game['scoring']['home']['name']} vs #{game['scoring']['away']['name']}"
-    live: game.status is 'inprogress'
-    completed: game.status is 'closed'
-    commercial: false
-    gameDate: moment.utc(game.scheduled).format('MMM Do LT')
-    tv: game['broadcast']['network']
     teams: [home, away]
     outs: outs
     inning: lastInning['number']

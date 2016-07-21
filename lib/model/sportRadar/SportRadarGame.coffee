@@ -8,7 +8,15 @@ module.exports = class
 
     _.extend @, data
 
+    @_id = @id
     @scheduled = moment(@scheduled).toDate()
+    @name = "#{@['home']['name']} vs #{@['away']['name']}"
+    @gameDate = moment.utc(@scheduled).format('MMM Do LT')
+    @tv = @['broadcast']['network']
+    @dateCreated = moment.utc(@scheduled).startOf('day').toDate()
+    @live = @status is 'inprogress'
+    @completed = @status is 'closed'
+    @commercial = false
 
   getSelector: ->
-    "id": @id
+    "_id": @_id
