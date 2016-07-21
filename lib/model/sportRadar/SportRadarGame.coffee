@@ -8,9 +8,12 @@ module.exports = class
 
     _.extend @, data
 
+    home = @['home'] or @['scoring']['home']
+    away = @['away'] or @['scoring']['away']
+
     @_id = @id
     @scheduled = moment(@scheduled).toDate()
-    @name = "#{@['home']['name']} vs #{@['away']['name']}"
+    @name = "#{home['name']} vs #{away['name']}"
     @gameDate = moment.utc(@scheduled).format('MMM Do LT')
     @tv = @['broadcast']['network']
     @dateCreated = moment.utc(@scheduled).startOf('day').toDate()
