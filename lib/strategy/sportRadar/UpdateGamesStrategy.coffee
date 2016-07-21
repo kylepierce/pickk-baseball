@@ -31,9 +31,6 @@ module.exports = class extends Strategy
       .then -> @closeInactiveQuestions.execute()
       .then -> @closeInactiveAtBats.execute()
       .then -> @getActiveGames.execute()
-      .then (games) -> _.sortBy games, (game) -> game['scheduled']
-      .then (games) -> _.filter games, (game) -> game['id'] is '69b062d0-55d0-46f4-a96a-cd704085109c'
-      .then (games) -> games.slice(0, 1)
       .map (game) ->
         Promise.bind @
         .then -> @importGameDetails.execute game['id']
