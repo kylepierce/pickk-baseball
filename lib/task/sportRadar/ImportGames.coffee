@@ -19,7 +19,7 @@ module.exports = class extends Task
 
     @registerEvents ['upserted']
 
-  execute: (date = moment().subtract(8, "hours").toDate()) ->
+  execute: (date = new Date()) ->
     Promise.bind @
     .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
     .then -> @api.getScheduledGames(date)
