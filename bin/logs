@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ssh root@do.pickk-stag 'pm2 logs'
