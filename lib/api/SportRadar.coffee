@@ -59,3 +59,10 @@ module.exports = class
 
     path = "games/#{gameId}/pbp.#{format}"
     @_mlbRequest path
+
+  getTeamProfile: (teamId, format = "json") ->
+    Match.check teamId, String
+    Match.check format, formatPattern
+
+    path = "teams/#{teamId}/profile.#{format}"
+    @_mlbRequest path

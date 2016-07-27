@@ -9,6 +9,7 @@ describe "SportRadar API", ->
 
   date = moment("2016-06-11").toDate()
   gameId = "6a37e74c-728f-4ee5-8f99-5387cde7e397"
+  teamId = "833a51a9-0d84-410f-bd77-da08c3e5e26e"
 
   it 'should check whether scheduled games are fetched', ->
     @timeout(60000) if process.env.NOCK_BACK_MODE in ["record", "wild"]
@@ -55,6 +56,28 @@ describe "SportRadar API", ->
           should.exist innings
           innings.should.be.an "array"
           innings.length.should.be.equal 11
+        .then @assertScopesFinished
+        .then resolve
+        .catch reject
+        .finally recordingDone
+
+  it 'should check whether information about the team are fetched', ->
+    @timeout(60000) if process.env.NOCK_BACK_MODE in ["record", "wild"]
+
+    new Promise (resolve, reject) ->
+      nock.back "test/fixtures/api/sportRadar/getTeamProfile.json", (recordingDone) ->
+        Promise.bind @
+        .then -> dependencies.sportRadar.getTeamProfile teamId
+        .then (result) ->
+          should.exist result
+
+          {name, players} = result
+          should.exist name
+          name.should.be.equal "Royals"
+
+          should.exist players
+          players.should.be.an "array"
+          players.length.should.be.equal 40
         .then @assertScopesFinished
         .then resolve
         .catch reject
