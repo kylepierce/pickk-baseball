@@ -239,11 +239,13 @@ module.exports = class
     team
 
   getPlayResults: (plays) ->
-    for play in plays
+    nonEmptyPlays = _.filter plays, (play) -> @getPitches(play).length
+
+    for play in nonEmptyPlays
       pitches = @getPitches play
 
       id: play.id
-      pitches: if pitches.length then (@getPitchOutcome pitches.slice(0, number) for number in [1..pitches.length]) else []
+      pitches: @getPitchOutcome pitches.slice(0, number) for number in [1..pitches.length]
       outcome: @getPlayOutcomeByPlay play
 
   getPlayOutcomeByPlay: (play) ->
