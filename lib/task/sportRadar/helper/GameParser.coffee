@@ -239,7 +239,7 @@ module.exports = class
     team
 
   getPlayResults: (plays) ->
-    nonEmptyPlays = _.filter plays, (play) -> @getPitches(play).length
+    nonEmptyPlays = _.filter plays, (play) => @getPitches(play).length
 
     for play in nonEmptyPlays
       pitches = @getPitches play
