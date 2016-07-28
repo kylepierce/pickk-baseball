@@ -96,9 +96,9 @@ module.exports = class extends Task
     object = new Player data
 
     Promise.bind @
-    .then -> @fetchPlayerStats object['mlbId']
-    .then (stats) ->
-      _.extend object, stats
+    .then -> @fetchPlayerStats object
+    .then (extension) ->
+      _.extend object, extension
 
       Promise.bind @
       .then -> @Players.update object.getSelector(), {$set: object}

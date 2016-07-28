@@ -5,6 +5,7 @@ moment = require "moment"
 UpdateTeam = require "../../../../lib/task/sportRadar/UpdateTeam"
 loadFixtures = require "../../../../helper/loadFixtures"
 ExistingTeamFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/updateTeam/collection/ExistingTeam.json"
+ExistingPlayerFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/updateTeam/collection/ExistingPlayer.json"
 
 describe "Import detailed information about teams and players", ->
   dependencies = createDependencies settings, "PickkImport"
@@ -83,7 +84,7 @@ describe "Import detailed information about teams and players", ->
         .catch reject
         .finally recordingDone
 
-  it "shouldn't update existed team because it's up to date", ->
+  it "shouldn't update existing team because it's up to date", ->
     @timeout 30000
 
     recently = moment().subtract(2, 'hour').toDate()
@@ -110,16 +111,16 @@ describe "Import detailed information about teams and players", ->
         .catch reject
         .finally recordingDone
 
-  it "should update existed team", ->
+  it "should update existed team because its data is out-of-date", ->
     @timeout 30000
 
-    recently = moment().subtract(2, 'day').toDate()
+    late = moment().subtract(2, 'day').toDate()
 
     new Promise (resolve, reject) ->
       nock.back "test/fixtures/task/sportRadar/updateTeam/request/update.json", (recordingDone) ->
         Promise.bind @
         .then -> loadFixtures ExistingTeamFixtures, mongodb
-        .then -> Teams.update({_id: teamId}, {$set: {updatedAt: recently}})
+        .then -> Teams.update({_id: teamId}, {$set: {updatedAt: late}})
         .then -> updateTeam.execute teamId
         .then -> Teams.count()
         .then (count) ->
@@ -136,3 +137,60 @@ describe "Import detailed information about teams and players", ->
         .then resolve
         .catch reject
         .finally recordingDone
+
+  it "shouldn't update existing player because it's up to date", ->
+    @timeout 30000
+
+    recently = moment().subtract(2, 'hour').toDate()
+
+    new Promise (resolve, reject) ->
+      nock.back "test/fixtures/task/sportRadar/updateTeam/request/empty.json", (recordingDone) ->
+        Promise.bind @
+        .then -> loadFixtures ExistingTeamFixtures, mongodb
+        .then -> loadFixtures ExistingPlayerFixtures, mongodb
+        .then -> Players.update({_id: playerId}, {$set: {updatedAt: recently}})
+        .then -> updateTeam.execute teamId
+        .then -> Teams.count()
+        .then (count) ->
+          count.should.be.equal 1
+        .then -> Players.findOne({_id: playerId})
+        .then (player) ->
+          should.exist player
+
+          # fake nickname should be present
+          {firstName} = player
+          should.exist firstName
+          firstName.should.be.equal "John"
+        .then @assertScopesFinished
+        .then resolve
+        .catch reject
+        .finally recordingDone
+
+  it "should update existing player because its data is out-of-date", ->
+    @timeout 30000
+
+    late = moment().subtract(2, 'day').toDate()
+
+    new Promise (resolve, reject) ->
+      nock.back "test/fixtures/task/sportRadar/updateTeam/request/empty.json", (recordingDone) ->
+        Promise.bind @
+        .then -> loadFixtures ExistingTeamFixtures, mongodb
+        .then -> loadFixtures ExistingPlayerFixtures, mongodb
+        .then -> Players.update({_id: playerId}, {$set: {updatedAt: late}})
+        .then -> updateTeam.execute teamId
+        .then -> Teams.count()
+        .then (count) ->
+          count.should.be.equal 1
+        .then -> Players.findOne({_id: playerId})
+        .then (player) ->
+          should.exist player
+
+          # fake nickname should be present
+          {firstName} = player
+          should.exist firstName
+          firstName.should.be.equal "Salvador"
+        .then @assertScopesFinished
+        .then resolve
+        .catch reject
+        .finally recordingDone
+

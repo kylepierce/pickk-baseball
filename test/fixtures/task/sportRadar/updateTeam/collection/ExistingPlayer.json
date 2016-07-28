@@ -1,0 +1,13 @@
+{
+  "players": [
+    {
+      "_id": "9baf07d4-b1cb-4494-8c95-600d9e8de1a9",
+      "playerId": "9baf07d4-b1cb-4494-8c95-600d9e8de1a9",
+      "name": "John Smith",
+      "firstName": "John",
+      "lastName": "Smith",
+      "team": "833a51a9-0d84-410f-bd77-da08c3e5e26e",
+      "position": "C"
+    }
+  ]
+}
