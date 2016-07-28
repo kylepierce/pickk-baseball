@@ -253,6 +253,9 @@ module.exports = class extends Task
     Promise.bind @
     .then -> @Players.findOne({_id: playerId})
     .then (player) ->
+      # fallback
+      return @getGenericMultipliersForPlay() if not player.stats
+
       stat = if player.stats.three_year['no_statistics_available_'] then player.stats.y2016extended else player.stats.three_year
 
       situation = switch true
@@ -308,6 +311,9 @@ module.exports = class extends Task
     Promise.bind @
     .then -> @Players.findOne({_id: playerId})
     .then (player) ->
+      # fallback
+      return @getGenericMultipliersForPitch() if not player.stats
+
       stat = if player.stats.three_year['no_statistics_available_'] then player.stats.y2016extended else player.stats.three_year
       totalAtBat = stat.total['ab']
 
@@ -361,5 +367,20 @@ module.exports = class extends Task
       out: toMultiplier outPercent
       hit: toMultiplier hitPercent
       foulball: @getRandomArbitrary(1.5, 2)
+
+  getGenericMultipliersForPlay: ->
+    out: @getRandomArbitrary 1.05, 1.65
+    walk: @getRandomArbitrary 1.05, 1.65
+    single: @getRandomArbitrary 1.05, 1.65
+    double: @getRandomArbitrary 1.05, 1.65
+    triple: @getRandomArbitrary 1.05, 1.65
+    homerun: @getRandomArbitrary 1.05, 1.65
+
+  getGenericMultipliersForPitch: ->
+    strike: @getRandomArbitrary 1.05, 1.65
+    ball: @getRandomArbitrary 1.05, 1.65
+    out: @getRandomArbitrary 1.05, 1.65
+    hit: @getRandomArbitrary 1.05, 1.65
+    foulball: @getRandomArbitrary 1.05, 1.65
 
   getRandomArbitrary: (min, max) -> parseFloat((Math.random() * (max - min) + min).toFixed(2))
