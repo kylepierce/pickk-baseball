@@ -61,7 +61,7 @@ module.exports = class extends Task
     player = result['hitter']
     playerId = player['player_id']
     play = result.playNumber
-    bases = game.playersOnBase
+    bases = result.playersOnBase
     question = "End of #{player['first_name']} #{player['last_name']}'s at bat."
 
     @logger.verbose "Handle play of hitter (#{player['first_name']} #{player['last_name']})", {gameId: game.id, playerId: playerId}
