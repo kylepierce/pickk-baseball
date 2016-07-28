@@ -362,28 +362,7 @@ describe "Process imported games and question management", ->
 
       {details} = result
 
-      {dateCreated, name, live, completed, commercial, gameDate, tv, teams, outs, inning, topOfInning, playersOnBase, users, nonActive} = details
-
-      should.exist dateCreated
-      dateCreated.getTime().should.equal moment.utc("2016-06-11").toDate().getTime()
-
-      should.exist name
-      name.should.equal "White Sox vs Royals"
-
-      should.exist live
-      live.should.equal true
-
-      should.exist completed
-      completed.should.equal false
-
-      should.exist commercial
-      commercial.should.equal false
-
-      should.exist gameDate
-      gameDate.should.equal "Jun 11th 6:10 PM"
-
-      should.exist tv
-      tv.should.equal "WGN"
+      {teams, outs, inning, topOfInning, playersOnBase, users, nonActive} = details
 
       should.exist teams
       teams.should.be.an "array"

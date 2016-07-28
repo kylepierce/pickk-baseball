@@ -1,6 +1,7 @@
 {
   "games": [
     {
+      "_id": "77ba61aa-d576-4a85-88b1-d5e40938dbbc",
       "id": "77ba61aa-d576-4a85-88b1-d5e40938dbbc",
       "status": "inprogress",
       "coverage": "full",

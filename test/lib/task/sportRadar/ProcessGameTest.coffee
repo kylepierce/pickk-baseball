@@ -410,109 +410,6 @@ describe "Process imported games and question management", ->
       should.exist active
       active.should.be.equal true
 
-  it 'should store teams into database', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGame.execute game
-    .then -> Teams.find()
-    .then (teams) ->
-      should.exist teams
-      teams.should.be.an "array"
-      teams.length.should.equal 2
-
-      home = _.findWhere teams, {_id: "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8"}
-      should.exist home
-      home.should.be.an "object"
-      
-      {fullName, nickname, computerName, city, state} = home
-
-      should.exist fullName
-      fullName.should.equal "Chicago White Sox"
-
-      should.exist nickname
-      nickname.should.equal "White Sox"
-
-      should.exist computerName
-      computerName.should.equal "cws"
-
-      should.exist city
-      city.should.equal "Chicago"
-
-      should.exist state
-      state.should.equal ""
-
-  it 'should update existing team', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
-    .then -> loadFixtures TeamsFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGame.execute game
-    .then -> Teams.find()
-    .then (teams) ->
-      should.exist teams
-      teams.should.be.an "array"
-      teams.length.should.equal 2
-
-      home = _.findWhere teams, {_id: "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8"}
-      should.exist home
-      home.should.be.an "object"
-
-      {city} = home
-
-      should.exist city
-      city.should.equal "Chicago"
-  
-  it 'should store players into database', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGame.execute game
-    .then -> Players.find()
-    .then (players) ->
-      should.exist players
-      players.should.be.an "array"
-      players.length.should.equal 20
-
-      player = _.findWhere players, {_id: "92500d32-2314-4c7c-91c5-110f95229f9a"}
-      should.exist player
-      player.should.be.an "object"
-      
-      {playerId, name, team, position} = player
-
-      should.exist playerId
-      playerId.should.equal "92500d32-2314-4c7c-91c5-110f95229f9a"
-
-      should.exist name
-      name.should.equal "Whitley Merrifield"
-
-      should.exist team
-      team.should.equal "833a51a9-0d84-410f-bd77-da08c3e5e26e"
-
-      should.exist position
-      position.should.equal 7
-
-  it 'should update existing player', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
-    .then -> loadFixtures PlayersFixtures, mongodb
-    .then -> SportRadarGames.findOne({id: activeGameId})
-    .then (game) -> processGame.execute game
-    .then -> Players.find()
-    .then (players) ->
-      should.exist players
-      players.should.be.an "array"
-      players.length.should.equal 20
-
-      player = _.findWhere players, {_id: "92500d32-2314-4c7c-91c5-110f95229f9a"}
-      should.exist player
-      player.should.be.an "object"
-
-      {position} = player
-
-      should.exist position
-      position.should.equal 7
-
   it 'should create atBat for active batter', ->
     game = undefined
 
@@ -609,28 +506,7 @@ describe "Process imported games and question management", ->
       should.exist game
       game.should.be.an "object"
 
-      {dateCreated, name, live, completed, commercial, gameDate, tv, teams, outs, inning, topOfInning, playersOnBase, users, nonActive} = game
-
-      should.exist dateCreated
-      dateCreated.getTime().should.equal moment.utc("2016-06-11").toDate().getTime()
-
-      should.exist name
-      name.should.equal "White Sox vs Royals"
-
-      should.exist live
-      live.should.equal true
-
-      should.exist completed
-      completed.should.equal false
-
-      should.exist commercial
-      commercial.should.equal false
-
-      should.exist gameDate
-      gameDate.should.equal "Jun 11th 6:10 PM"
-
-      should.exist tv
-      tv.should.equal "WGN"
+      {teams, outs, inning, topOfInning, playersOnBase, users, nonActive} = game
 
       should.exist teams
       teams.should.be.an "array"

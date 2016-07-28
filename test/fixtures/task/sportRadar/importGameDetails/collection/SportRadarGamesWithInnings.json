@@ -1,6 +1,7 @@
 {
   "games": [
     {
+      "_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
       "id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
       "status": "InProgress",
       "coverage": "full",
@@ -18,6 +19,7 @@
       ]
     },
     {
+      "_id": "2b0ba18a-41f5-46d7-beb3-1e86b9a4acc0",
       "id": "2b0ba18a-41f5-46d7-beb3-1e86b9a4acc0",
       "status": "closed",
       "coverage": "full",
