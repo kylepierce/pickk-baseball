@@ -1,12 +1,13 @@
 {
   "teams": [
     {
-      "_id": "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8",
-      "fullName": "Chicago White Sox",
-      "nickname": "White Sox",
-      "computerName": "computerName",
-      "city": "New York",
-      "state": ""
+      "_id": "833a51a9-0d84-410f-bd77-da08c3e5e26e",
+      "nickname": "Royals",
+      "fullName": "Kansas City Royals",
+      "computerName": "kc",
+      "city": "Kansas City",
+      "state": "MO",
+      "updatedAt": "2016-07-28T18:01:28.571Z"
     }
   ]
 }

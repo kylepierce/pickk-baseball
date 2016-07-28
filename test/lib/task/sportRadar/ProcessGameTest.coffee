@@ -574,55 +574,56 @@ describe "Process imported games and question management", ->
       should.exist nonActive
       nonActive.should.be.an "array"
 
-#  it 'should enrich the game by new fields, case 2', ->
-#    Promise.bind @
-#    .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
-#    .then -> SportRadarGames.findOne({id: activeGameId})
-#    .then (game) -> processGame.execute game
-#    .then -> SportRadarGames.findOne({id: activeGameId})
-#    .then (game) ->
-#      should.exist game
-#      game.should.be.an "object"
-#
-#      {dateCreated, name, live, completed, commercial, gameDate, tv, teams, outs, inning, topOfInning, playersOnBase, users, nonActive} = game
-#
-#      home = _.findWhere teams, {teamId: "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8"}
-#      should.exist home
-#      home.should.be.an "object"
-#
-#      {batterNum} = home
-#
-#      should.exist batterNum
-#      batterNum.should.equal (6 - 1)
-#
-#      away = _.findWhere teams, {teamId: "833a51a9-0d84-410f-bd77-da08c3e5e26e"}
-#      should.exist away
-#      away.should.be.an "object"
-#
-#      {batterNum} = away
-#
-#      should.exist batterNum
-#      batterNum.should.equal (1 - 1)
-#
-#      should.exist outs
-#      outs.should.equal 0
-#
-#      should.exist inning
-#      inning.should.equal 2
-#
-#      should.exist topOfInning
-#      topOfInning.should.equal true
-#
-#      should.exist playersOnBase
-#      playersOnBase.should.be.an "object"
-#
-#      {first, second, third} = playersOnBase
-#
-#      should.exist first
-#      first.should.equal false
-#
-#      should.exist second
-#      second.should.equal false
-#
-#      should.exist third
-#      third.should.equal false
+  it 'should generate multipliers properly', ->
+    playerId = "9baf07d4-b1cb-4494-8c95-600d9e8de1a9"
+    bases =
+      first: true
+      second: false
+      third: false
+
+    Promise.bind @
+    .then -> loadFixtures PlayersFixtures, mongodb
+    .then -> processGame.calculateMultipliersForPitch playerId, 1, 2
+    .then (multipliers) ->
+      should.exist multipliers
+      multipliers.should.be.an "object"
+
+      {strike, ball, hit, out, foulball} = multipliers
+      should.exist strike
+      strike.should.be.a "number"
+
+      should.exist ball
+      ball.should.be.a "number"
+
+      should.exist hit
+      hit.should.be.a "number"
+
+      should.exist out
+      out.should.be.a "number"
+
+      should.exist foulball
+      foulball.should.be.a "number"
+    .then -> processGame.calculateMultipliersForPlay bases, playerId
+    .then (multipliers) ->
+      should.exist multipliers
+      multipliers.should.be.an "object"
+
+      console.log multipliers
+      {out, walk, single, double, triple, homerun} = multipliers
+      should.exist out
+      out.should.be.a "number"
+
+      should.exist walk
+      walk.should.be.a "number"
+
+      should.exist single
+      single.should.be.a "number"
+
+      should.exist double
+      double.should.be.a "number"
+
+      should.exist triple
+      triple.should.be.a "number"
+
+      should.exist homerun
+      homerun.should.be.a "number"

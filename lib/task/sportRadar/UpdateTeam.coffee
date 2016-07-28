@@ -240,32 +240,22 @@ module.exports = class extends Task
         retry(error)
 
   parsePlayerExtendedInfo: (data) ->
+
     $ = cheerio.load data
+    stats = ["ab", "r", "h", "double", "triple", "hr", "rbi", "bb", "hbp", "so", "sb", "cs", "avg", "obp", "slg", "ops"]
 
-    countStats = {}
-    statsArray = ["ab", "r", "h", "double", "triple", "hr", "rbi", "bb", "hbp", "so", "sb", "cs", "avg", "obp", "slg", "ops"]
+    result = {}
+    _.object $('.tablehead tr').each ->
+      $row = $(@)
 
-    general = $('.tablehead .oddrow')
-    general.each ->
-      $row = $(this)
-      row = {}
-      for i in [0..statsArray.length]
-        statName = statsArray[i]
-        numberFix = i+2
-        row[statName] = $row.find(":nth-child(#{numberFix})").text()
+      values = _.map stats, (stat, index) ->
+        # first position is a parameter name so just skip it
+        position = index + 2
+        $row.find(":nth-child(#{position})").text()
 
-    general = $('.tablehead .evenrow')
-    general.each ->
-      $row = $(this)
-      row = {}
-      for i in [0..statsArray.length]
-        statName = statsArray[i]
-        numberFix = i+2
-        statValue = $row.find(":nth-child(#{numberFix})").text()
-        row[statName] = statValue
-      name = $row.find(':nth-child(1)').text()
-      name = name.replace(/[^A-Z0-9]+/ig, "_")
-      name = name.toLowerCase()
-      countStats[name] = row
+      row = _.object stats, values
+      name = $row.find(':first-child').text().replace(/[^A-Z0-9]+/ig, "_").toLowerCase()
 
-    countStats
+      result[name] = row
+
+    result

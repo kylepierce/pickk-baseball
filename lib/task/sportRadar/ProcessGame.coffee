@@ -61,44 +61,48 @@ module.exports = class extends Task
     player = result['hitter']
     playerId = player['player_id']
     play = result.playNumber
+    bases = game.playersOnBase
     question = "End of #{player['first_name']} #{player['last_name']}'s at bat."
 
     @logger.verbose "Handle play of hitter (#{player['first_name']} #{player['last_name']})", {gameId: game.id, playerId: playerId}
 
-    options =
-      option1: {title: "Out", multiplier: 2.1 }
-      option2: {title: "Walk", multiplier: 2.2 }
-      option3: {title: "Single", multiplier: 2.3 }
-      option4: {title: "Double", multiplier: 2.4 }
-      option5: {title: "Triple", multiplier: 2.3 }
-      option6: {title: "Home Run", multiplier: 2.4 }
-
     Promise.bind @
-    .then -> @closeInactivePlays game, result
-    .then -> @Questions.count {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play}
-    .then (found) ->
-      if not found
-        Promise.bind @
-        .then ->
-          @Questions.insert
-            game_id: game.id
-            player_id: player['player_id']
-            atBatQuestion: true
-            play: play
-            dateCreated: new Date()
-            gameId: game['_id']
-            playNumber: result.playNumber
-            active: true
-            player: player
-            commercial: false
-            que: question
-            options: options
-            _id: @Questions.db.ObjectId().toString()
-            usersAnswered: []
-        .tap ->
-          questionId = result.upserted?[0]?._id
-          @logger.info "Create play question (#{question})"
-          @logger.verbose "Create play question (#{question})", {gameId: game.id, playerId: playerId, play: play, questionId: questionId}
+    .then -> @calculateMultipliersForPlay bases, playerId
+    .then (multipliers) ->
+      options =
+        option1: {title: "Out", multiplier: multipliers['out'] }
+        option2: {title: "Walk", multiplier: multipliers['walk'] }
+        option3: {title: "Single", multiplier: multipliers['single'] }
+        option4: {title: "Double", multiplier: multipliers['double'] }
+        option5: {title: "Triple", multiplier: multipliers['triple'] }
+        option6: {title: "Home Run", multiplier: multipliers['homerun'] }
+
+      Promise.bind @
+      .then -> @closeInactivePlays game, result
+      .then -> @Questions.count {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play}
+      .then (found) ->
+        if not found
+          Promise.bind @
+          .then ->
+            @Questions.insert
+              game_id: game.id
+              player_id: player['player_id']
+              atBatQuestion: true
+              play: play
+              dateCreated: new Date()
+              gameId: game['_id']
+              playNumber: result.playNumber
+              active: true
+              player: player
+              commercial: false
+              que: question
+              options: options
+              _id: @Questions.db.ObjectId().toString()
+              usersAnswered: []
+          .tap ->
+            questionId = result.upserted?[0]?._id
+            @logger.info "Create play question (#{question})"
+            @logger.verbose "Create play question (#{question})", {gameId: game.id, playerId: playerId, play: play, questionId: questionId}
 
   closeInactivePlays: (game, result) ->
     playNumber = result.playNumber
@@ -157,55 +161,52 @@ module.exports = class extends Task
       play: play
       pitch: pitch
 
-
-    title1 = "Strike"
-    title2 = "Ball"
-    title3 = "Hit"
-    title4 = "Out"
-    title5 = undefined
-
-    if balls is 3
-      title2 = "Walk"
-
-    if strikes is 2
-      title1 = "Strike Out"
-      title3 = "Foul Ball"
-      title4 = "Hit"
-      title5 = "Out"
-
-    options =
-      option1: { title: title1, multiplier: 1.45 }
-      option2: { title: title2, multiplier: 1.65 }
-      option3: { title: title3, multiplier: 7.35 }
-      option4: { title: title4, multiplier: 3.23 }
-
-    options.option5 = { title: title5, multiplier: 1 } if title5
-
     Promise.bind @
-    .then -> @closeInactivePitches game, result
-    .then -> @Questions.count {game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}, play: play, pitch: pitch}
-    .then (found) ->
-      if not found
-        Promise.bind @
-        .then ->
-          @Questions.insert
-            game_id: game.id
-            player_id: player['player_id']
-            play: play
-            pitch: pitch
-            dateCreated: new Date()
-            gameId: game['_id']
-            active: true
-            player: player
-            commercial: false
-            que: question
-            options: options
-            _id: @Questions.db.ObjectId().toString()
-            usersAnswered: []
-        .tap ->
-          questionId = result.upserted?[0]?._id
-          @logger.info "Create pitch question (#{question})"
-          @logger.verbose "Create pitch question (#{question})", {gameId: game.id, playerId: playerId, play: play, pitch: pitch, questionId: questionId}
+    .then -> @calculateMultipliersForPitch playerId, balls, strikes
+    .then (multipliers) ->
+      option1 = {title: "Strike", multiplier: multipliers['strike']}
+      option2 = {title: "Ball", multiplier: multipliers['ball']}
+      option3 = {title: "Hit", multiplier: multipliers['hit']}
+      option4 = {title: "Out", multiplier: multipliers['out']}
+      option5 = undefined
+
+      if balls is 3
+        option2.title = "Walk"
+
+      if strikes is 2
+        option1.title = "Strike Out"
+        option3 = {title: "Foul Ball", multiplier: multipliers['foulball']}
+        option4 = {title: "Hit", multiplier: multipliers['hit']}
+        option5 = {title: "Out", multiplier: multipliers['out']}
+
+      options = {option1, option2, option3, option4}
+      options.option5 = option5 if option5
+
+      Promise.bind @
+      .then -> @closeInactivePitches game, result
+      .then -> @Questions.count {game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}, play: play, pitch: pitch}
+      .then (found) ->
+        if not found
+          Promise.bind @
+          .then ->
+            @Questions.insert
+              game_id: game.id
+              player_id: player['player_id']
+              play: play
+              pitch: pitch
+              dateCreated: new Date()
+              gameId: game['_id']
+              active: true
+              player: player
+              commercial: false
+              que: question
+              options: options
+              _id: @Questions.db.ObjectId().toString()
+              usersAnswered: []
+          .tap ->
+            questionId = result.upserted?[0]?._id
+            @logger.info "Create pitch question (#{question})"
+            @logger.verbose "Create pitch question (#{question})", {gameId: game.id, playerId: playerId, play: play, pitch: pitch, questionId: questionId}
 
   closeInactivePitches: (game, result) ->
     playNumber = result.playNumber
@@ -247,3 +248,118 @@ module.exports = class extends Task
                 sharable: false,
                 shareMessage: ""
         .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
+
+  calculateMultipliersForPlay: (bases, playerId) ->
+    Promise.bind @
+    .then -> @Players.findOne({_id: playerId})
+    .then (player) ->
+      stat = if player.stats.three_year['no_statistics_available_'] then player.stats.y2016extended else player.stats.three_year
+
+      situation = switch true
+        when bases.first and bases.second and bases.third then stat['bases_loaded']
+        when bases.first then stat['runners_on']
+        when bases.second and bases.third then stat['scoring_position']
+        else stat['total']
+
+      atBats = situation.ab
+      avg = situation.avg
+      hit = situation.h
+      walk = parseInt(situation.bb)
+      hitByBall = parseInt(situation.hbp)
+      walkPercent = (walk + hitByBall ) / atBats
+      homeRun = parseInt(situation.hr)
+      homeRunPercent = homeRun / atBats
+      triple = parseInt(situation.triple)
+      triplePercent = triple / atBats
+      double = parseInt(situation.double)
+      doublePercent = double / atBats
+      single = parseInt(hit - homeRun - double - triple)
+      singlePercent = single / atBats
+      outs = (atBats - hitByBall - walk - homeRun - triple - double - single)
+      outPercent = outs / atBats
+
+      outPercent = (100 - (outPercent*100).toFixed(2))
+      walkPercent = (100 - (walkPercent*100).toFixed(2))
+      singlePercent = (100 - (singlePercent*100).toFixed(2))
+      doublePercent = (100 - (doublePercent*100).toFixed(2))
+      triplePercent = (100 - (triplePercent*100).toFixed(2))
+      homeRunPercent = (100 - (homeRunPercent*100).toFixed(2))
+
+      toMultiplier = (value) =>
+        switch true
+          when value < 25 then @getRandomArbitrary 1.5, 1.95
+          when value < 50 then @getRandomArbitrary 1.7, 2.3
+          when value < 60 then @getRandomArbitrary 2.2, 2.7
+          when value < 75 then @getRandomArbitrary 2.65, 3.15
+          when value < 85 then @getRandomArbitrary 2.75, 3.35
+          when value < 90 then @getRandomArbitrary 3.25, 3.75
+          when value < 95 then @getRandomArbitrary 3.65, 3.95
+          when value < 99 then @getRandomArbitrary 3.95, 4.5
+          else @getRandomArbitrary 5.5, 7
+
+      out: toMultiplier outPercent
+      walk: toMultiplier walkPercent
+      single: toMultiplier singlePercent
+      double: toMultiplier doublePercent
+      triple: toMultiplier triplePercent
+      homerun: toMultiplier homeRunPercent
+
+  calculateMultipliersForPitch: (playerId, balls, strikes) ->
+    Promise.bind @
+    .then -> @Players.findOne({_id: playerId})
+    .then (player) ->
+      stat = if player.stats.three_year['no_statistics_available_'] then player.stats.y2016extended else player.stats.three_year
+      totalAtBat = stat.total['ab']
+
+      currentPlayKey = "count_#{balls}_#{strikes}"
+      play = stat[currentPlayKey] or player.stats.career
+      playEoP = play['ab']
+
+      # End of Play probability
+      EoP = parseInt(playEoP) / parseInt(totalAtBat)
+      remainingPercent = 1 - EoP
+      hitPercent = play['avg'] * EoP
+      outPercent = (1 - hitPercent) * EoP
+
+      if strikes is 2
+        option1EoP = play['so']
+      else
+        nextPlayKey = "count_#{balls}_#{strikes + 1}"
+        nextPlay = stat[nextPlayKey]
+        option1EoP = nextPlay?['ab'] or 1
+
+      if balls is 3
+        option2EoP = play['bb']
+      else
+        nextPlayKey = "count_#{balls + 1}_#{strikes}"
+        nextPlay = stat[nextPlayKey]
+        option2EoP = nextPlay?['ab'] or 1
+
+      option1EoP = parseInt option1EoP
+      option2EoP = parseInt option2EoP
+      combinedEoP = option1EoP + option2EoP
+      option1EoPPercentage = (( option1EoP / combinedEoP ) * remainingPercent).toFixed(4)
+      option2EoPPercentage = (( option2EoP / combinedEoP ) * remainingPercent).toFixed(4)
+
+      strikePercent = (100 - (option1EoPPercentage * 100).toFixed(2))
+      ballPercent = (100 - (option2EoPPercentage *100).toFixed(2))
+      outPercent = (100 - (outPercent*100).toFixed(2))
+      hitPercent = (100 - (hitPercent*100).toFixed(2))
+
+      toMultiplier = (value) =>
+        switch true
+          when value < 25 then @getRandomArbitrary 1.15,1.25
+          when value < 50 then @getRandomArbitrary 1.25, 1.5
+          when value < 60 then @getRandomArbitrary 1.5,1.75
+          when value < 75 then @getRandomArbitrary 1.75, 2.25
+          when value < 85 then @getRandomArbitrary 2.25, 2.75
+          when value < 90 then @getRandomArbitrary 2.75, 3.5
+          else @getRandomArbitrary 3.5, 4.5
+
+      strike: toMultiplier strikePercent
+      ball: toMultiplier ballPercent
+      out: toMultiplier outPercent
+      hit: toMultiplier hitPercent
+      foulball: @getRandomArbitrary(1.5, 2)
+
+  getRandomArbitrary: (min, max) -> parseFloat((Math.random() * (max - min) + min).toFixed(2))
