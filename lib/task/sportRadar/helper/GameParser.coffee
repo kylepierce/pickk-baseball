@@ -200,7 +200,7 @@ module.exports = class
 
     bases =
       first: false
-      seconds: false
+      second: false
       third: false
 
     outs = 0
