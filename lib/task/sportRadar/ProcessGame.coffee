@@ -304,7 +304,8 @@ module.exports = class extends Task
       triple: toMultiplier triplePercent
       homerun: toMultiplier homeRunPercent
     .catch (error) ->
-      @logger.warn "Fallback to generic multipliers for play", error
+      @logger.warn "Fallback to generic multipliers for play. Player (#{playerId})"
+      @logger.verbose "Fallback to generic multipliers for play. Player (#{playerId})", error
       @getGenericMultipliersForPlay()
 
   calculateMultipliersForPitch: (playerId, balls, strikes) ->
@@ -366,7 +367,8 @@ module.exports = class extends Task
       hit: toMultiplier hitPercent
       foulball: @getRandomArbitrary(1.5, 2)
     .catch (error) ->
-      @logger.warn "Fallback to generic multipliers for pitch", error
+      @logger.warn "Fallback to generic multipliers for pitch. Player (#{playerId})"
+      @logger.verbose "Fallback to generic multipliers for pitch. Player (#{playerId})", error
       @getGenericMultipliersForPitch()
 
   getGenericMultipliersForPlay: ->
