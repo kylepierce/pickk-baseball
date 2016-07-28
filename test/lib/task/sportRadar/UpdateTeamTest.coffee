@@ -15,6 +15,7 @@ describe "Import detailed information about teams and players", ->
   Players = mongodb.collection("players")
 
   teamId = "833a51a9-0d84-410f-bd77-da08c3e5e26e"
+  playerId = "9baf07d4-b1cb-4494-8c95-600d9e8de1a9"
 
   beforeEach ->
     updateTeam = new UpdateTeam dependencies
@@ -44,13 +45,17 @@ describe "Import detailed information about teams and players", ->
         .then (team) ->
           should.exist team
 
-          {nickname} = team
+          {nickname, updatedAt} = team
           should.exist nickname
           nickname.should.be.equal "Royals"
+
+          should.exist updatedAt
+          updatedAt.should.be.a "date"
+          (moment().diff(updatedAt, 'hour') is 0).should.be.equal true
         .then -> Players.count()
         .then (count) ->
           count.should.be.equal 40
-        .then -> Players.findOne({_id: "9baf07d4-b1cb-4494-8c95-600d9e8de1a9"})
+        .then -> Players.findOne({_id: playerId})
         .then (player) ->
           should.exist player
 
@@ -62,7 +67,17 @@ describe "Import detailed information about teams and players", ->
           name.should.be.equal "Salvador Perez"
 
           should.exist stats
-          console.log stats
+          {three_year} = stats
+          should.exist three_year
+          three_year.should.be.an "object"
+
+          {bases_loaded} = three_year
+          should.exist bases_loaded
+          bases_loaded.should.be.an "object"
+
+          {avg} = bases_loaded
+          should.exist avg
+          avg.should.be.equal ".238"
         .then @assertScopesFinished
         .then resolve
         .catch reject
