@@ -3,7 +3,8 @@
   "logger": {
     "transports": {
       "Console": {
-        "silent": false
+        "silent": false,
+        "level": "verbose"
       }
     }
   },

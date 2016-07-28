@@ -11,7 +11,10 @@ module.exports = class
     @fullName = "#{data['market']} #{data['name']}"
     @computerName = data['abbr'].toLowerCase()
     @city = data['market']
-    @state = ""
+    @state = data['venue']['state']
+
+    now = new Date()
+    @updatedAt = now
 
   getSelector: ->
     "_id": @_id

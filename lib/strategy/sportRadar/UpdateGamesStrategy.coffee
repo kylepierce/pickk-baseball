@@ -8,6 +8,7 @@ ImportGameDetails = require "../../task/sportRadar/ImportGameDetails"
 CloseInactiveAtBats = require "../../task/CloseInactiveAtBats"
 CloseInactiveQuestions = require "../../task/CloseInactiveQuestions"
 ProcessGame = require "../../task/sportRadar/ProcessGame"
+UpdateTeam = require "../../task/sportRadar/UpdateTeam"
 promiseRetry = require 'promise-retry'
 
 module.exports = class extends Strategy
@@ -19,8 +20,9 @@ module.exports = class extends Strategy
     @importGameDetails = new ImportGameDetails dependencies
     @closeInactiveAtBats = new CloseInactiveAtBats dependencies
     @closeInactiveQuestions = new CloseInactiveQuestions dependencies
+    @updateTeam = new UpdateTeam dependencies
     @processGame = new ProcessGame dependencies
-    
+
     @logger = dependencies.logger
 
   execute: ->
@@ -34,6 +36,8 @@ module.exports = class extends Strategy
       .map (game) ->
         Promise.bind @
         .then -> @importGameDetails.execute game['id']
+        .then -> @updateTeam.execute game['home_team']
+        .then -> @updateTeam.execute game['away_team']
         .then -> @processGame.execute game
       , {concurrency: 1}
       .catch (error) =>

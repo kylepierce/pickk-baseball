@@ -5,11 +5,16 @@ module.exports = class
   constructor: (data) ->
     Match.check data, Object
 
-    @_id = data['player_id']
-    @playerId = data['player_id']
-    @name = "#{data['first_name']} #{data['last_name']}"
+    @_id = data['id']
+    @playerId = data['id']
+    @name = data['full_name']
+    @firstName = data['first_name']
+    @lastName = data['last_name']
     @team = data['team_id']
     @position = data['position']
+
+    now = new Date()
+    @updatedAt = now
 
   getSelector: ->
     "_id": @_id
