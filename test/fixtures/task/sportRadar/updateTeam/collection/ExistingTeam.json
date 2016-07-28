@@ -1,0 +1,12 @@
+{
+  "teams": [
+    {
+      "_id": "833a51a9-0d84-410f-bd77-da08c3e5e26e",
+      "nickname": "Stanford Rockies",
+      "fullName": "New-York Rockies",
+      "computerName": "RKS",
+      "city": "New-York",
+      "state": "CF"
+    }
+  ]
+}
