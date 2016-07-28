@@ -253,9 +253,6 @@ module.exports = class extends Task
     Promise.bind @
     .then -> @Players.findOne({_id: playerId})
     .then (player) ->
-      # fallback
-      return @getGenericMultipliersForPlay() if not player.stats
-
       stat = if player.stats.three_year['no_statistics_available_'] then player.stats.y2016extended else player.stats.three_year
 
       situation = switch true
@@ -306,13 +303,14 @@ module.exports = class extends Task
       double: toMultiplier doublePercent
       triple: toMultiplier triplePercent
       homerun: toMultiplier homeRunPercent
+    .catch (error) ->
+      @logger.warn "Fallback to generic multipliers for play", error
+      @getGenericMultipliersForPlay()
 
   calculateMultipliersForPitch: (playerId, balls, strikes) ->
     Promise.bind @
     .then -> @Players.findOne({_id: playerId})
     .then (player) ->
-      # fallback
-      return @getGenericMultipliersForPitch() if not player.stats
 
       stat = if player.stats.three_year['no_statistics_available_'] then player.stats.y2016extended else player.stats.three_year
       totalAtBat = stat.total['ab']
@@ -367,6 +365,9 @@ module.exports = class extends Task
       out: toMultiplier outPercent
       hit: toMultiplier hitPercent
       foulball: @getRandomArbitrary(1.5, 2)
+    .catch (error) ->
+      @logger.warn "Fallback to generic multipliers for pitch", error
+      @getGenericMultipliersForPitch()
 
   getGenericMultipliersForPlay: ->
     out: @getRandomArbitrary 1.05, 1.65
