@@ -3,7 +3,7 @@
     {
       "script": "./bin/worker",
       "args": [
-        "--settings", "settings/stage.json",
+        "--settings", "settings/prod.json",
         "--delay=3000",
         "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
       ],
@@ -15,6 +15,14 @@
   ],
 
   "deploy": {
+    "prod": {
+      "user": "root",
+      "host": "do.pickk-prod",
+      "ref": "origin/master",
+      "repo": "git@bitbucket.org:IcyEagle/pickk-import.git",
+      "path": "/opt/pickk-import",
+      "post-deploy": "npm install && pm2 startOrRestart ecosystem.json --env prod"
+    },
     "stage": {
       "user": "root",
       "host": "do.pickk-stag",
