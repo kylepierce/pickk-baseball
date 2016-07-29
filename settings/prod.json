@@ -1,0 +1,19 @@
+{
+  "logger": {
+    "transports": {
+      "Console": {
+        "silent": false
+      },
+      "File": {
+        "silent": false
+      }
+    }
+  },
+  "mongodb": {
+    "url": "mongodb://getpickk:Imonaboat118@candidate.11.mongolayer.com:11179/pickk-production"
+  },
+  "sportRadar": {
+    "apiKey": "kw3k3f8n9zcy92ufe7g8gwy4"
+  }
+
+}
