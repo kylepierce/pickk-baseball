@@ -4,7 +4,7 @@
       "script": "./bin/worker",
       "args": [
         "--settings", "settings/prod.json",
-        "--delay=500",
+        "--delay=1000",
         "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
       ],
       "exec_interpreter": "coffee",
