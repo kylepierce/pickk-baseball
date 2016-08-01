@@ -351,6 +351,48 @@ describe "Process imported games and question management", ->
       should.exist first_name
       first_name.should.be.equal "Whitley"
 
+  it 'should calculate current inning number correctly', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameWithLineUp, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {inningNumber} = result
+
+      should.exist inningNumber
+      inningNumber.should.be.equal 8
+
+  it 'should determine commercial break (true)', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameWithLineUp, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {commercialBreak} = result
+
+      should.exist commercialBreak
+      commercialBreak.should.be.equal true
+
+  it 'should determine commercial break (false)', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {commercialBreak} = result
+
+      should.exist commercialBreak
+      commercialBreak.should.be.equal false
+
   it 'should provide game details', ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb

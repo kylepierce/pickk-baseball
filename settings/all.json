@@ -25,5 +25,8 @@
   },
   "mongodb": {
     "url": "Define_this_key_in_environment_settings"
+  },
+  "common": {
+    "commercialTime": 2
   }
 }

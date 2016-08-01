@@ -47,6 +47,35 @@ module.exports = class extends Task
       .then -> @handlePlay game, result
       .then -> @handlePitch game, result
       .then -> @handleAtBat game, result
+      .then -> @handleCommercialBreak game, result
+
+  handleCommercialBreak: (game, result) ->
+    if result.commercialBreak
+      @logger.verbose "Commercial break is active"
+      # it's time to start commercial break
+      # It's necessary to check commercialStartedAt is undefined so it means
+      # that "commercial" hasn't been unset because of timeout
+      if not game.commercial and not game.commercialStartedAt
+        Promise.bind @
+        .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: true, commercialStartedAt: new Date()}}
+        .tap -> @logger.info "Commercial flag has been set for game (#{game.name})"
+        .tap -> @logger.verbose "Commercial flag has been set for game (#{game.name})", {gameId: game._id}
+      else
+      # so here a commercial break is active and commercialStartedAt is set
+      # It's necessary to calculate if time interval for a break is finished or not
+        timeout = moment().diff(game.commercialStartedAt, 'minute')
+        @logger.verbose "Commercial interval for game (#{game.name}) [#{game._id}] is #{timeout} minutes"
+        if timeout >= @dependencies.settings['common']['commercialTime']
+          Promise.bind @
+          .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}} # do NOT unset "commercialStartedAt" here!
+          .tap -> @logger.info "Commercial flag has been clear for game (#{game.name}) because of timeout"
+          .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name}) because of timeout", {gameId: game._id}
+    # the game is in progress. Clear "commercial" flag if it's been set earlier.
+    else if game.commercial
+      Promise.bind @
+      .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
+      .tap -> @logger.info "Commercial flag has been clear for game (#{game.name})"
+      .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name})", {gameId: game._id}
 
   handleAtBat: (game, result) ->
     Promise.bind @

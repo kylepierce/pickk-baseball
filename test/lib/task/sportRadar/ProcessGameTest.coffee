@@ -496,6 +496,84 @@ describe "Process imported games and question management", ->
       should.exist strikeCount
       strikeCount.should.equal 0
 
+  it 'should set commercial break (no timeout)', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) ->
+      should.exist game
+
+      {commercial, commercialStartedAt} = game
+      should.exist commercial
+      commercial.should.be.equal true
+
+      should.exist commercialStartedAt
+      duration = moment().diff(commercialStartedAt, 'minute')
+      (duration < dependencies.settings['common']['commercialTime']).should.be.equal true
+
+  it 'shouldn\'t clear commercial startedAt field', ->
+    now = new Date()
+
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> SportRadarGames.update {_id: game._id}, {$set: {commercial: true, commercialStartedAt: now}}
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) ->
+      should.exist game
+
+      {commercial, commercialStartedAt} = game
+      should.exist commercial
+      commercial.should.be.equal true
+
+      should.exist commercialStartedAt
+      commercialStartedAt.getTime().should.be.equal now.getTime()
+
+  it 'should clear commercial flag because of timeout', ->
+    interval = dependencies.settings['common']['commercialTime']
+    now = moment().subtract(interval + 1, 'minutes').toDate()
+
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> SportRadarGames.update {_id: game._id}, {$set: {commercial: true, commercialStartedAt: now}}
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) ->
+      should.exist game
+
+      {commercial, commercialStartedAt} = game
+      should.exist commercial
+      commercial.should.be.equal false
+
+      should.exist commercialStartedAt
+      commercialStartedAt.getTime().should.be.equal now.getTime()
+
+  it 'should clear commercial flag and commercialStartedAt because the game is active', ->
+    interval = dependencies.settings['common']['commercialTime']
+    now = moment().subtract(interval + 1, 'minutes').toDate()
+
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> SportRadarGames.update {_id: game._id}, {$set: {commercial: true, commercialStartedAt: now}}
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) ->
+      should.exist game
+
+      {commercial, commercialStartedAt} = game
+      should.exist commercial
+      commercial.should.be.equal false
+
+      should.not.exist commercialStartedAt
+
   it 'should enrich the game by new fields', ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
@@ -608,7 +686,6 @@ describe "Process imported games and question management", ->
       should.exist multipliers
       multipliers.should.be.an "object"
 
-      console.log multipliers
       {out, walk, single, double, triple, homerun} = multipliers
       should.exist out
       out.should.be.a "number"

@@ -25,13 +25,33 @@ module.exports = class
     @logger.verbose "Number of innings - #{innings.length}"
 
     if innings.length
+      # propagate data down
+      for inning in innings when inning['halfs']
+        for half in inning['halfs'] when half['events']
+          for event in half['events']
+            for type, data of event
+              _.extend data,
+                inning: inning['number']
+                half: half['half']
+                type: type
+
+              # extend play events
+              if type is 'at_bat' and data['events']
+                for pitch in data['events']
+                  _.extend pitch,
+                    inning: inning['number']
+                    half: half['half']
+                    hitter_id: data['hitter_id']
+
       @innings = innings = _.sortBy(innings, @byNumber)
       halfs = _.flatten _.pluck _.sortBy(innings, @byNumber), 'halfs'
       @logger.verbose "Number of halfs - #{halfs.length}"
 
       groupedHalfs = _.groupBy halfs, @byTeam
-      @logger.verbose "Number of (#{@HOME_TEAM_MARKER}) halfs - #{groupedHalfs[@HOME_TEAM_MARKER].length}"
-      @logger.verbose "Number of (#{@AWAY_TEAM_MARKER}) halfs - #{groupedHalfs[@AWAY_TEAM_MARKER].length}"
+      homeHalfs = groupedHalfs[@HOME_TEAM_MARKER]
+      awayHalfs = groupedHalfs[@AWAY_TEAM_MARKER]
+      @logger.verbose "Number of (#{@HOME_TEAM_MARKER}) halfs - #{homeHalfs.length}"
+      @logger.verbose "Number of (#{@AWAY_TEAM_MARKER}) halfs - #{awayHalfs.length}"
 
       homeTeamId = game['scoring']['home'].id
       @logger.verbose "homeTeamId - #{homeTeamId}"
@@ -65,11 +85,15 @@ module.exports = class
       @lastPlay = lastPlay = @getLastPlay(plays)
       @lastPlays = lastPlays = {}
 
+      inningNumber = @lastPlay.inning
+
       result =
         balls: 0
         strikes: 0
         playNumber: plays.length
         pitchNumber: 1
+        inningNumber: inningNumber
+        commercialBreak: false
 
       if lastPlay
         @logger.verbose "lastPlay", lastPlay
@@ -104,6 +128,7 @@ module.exports = class
               @logger.verbose "nextPlayer", nextPlayer
 
               result.hitter = nextPlayer
+              result.commercialBreak = @isFinishedInning lastPlay
             else
               result.hitter = @getFirstPlayerForTeam oppositeMarker
           else
@@ -167,6 +192,7 @@ module.exports = class
   isPitch: (event) -> event['type'] is 'pitch'
   isFinishedPlay: (play) -> @getLastPitch(play)?['flags']['is_ab_over']
   isFinishedHalf: (play) -> @getLastPitch(play)?['count']['outs'] is 3
+  isFinishedInning: (play) -> @isFinishedHalf(play) and play.half is 'B'
   byTeam: (half) -> half['half']
   byDate: (play) -> moment(play['events'][0]['created_at']).toDate()
   byNumber: (inning) -> inning['number']
