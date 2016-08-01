@@ -574,6 +574,57 @@ describe "Process imported games and question management", ->
 
       should.not.exist commercialStartedAt
 
+  it 'should create commercial questions for each team', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 2
+
+      homeTeamQuestion = _.findWhere questions, {teamId: '47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8'}
+      should.exist homeTeamQuestion
+      {commercial, inning, binaryChoice, gameId} = homeTeamQuestion
+      commercial.should.be.equal true
+      inning.should.be.equal 2
+      binaryChoice.should.be.equal true
+      gameId.should.be.equal activeGameId
+
+      awayTeamQuestion = _.findWhere questions, {teamId: '833a51a9-0d84-410f-bd77-da08c3e5e26e'}
+      should.exist awayTeamQuestion
+      {commercial, inning, binaryChoice, gameId} = awayTeamQuestion
+      commercial.should.be.equal true
+      inning.should.be.equal 2
+      binaryChoice.should.be.equal true
+      gameId.should.be.equal activeGameId
+
+  it 'shouldn\'t create duplicate commercial questions', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 2
+
+  it 'shouldn\'t create commercial questions because the game is in progress', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 0
+
   it 'should enrich the game by new fields', ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb

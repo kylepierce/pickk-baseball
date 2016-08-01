@@ -60,6 +60,7 @@ module.exports = class extends Task
         .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: true, commercialStartedAt: new Date()}}
         .tap -> @logger.info "Commercial flag has been set for game (#{game.name})"
         .tap -> @logger.verbose "Commercial flag has been set for game (#{game.name})", {gameId: game._id}
+        .then -> @createCommercialQuestions game, result
       else
       # so here a commercial break is active and commercialStartedAt is set
       # It's necessary to calculate if time interval for a break is finished or not
@@ -76,6 +77,59 @@ module.exports = class extends Task
       .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
       .tap -> @logger.info "Commercial flag has been clear for game (#{game.name})"
       .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name})", {gameId: game._id}
+
+  createCommercialQuestions: (game, result) ->
+    inningNumber = result.inningNumber + 1
+
+    questions = [
+      title: "Hit a Single"
+      outcomes: ["aS", "aSAD2", "aSAD3", "aSAD4"]
+    ,
+      title: "Hit a Double"
+      outcomes: ["aD", "aDAD3", "aDAD4"]
+    ,
+      title: "Hit a Home Run"
+      outcomes: ["aT", "aTAD4"]
+    ,
+      title: "Steal a Base"
+      outcomes: ["SB2", "SB3", "SB4"]
+    ,
+      title: "Get Hit by a Pitch"
+      outcomes: ["aHBP"]
+    ]
+
+    Promise.all (for type, team of result.teams
+      Promise.bind @
+      .return team
+      .then (team) ->
+        name = team.name
+        question = _.sample questions
+        text = "Will #{name} #{question.title} in the #{inningNumber} inning?"
+
+        options =
+          option1: {title: "True"}
+          option2: {title: "False"}
+
+        Promise.bind @
+        .then ->
+          @Questions.insert
+            _id: @Questions.db.ObjectId().toString()
+            que: text
+            game_id: game._id
+            gameId: game._id
+            teamId: team.id
+            inning: inningNumber
+            dateCreated: new Date()
+            active: true
+            commercial: true
+            binaryChoice: true
+            options: options
+            usersAnswered: []
+        .tap ->
+          @logger.info "Create commercial question '#{text}' for the game (#{game.name})"
+          @logger.verbose "Create commercial question '#{text}' for the game (#{game.name})", {gameId: game._id}
+    )
+
 
   handleAtBat: (game, result) ->
     Promise.bind @
@@ -109,7 +163,7 @@ module.exports = class extends Task
 
       Promise.bind @
       .then -> @closeInactivePlays game, result
-      .then -> @Questions.count {game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play}
+      .then -> @Questions.count {commercial: false, game_id: game.id, player_id: player['player_id'], atBatQuestion: true, play: play}
       .then (found) ->
         if not found
           Promise.bind @
@@ -138,7 +192,7 @@ module.exports = class extends Task
     playNumber = result.playNumber
 
     Promise.bind @
-    .then -> @Questions.find {game_id: game.id, active: true, atBatQuestion: true, play: {$ne: playNumber}}
+    .then -> @Questions.find {commercial: false, game_id: game.id, active: true, atBatQuestion: true, play: {$ne: playNumber}}
     .map (question) ->
       play = result['plays'][question['play'] - 1]
       outcome = play.outcome
@@ -214,7 +268,7 @@ module.exports = class extends Task
 
       Promise.bind @
       .then -> @closeInactivePitches game, result
-      .then -> @Questions.count {game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}, play: play, pitch: pitch}
+      .then -> @Questions.count {commercial: false, game_id: game.id, player_id: player['player_id'], atBatQuestion: {$exists: false}, play: play, pitch: pitch}
       .then (found) ->
         if not found
           Promise.bind @
@@ -243,7 +297,7 @@ module.exports = class extends Task
     pitchNumber = result.pitchNumber
 
     Promise.bind @
-    .then -> @Questions.find {game_id: game.id, active: true, atBatQuestion: {$exists: false}, $or: [{play: {$ne: playNumber}}, {pitch: {$ne: pitchNumber}}]}
+    .then -> @Questions.find {commercial: false, game_id: game.id, active: true, atBatQuestion: {$exists: false}, $or: [{play: {$ne: playNumber}}, {pitch: {$ne: pitchNumber}}]}
     .map (question) ->
       play = result['plays'][question['play'] - 1]
       outcome = play.pitches[question['pitch'] - 1]
