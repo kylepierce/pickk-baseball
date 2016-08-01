@@ -587,19 +587,21 @@ describe "Process imported games and question management", ->
 
       homeTeamQuestion = _.findWhere questions, {teamId: '47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8'}
       should.exist homeTeamQuestion
-      {commercial, inning, binaryChoice, gameId} = homeTeamQuestion
+      {commercial, inning, binaryChoice, gameId, outcomes} = homeTeamQuestion
       commercial.should.be.equal true
       inning.should.be.equal 2
       binaryChoice.should.be.equal true
       gameId.should.be.equal activeGameId
+      outcomes.should.be.an "array"
 
       awayTeamQuestion = _.findWhere questions, {teamId: '833a51a9-0d84-410f-bd77-da08c3e5e26e'}
       should.exist awayTeamQuestion
-      {commercial, inning, binaryChoice, gameId} = awayTeamQuestion
+      {commercial, inning, binaryChoice, gameId, outcomes} = awayTeamQuestion
       commercial.should.be.equal true
       inning.should.be.equal 2
       binaryChoice.should.be.equal true
       gameId.should.be.equal activeGameId
+      outcomes.should.be.an "array"
 
   it 'shouldn\'t create duplicate commercial questions', ->
     Promise.bind @

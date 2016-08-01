@@ -81,7 +81,7 @@ module.exports = class extends Task
   createCommercialQuestions: (game, result) ->
     inningNumber = result.inningNumber + 1
 
-    questions = [
+    templates = [
       title: "Hit a Single"
       outcomes: ["aS", "aSAD2", "aSAD3", "aSAD4"]
     ,
@@ -103,8 +103,8 @@ module.exports = class extends Task
       .return team
       .then (team) ->
         name = team.name
-        question = _.sample questions
-        text = "Will #{name} #{question.title} in the #{inningNumber} inning?"
+        template = _.sample templates
+        text = "Will #{name} #{template.title} in the #{inningNumber} inning?"
 
         options =
           option1: {title: "True"}
@@ -124,6 +124,7 @@ module.exports = class extends Task
             commercial: true
             binaryChoice: true
             options: options
+            outcomes: template.outcomes
             usersAnswered: []
         .tap ->
           @logger.info "Create commercial question '#{text}' for the game (#{game.name})"
