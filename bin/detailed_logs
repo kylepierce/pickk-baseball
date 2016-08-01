@@ -1,3 +1,18 @@
 #!/bin/bash
 
-ssh root@do.pickk-prod 'tail -f /tmp/pickk/logs'
+set -eux
+
+DIRNAME=$(cd `dirname $0` && pwd)
+
+ENV=${1:-}
+if [ -z $ENV ]; then
+  echo "Usage: $0 ENV"
+  echo "ENV = [prod, stag]"
+  exit 1
+else
+  shift
+fi
+
+HOST=root@do.pickk-$ENV
+
+ssh $HOST 'tail -f /tmp/pickk/logs'

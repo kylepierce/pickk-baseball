@@ -15,4 +15,4 @@ fi
 
 HOST=root@do.pickk-$ENV
 
-ssh $HOST 'pm2 logs'
+ssh $HOST 'pm2 restart all'
