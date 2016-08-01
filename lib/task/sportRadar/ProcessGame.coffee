@@ -129,7 +129,7 @@ module.exports = class extends Task
         reward = Math.floor answer['wager'] * answer['multiplier']
         Promise.bind @
         .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
-        .then -> @GamePlayed.update {userId: _id, gameId: game.id}, {$inc: {coins: reward}}
+        .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
         .then ->
           notificationId = chance.guid()
           @Users.update {_id: answer['userId']},
@@ -234,7 +234,7 @@ module.exports = class extends Task
         reward = Math.floor answer['wager'] * answer['multiplier']
         Promise.bind @
         .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
-        .then -> @GamePlayed.update {userId: _id, gameId: game.id}, {$inc: {coins: reward}}
+        .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
         .then ->
           notificationId = chance.guid()
           @Users.update {_id: answer['userId']},
