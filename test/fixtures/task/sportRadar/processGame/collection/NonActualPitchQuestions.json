@@ -5,6 +5,7 @@
       "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
       "player_id": "abbda8e1-2274-4bf0-931c-691cf8bf24c6",
       "atBatQuestion": true,
+      "commercial": false,
       "play": 28,
       "active": true,
       "options": {
@@ -21,6 +22,7 @@
       "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
       "player_id": "abbda8e1-2274-4bf0-931c-691cf8bf24c7",
       "atBatQuestion": true,
+      "commercial": false,
       "play": 27,
       "active": false,
       "options": {
@@ -40,6 +42,7 @@
       "play": 28,
       "pitch": 5,
       "active": true,
+      "commercial": false,
       "options": {
         "option1": { "title": "Strike Out", "multiplier": 1.45 },
         "option2": { "title": "Foul Ball", "multiplier": 1.65 },
@@ -54,6 +57,7 @@
       "play": 28,
       "pitch": 4,
       "active": false,
+      "commercial": false,
       "options": {
         "option1": { "title": "Strike Out", "multiplier": 1.45 },
         "option2": { "title": "Foul Ball", "multiplier": 1.65 },

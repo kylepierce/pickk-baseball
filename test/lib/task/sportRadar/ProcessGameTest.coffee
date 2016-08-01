@@ -207,7 +207,7 @@ describe "Process imported games and question management", ->
       # should be still active
       active.should.be.equal false
 
-  it 'should reward the user for right answer on pitch question', ->
+  it.skip 'should reward the user for right answer on pitch question', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualPitchQuestionsFixtures, mongodb
@@ -228,7 +228,7 @@ describe "Process imported games and question management", ->
       should.exist coins
       coins.should.be.equal 10435
 
-  it 'should reward the user for right answer on play question', ->
+  it.skip 'should reward the user for right answer on play question', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualQuestionsFixtures, mongodb

@@ -87,8 +87,7 @@ module.exports = class
       @lastPlay = lastPlay = @getLastPlay(plays)
       @lastPlays = lastPlays = {}
 
-      inningNumber = @lastPlay.inning
-
+      inningNumber = @lastPlay?.inning or 0
 
       result =
         balls: 0
