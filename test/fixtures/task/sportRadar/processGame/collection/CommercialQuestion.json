@@ -1,0 +1,20 @@
+{
+  "questions": [
+    {
+      "id": "active_question_for_active_game",
+      "game_id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "gameId": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "teamId": "47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8",
+      "commercial": true,
+      "inning": 3,
+      "active": true,
+      "binaryChoice": true,
+      "options": {
+        "option1": { "title": "True"},
+        "option2": { "title": "False"}
+      },
+      "outcomes": ["aS", "aSAD2", "aSAD3", "aSAD4"],
+      "usersAnswered": []
+    }
+  ]
+}

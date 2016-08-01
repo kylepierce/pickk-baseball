@@ -12,6 +12,7 @@ QuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRad
 ActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActualQuestions.json"
 NonActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/NonActualQuestions.json"
 NonActualPitchQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/NonActualPitchQuestions.json"
+CommercialQuestionFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/CommercialQuestion.json"
 ActiveFullGameFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveFullGame.json"
 ActiveFullGameWithLineUp = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveFullGameWithLineUp.json"
 ActiveGameNoInningsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameNoInnings.json"
@@ -626,6 +627,99 @@ describe "Process imported games and question management", ->
       should.exist questions
       questions.should.be.an "array"
       questions.length.should.be.equal 0
+
+  it 'should close commercial questions with true result', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures CommercialQuestionFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 1
+
+      question = questions[0]
+      should.exist question
+      {outcome, active} = question
+
+      should.exist outcome
+      outcome.should.be.equal true
+
+      should.exist active
+      active.should.be.equal false
+
+  it 'should close commercial questions with false result', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures CommercialQuestionFixtures, mongodb
+    .then -> Questions.findOne({commercial: true})
+    .then (question) -> Questions.update {_id: question._id}, {$set: {outcomes: ["aHR"]}}
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 1
+
+      question = questions[0]
+      should.exist question
+      {outcome, active} = question
+
+      should.exist outcome
+      outcome.should.be.equal false
+
+      should.exist active
+      active.should.be.equal false
+
+  it 'shouldn\'t close commercial questions because the inning still in progress', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures CommercialQuestionFixtures, mongodb
+    .then -> Questions.findOne({commercial: true})
+    .then (question) -> Questions.update {_id: question._id}, {$set: {inning: 4}}
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 1
+
+      question = questions[0]
+      should.exist question
+      {outcome, active} = question
+
+      should.not.exist outcome
+
+      should.exist active
+      active.should.be.equal true
+
+  it 'should close commercial questions (inning in progress)', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures CommercialQuestionFixtures, mongodb
+    .then -> Questions.findOne({commercial: true})
+    .then (question) -> Questions.update {_id: question._id}, {$set: {inning: 4, outcomes: ["kKS"]}}
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 1
+
+      question = questions[0]
+      should.exist question
+      {outcome, active} = question
+
+      should.exist outcome
+      outcome.should.be.equal true
+
+      should.exist active
+      active.should.be.equal false
 
   it 'should enrich the game by new fields', ->
     Promise.bind @

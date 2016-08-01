@@ -60,9 +60,11 @@ module.exports = class
 
       allEvents = _.flatten _.pluck halfs, 'events'
       @logger.verbose "Number of home events - #{allEvents.length}"
-      homeEvents = _.flatten _.pluck groupedHalfs[@HOME_TEAM_MARKER], 'events'
+      splitHomeEvents = _.pluck groupedHalfs[@HOME_TEAM_MARKER], 'events'
+      homeEvents = _.flatten splitHomeEvents
       @logger.verbose "Number of home events - #{homeEvents.length}"
-      awayEvents = _.flatten _.pluck groupedHalfs[@AWAY_TEAM_MARKER], 'events'
+      splitAwayEvents = _.pluck groupedHalfs[@AWAY_TEAM_MARKER], 'events'
+      awayEvents = _.flatten splitAwayEvents
       @logger.verbose "Number of away events - #{awayEvents.length}"
 
       allLineups = _.pluck (_.filter(allEvents, @isLineup)), 'lineup'
@@ -87,6 +89,7 @@ module.exports = class
 
       inningNumber = @lastPlay.inning
 
+
       result =
         balls: 0
         strikes: 0
@@ -94,6 +97,9 @@ module.exports = class
         pitchNumber: 1
         inningNumber: inningNumber
         commercialBreak: false
+        outcomesList:
+          "#{homeTeamId}": @getOutcomesForHalfs splitHomeEvents
+          "#{awayTeamId}": @getOutcomesForHalfs splitAwayEvents
 
       if lastPlay
         @logger.verbose "lastPlay", lastPlay
@@ -304,3 +310,9 @@ module.exports = class
 
   ofTeam: (teamId) ->
     (lineup) -> lineup['team_id'] is teamId
+
+  getOutcomesForHalfs: (halfs) ->
+    _.map halfs, (events) =>
+      plays = _.pluck _.filter(events, @isPlay), 'at_bat'
+      pitches = _.filter _.flatten(_.pluck(plays, 'events')), (event) -> event.type is 'pitch'
+      _.uniq _.pluck pitches, "outcome_id"

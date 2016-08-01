@@ -48,6 +48,7 @@ module.exports = class extends Task
       .then -> @handlePitch game, result
       .then -> @handleAtBat game, result
       .then -> @handleCommercialBreak game, result
+      .then -> @resolveCommercialQuestions game, result
 
   handleCommercialBreak: (game, result) ->
     if result.commercialBreak
@@ -88,8 +89,11 @@ module.exports = class extends Task
       title: "Hit a Double"
       outcomes: ["aD", "aDAD3", "aDAD4"]
     ,
-      title: "Hit a Home Run"
+      title: "Hit a Triple"
       outcomes: ["aT", "aTAD4"]
+    ,
+      title: "Hit a Home Run"
+      outcomes: ["aHR"]
     ,
       title: "Steal a Base"
       outcomes: ["SB2", "SB3", "SB4"]
@@ -130,6 +134,32 @@ module.exports = class extends Task
           @logger.info "Create commercial question '#{text}' for the game (#{game.name})"
           @logger.verbose "Create commercial question '#{text}' for the game (#{game.name})", {gameId: game._id}
     )
+
+  resolveCommercialQuestions: (game, result) ->
+    teamOutcomesList = result.outcomesList
+
+    Promise.bind @
+    .then -> @Questions.find {commercial: true, game_id: game.id, active: true}
+    .map (question) ->
+      @logger.verbose "Handle commercial question #{question.que}"
+      inning = question['inning']
+
+      outcomesList = teamOutcomesList[question['teamId']]
+      if outcomesList.length >= (inning + 1)
+        result = _.intersection(outcomesList[inning], question['outcomes']).length > 0
+        @logger.verbose "Try to resolve the commercial question #{question.que}", {expected: question['outcomes'], actual: outcomesList[inning], result: result}
+        if result
+          Promise.bind @
+          .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: true}
+          .tap ->
+            @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with true result"
+            @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with true result", {gameId: game._id}
+        else if outcomesList.length > (inning + 1)
+          Promise.bind @
+          .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: result}
+          .tap ->
+            @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with false result"
+            @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with false result", {gameId: game._id}
 
 
   handleAtBat: (game, result) ->
