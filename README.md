@@ -68,4 +68,13 @@ In order to deploy the application on the stage server call:
 pm2 deploy stage
 ```
 
+In order to restart the application on the stage or production server call:
+```
+#!bash
+
+./bin/restart stag
+or
+./bin/restart prod
+```
+
 Open [this](http://localhost:3000/sportRadarGames) URL to show games for today.
