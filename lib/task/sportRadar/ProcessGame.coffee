@@ -24,6 +24,7 @@ module.exports = class extends Task
     @Questions = dependencies.mongodb.collection("questions")
     @AtBats = dependencies.mongodb.collection("atBat")
     @Answers = dependencies.mongodb.collection("answers")
+    @GamePlayed = dependencies.mongodb.collection("gamePlayed")
     @Users = dependencies.mongodb.collection("users")
     @gameParser = new GameParser dependencies
 
@@ -128,10 +129,10 @@ module.exports = class extends Task
         reward = Math.floor answer['wager'] * answer['multiplier']
         Promise.bind @
         .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
+        .then -> @GamePlayed.update {userId: _id, gameId: game.id}, {$inc: {coins: reward}}
         .then ->
           notificationId = chance.guid()
           @Users.update {_id: answer['userId']},
-            $inc: {"profile.coins": reward}
             $push:
               pendingNotifications:
                 _id: notificationId,
@@ -233,10 +234,10 @@ module.exports = class extends Task
         reward = Math.floor answer['wager'] * answer['multiplier']
         Promise.bind @
         .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
+        .then -> @GamePlayed.update {userId: _id, gameId: game.id}, {$inc: {coins: reward}}
         .then ->
           notificationId = chance.guid()
           @Users.update {_id: answer['userId']},
-            $inc: {"profile.coins": reward}
             $push:
               pendingNotifications:
                 _id: notificationId,
