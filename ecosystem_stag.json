@@ -4,7 +4,7 @@
       "name": "ImportGames",
       "script": "./bin/worker",
       "args": [
-        "--settings", "settings/stage.json",
+        "--settings", "settings/stag.json",
         "--delay=1000",
         "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
       ],
@@ -17,7 +17,7 @@
       "name": "ImportFutureGames",
       "script": "./bin/worker",
       "args": [
-        "--settings", "settings/stage.json",
+        "--settings", "settings/stag.json",
         "--delay=3600000",
         "lib/strategy/sportRadar/ImportFutureGamesStrategy.coffee"
       ],
@@ -30,13 +30,13 @@
   ],
 
   "deploy": {
-    "prod": {
+    "stag": {
       "user": "root",
-      "host": "do.pickk-stage",
+      "host": "do.pickk-stag",
       "ref": "origin/master",
       "repo": "git@bitbucket.org:IcyEagle/pickk-import.git",
       "path": "/opt/pickk-import",
-      "post-deploy": "npm install && pm2 startOrRestart ecosystem.json --env prod"
+      "post-deploy": "npm install && pm2 startOrRestart ecosystem_stag.json --env stag"
     }
   }
 }

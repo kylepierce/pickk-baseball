@@ -61,11 +61,13 @@ In order to see active tasks call:
 pm2 status
 ```
 
-In order to deploy the application on the stage server call:
+In order to deploy the application on the stage or production server call:
 ```
 #!bash
 
-pm2 deploy stage
+./bin/deploy stag
+or
+./bin/deploy prod
 ```
 
 In order to restart the application on the stage or production server call:

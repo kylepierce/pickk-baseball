@@ -4,7 +4,7 @@
       "name": "ImportGames",
       "script": "./bin/worker",
       "args": [
-        "--settings", "settings/stage.json",
+        "--settings", "settings/stag.json",
         "--max-loops=5",
         "--delay=3000",
         "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
@@ -18,7 +18,7 @@
       "name": "ImportFutureGames",
       "script": "./bin/worker",
       "args": [
-        "--settings", "settings/stage.json",
+        "--settings", "settings/stag.json",
         "--delay=3600000",
         "lib/strategy/sportRadar/ImportFutureGamesStrategy.coffee"
       ],
