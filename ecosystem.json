@@ -15,13 +15,13 @@
   ],
 
   "deploy": {
-    "stage": {
+    "prod": {
       "user": "root",
-      "host": "do.pickk-stag",
+      "host": "do.pickk-prod",
       "ref": "origin/master",
       "repo": "git@bitbucket.org:IcyEagle/pickk-import.git",
       "path": "/opt/pickk-import",
-      "post-deploy": "npm install && pm2 startOrRestart ecosystem.json --env stage"
+      "post-deploy": "npm install && pm2 startOrRestart ecosystem.json --env prod"
     }
   }
 }
