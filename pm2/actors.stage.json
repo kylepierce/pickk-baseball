@@ -13,6 +13,20 @@
       "exec_mode": "fork",
       "instances": 1,
       "max_memory_restart": "512M"
+    },
+    {
+      "name": "ImportFutureGames",
+      "script": "./bin/worker",
+      "args": [
+        "--settings", "settings/stage.json",
+        "--delay=3600000",
+        "lib/strategy/sportRadar/ImportFutureGamesStrategy.coffee"
+      ],
+      "exec_interpreter": "coffee",
+      "exec_mode": "fork",
+      "instances": 1,
+      "max_memory_restart": "1024M"
     }
+
   ]
 }

@@ -1,11 +1,25 @@
 {
   "apps": [
     {
+      "name": "ImportGames",
       "script": "./bin/worker",
       "args": [
         "--settings", "settings/prod.json",
         "--delay=3000",
         "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
+      ],
+      "exec_interpreter": "coffee",
+      "exec_mode": "fork",
+      "instances": 1,
+      "max_memory_restart": "1024M"
+    },
+    {
+      "name": "ImportFutureGames",
+      "script": "./bin/worker",
+      "args": [
+        "--settings", "settings/prod.json",
+        "--delay=3600000",
+        "lib/strategy/sportRadar/ImportFutureGamesStrategy.coffee"
       ],
       "exec_interpreter": "coffee",
       "exec_mode": "fork",
