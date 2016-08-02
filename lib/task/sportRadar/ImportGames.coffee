@@ -20,6 +20,10 @@ module.exports = class extends Task
     @registerEvents ['upserted']
 
   execute: (date = new Date()) ->
+    # cast to EDT timezone
+    EDT_OFFSET = 60 * 4
+    date = moment(date).subtract(EDT_OFFSET + moment(date).utcOffset(), 'minutes').toDate()
+
     Promise.bind @
     .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
     .then -> @api.getScheduledGames(date)
