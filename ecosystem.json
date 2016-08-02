@@ -32,7 +32,7 @@
   "deploy": {
     "prod": {
       "user": "root",
-      "host": "do.pickk-prod",
+      "host": "do.pickk-stage",
       "ref": "origin/master",
       "repo": "git@bitbucket.org:IcyEagle/pickk-import.git",
       "path": "/opt/pickk-import",
