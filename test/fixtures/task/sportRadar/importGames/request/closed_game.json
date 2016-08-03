@@ -1,0 +1,347 @@
+[
+    {
+        "scope": "http://api.sportradar.us:80",
+        "method": "GET",
+        "path": "/mlb-t5/games/2016/08/01/schedule.json?api_key=kw3k3f8n9zcy92ufe7g8gwy4",
+        "body": "",
+        "status": 200,
+        "response": {
+            "league": {
+                "id": "2fa448bc-fc17-4d3d-be03-e60e080fdc26",
+                "name": "Major League Baseball",
+                "alias": "MLB",
+                "date": "2016-08-01",
+                "games": [
+                    {
+                        "id": "69383e6a-7b67-486c-8f36-52f174a42c62",
+                        "status": "closed",
+                        "coverage": "full",
+                        "attendance": 24009,
+                        "duration": "3:46",
+                        "game_number": 1,
+                        "day_night": "N",
+                        "scheduled": "2016-08-02T02:10:00+00:00",
+                        "home_team": "d52d5339-cbdd-43f3-9dfa-a42fd588b9a3",
+                        "away_team": "dcfd5266-00ce-442c-bc09-264cd20cf455",
+                        "venue": {
+                            "id": "0ab45d79-5475-4308-9f94-74b0c185ee6f",
+                            "name": "PETCO Park",
+                            "market": "San Diego",
+                            "capacity": 42302,
+                            "surface": "grass",
+                            "address": "100 Park Blvd.",
+                            "city": "San Diego",
+                            "state": "CA",
+                            "zip": "92101",
+                            "country": "USA"
+                        },
+                        "broadcast": {
+                            "network": "FSSD"
+                        },
+                        "home": {
+                            "name": "Padres",
+                            "market": "San Diego",
+                            "abbr": "SD",
+                            "id": "d52d5339-cbdd-43f3-9dfa-a42fd588b9a3"
+                        },
+                        "away": {
+                            "name": "Brewers",
+                            "market": "Milwaukee",
+                            "abbr": "MIL",
+                            "id": "dcfd5266-00ce-442c-bc09-264cd20cf455"
+                        }
+                    },
+                    {
+                        "id": "daf95ea1-0c7d-4739-9227-e58db63203f4",
+                        "status": "closed",
+                        "coverage": "full",
+                        "attendance": 20623,
+                        "duration": "4:05",
+                        "game_number": 1,
+                        "day_night": "N",
+                        "scheduled": "2016-08-02T00:10:00+00:00",
+                        "home_team": "eb21dadd-8f10-4095-8bf3-dfb3b779f107",
+                        "away_team": "1d678440-b4b1-4954-9b39-70afb3ebbcfa",
+                        "venue": {
+                            "id": "f0600f04-1386-4c61-a412-804960c46cb1",
+                            "name": "Minute Maid Park",
+                            "market": "Houston",
+                            "capacity": 42060,
+                            "surface": "grass",
+                            "address": "501 Crawford Street",
+                            "city": "Houston",
+                            "state": "TX",
+                            "zip": "77002",
+                            "country": "USA"
+                        },
+                        "broadcast": {
+                            "network": "ROOTSW"
+                        },
+                        "home": {
+                            "name": "Astros",
+                            "market": "Houston",
+                            "abbr": "HOU",
+                            "id": "eb21dadd-8f10-4095-8bf3-dfb3b779f107"
+                        },
+                        "away": {
+                            "name": "Blue Jays",
+                            "market": "Toronto",
+                            "abbr": "TOR",
+                            "id": "1d678440-b4b1-4954-9b39-70afb3ebbcfa"
+                        }
+                    },
+                    {
+                        "id": "2b26e4c6-0b09-4d67-a396-6144ab05a133",
+                        "status": "closed",
+                        "coverage": "full",
+                        "attendance": 15018,
+                        "duration": "3:12",
+                        "game_number": 1,
+                        "day_night": "N",
+                        "scheduled": "2016-08-01T23:10:00+00:00",
+                        "home_team": "80715d0d-0d2a-450f-a970-1b9a3b18c7e7",
+                        "away_team": "aa34e0ed-f342-4ec6-b774-c79b47b60e2d",
+                        "venue": {
+                            "id": "2b0ccd49-4d87-4996-ac4d-27ffc7ee4c16",
+                            "name": "Progressive Field",
+                            "market": "Cleveland",
+                            "capacity": 38000,
+                            "surface": "grass",
+                            "address": "2401 Ontario Street",
+                            "city": "Cleveland",
+                            "state": "OH",
+                            "zip": "44115",
+                            "country": "USA"
+                        },
+                        "broadcast": {
+                            "network": "SportsTime Ohio"
+                        },
+                        "home": {
+                            "name": "Indians",
+                            "market": "Cleveland",
+                            "abbr": "CLE",
+                            "id": "80715d0d-0d2a-450f-a970-1b9a3b18c7e7"
+                        },
+                        "away": {
+                            "name": "Twins",
+                            "market": "Minnesota",
+                            "abbr": "MIN",
+                            "id": "aa34e0ed-f342-4ec6-b774-c79b47b60e2d"
+                        }
+                    },
+                    {
+                        "id": "619ec0c4-7829-4ddc-ac12-841848f45109",
+                        "status": "closed",
+                        "coverage": "full",
+                        "attendance": 17518,
+                        "duration": "3:23",
+                        "game_number": 1,
+                        "day_night": "N",
+                        "scheduled": "2016-08-02T01:40:00+00:00",
+                        "home_team": "25507be1-6a68-4267-bd82-e097d94b359b",
+                        "away_team": "d89bed32-3aee-4407-99e3-4103641b999a",
+                        "venue": {
+                            "id": "bf05de0d-7ced-4a19-8e17-2bbd985f8a92",
+                            "name": "Chase Field",
+                            "market": "Arizona",
+                            "capacity": 48633,
+                            "surface": "grass",
+                            "address": "401 East Jefferson Street",
+                            "city": "Phoenix",
+                            "state": "AZ",
+                            "zip": "85004",
+                            "country": "USA"
+                        },
+                        "broadcast": {
+                            "network": "FS-A"
+                        },
+                        "home": {
+                            "name": "Diamondbacks",
+                            "market": "Arizona",
+                            "abbr": "ARI",
+                            "id": "25507be1-6a68-4267-bd82-e097d94b359b"
+                        },
+                        "away": {
+                            "name": "Nationals",
+                            "market": "Washington",
+                            "abbr": "WSH",
+                            "id": "d89bed32-3aee-4407-99e3-4103641b999a"
+                        }
+                    },
+                    {
+                        "id": "efcac927-3182-4046-894b-d0497514b7cb",
+                        "status": "closed",
+                        "coverage": "full",
+                        "attendance": 40937,
+                        "duration": "2:47",
+                        "game_number": 1,
+                        "day_night": "N",
+                        "scheduled": "2016-08-02T00:05:00+00:00",
+                        "home_team": "55714da8-fcaf-4574-8443-59bfb511a524",
+                        "away_team": "03556285-bdbb-4576-a06d-42f71f46ddc5",
+                        "venue": {
+                            "id": "53f8eb0d-a361-4a7a-930b-2f8735ea0698",
+                            "name": "Wrigley Field",
+                            "market": "Chicago",
+                            "capacity": 41072,
+                            "surface": "grass",
+                            "address": "1060 West Addison Street",
+                            "city": "Chicago",
+                            "state": "IL",
+                            "zip": "60613",
+                            "country": "USA"
+                        },
+                        "broadcast": {
+                            "network": "WGN"
+                        },
+                        "home": {
+                            "name": "Cubs",
+                            "market": "Chicago",
+                            "abbr": "CHC",
+                            "id": "55714da8-fcaf-4574-8443-59bfb511a524"
+                        },
+                        "away": {
+                            "name": "Marlins",
+                            "market": "Miami",
+                            "abbr": "MIA",
+                            "id": "03556285-bdbb-4576-a06d-42f71f46ddc5"
+                        }
+                    },
+                    {
+                        "id": "fb756b30-8850-4c14-95ae-4689fb014d04",
+                        "status": "closed",
+                        "coverage": "full",
+                        "attendance": 29601,
+                        "duration": "2:42",
+                        "game_number": 1,
+                        "day_night": "N",
+                        "scheduled": "2016-08-02T02:10:00+00:00",
+                        "home_team": "43a39081-52b4-4f93-ad29-da7f329ea960",
+                        "away_team": "93941372-eb4c-4c40-aced-fe3267174393",
+                        "venue": {
+                            "id": "f1c03dac-3c0f-437c-a325-8d5702cd321a",
+                            "name": "Safeco Field",
+                            "market": "Seattle",
+                            "capacity": 47476,
+                            "surface": "grass",
+                            "address": "1516 First Avenue South",
+                            "city": "Seattle",
+                            "state": "WA",
+                            "zip": "98134",
+                            "country": "USA"
+                        },
+                        "broadcast": {
+                            "network": "ROOTNW"
+                        },
+                        "home": {
+                            "name": "Mariners",
+                            "market": "Seattle",
+                            "abbr": "SEA",
+                            "id": "43a39081-52b4-4f93-ad29-da7f329ea960"
+                        },
+                        "away": {
+                            "name": "Red Sox",
+                            "market": "Boston",
+                            "abbr": "BOS",
+                            "id": "93941372-eb4c-4c40-aced-fe3267174393"
+                        }
+                    },
+                    {
+                        "id": "10f2de6c-c179-457a-bb50-ecf2cf753c0f",
+                        "status": "closed",
+                        "coverage": "full",
+                        "attendance": 42125,
+                        "duration": "3:47",
+                        "game_number": 1,
+                        "day_night": "N",
+                        "scheduled": "2016-08-01T23:10:00+00:00",
+                        "home_team": "f246a5e5-afdb-479c-9aaa-c68beeda7af6",
+                        "away_team": "a09ec676-f887-43dc-bbb3-cf4bbaee9a18",
+                        "venue": {
+                            "id": "265c7d6c-427a-4b8a-8def-392c41954bec",
+                            "name": "Citi Field",
+                            "market": "New York",
+                            "capacity": 41922,
+                            "surface": "grass",
+                            "address": "123-01 Roosevelt Avenue",
+                            "city": "Flushing, Queens",
+                            "state": "NY",
+                            "zip": "11368",
+                            "country": "USA"
+                        },
+                        "broadcast": {
+                            "network": "ESPN"
+                        },
+                        "home": {
+                            "name": "Mets",
+                            "market": "New York",
+                            "abbr": "NYM",
+                            "id": "f246a5e5-afdb-479c-9aaa-c68beeda7af6"
+                        },
+                        "away": {
+                            "name": "Yankees",
+                            "market": "New York",
+                            "abbr": "NYY",
+                            "id": "a09ec676-f887-43dc-bbb3-cf4bbaee9a18"
+                        }
+                    },
+                    {
+                        "id": "705a5674-22b2-4ccb-bc3c-13de8075c00e",
+                        "status": "closed",
+                        "coverage": "full",
+                        "attendance": 13976,
+                        "duration": "2:37",
+                        "game_number": 1,
+                        "day_night": "N",
+                        "scheduled": "2016-08-01T23:10:00+00:00",
+                        "home_team": "bdc11650-6f74-49c4-875e-778aeb7632d9",
+                        "away_team": "833a51a9-0d84-410f-bd77-da08c3e5e26e",
+                        "venue": {
+                            "id": "3aaaf4af-0f8c-49c1-8bf1-1780bb5a5f5c",
+                            "name": "Tropicana Field",
+                            "market": "Tampa Bay",
+                            "capacity": 31042,
+                            "surface": "turf",
+                            "address": "One Tropicana Drive",
+                            "city": "St. Petersburg",
+                            "state": "FL",
+                            "zip": "33705",
+                            "country": "USA"
+                        },
+                        "broadcast": {
+                            "network": "Fox  Sports Sun"
+                        },
+                        "home": {
+                            "name": "Rays",
+                            "market": "Tampa Bay",
+                            "abbr": "TB",
+                            "id": "bdc11650-6f74-49c4-875e-778aeb7632d9"
+                        },
+                        "away": {
+                            "name": "Royals",
+                            "market": "Kansas City",
+                            "abbr": "KC",
+                            "id": "833a51a9-0d84-410f-bd77-da08c3e5e26e"
+                        }
+                    }
+                ]
+            }
+        },
+        "headers": {
+            "cache-control": "public, must-revalidate, max-age=2",
+            "content-type": "application/json;charset=utf-8",
+            "date": "Wed, 03 Aug 2016 17:50:36 GMT",
+            "expires": "Wed, 03 Aug 2016 17:50:38 GMT",
+            "server": "nginx",
+            "x-content-type-options": "nosniff",
+            "x-mashery-responder": "prod-j-worker-us-east-1e-127.mashery.com",
+            "x-packagekey-qps-allotted": "50",
+            "x-packagekey-qps-current": "1",
+            "x-packagekey-quota-allotted": "2000000",
+            "x-packagekey-quota-current": "831125",
+            "x-via": "S3-Proxy",
+            "content-length": "6213",
+            "connection": "Close"
+        }
+    }
+]

@@ -1,0 +1,15 @@
+{
+  "games": [
+    {
+      "_id": "69383e6a-7b67-486c-8f36-52f174a42c62",
+      "id": "69383e6a-7b67-486c-8f36-52f174a42c62",
+      "status": "inprogress",
+      "completed": false,
+      "coverage": "full",
+      "attendance": 31183,
+      "duration": "2:37",
+      "game_number": 1,
+      "day_night": "D"
+    }
+  ]
+}

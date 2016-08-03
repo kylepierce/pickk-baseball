@@ -16,6 +16,7 @@ module.exports = class extends Task
 
     @api = @dependencies.sportRadar
     @logger = @dependencies.logger
+    @Games = @dependencies.mongodb.collection("games")
 
     @registerEvents ['upserted']
 
@@ -27,14 +28,21 @@ module.exports = class extends Task
     Promise.bind @
     .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
     .then -> @api.getScheduledGames(date)
-    .tap (result) -> @logger.verbose "#{result.league.games.length} results have been fetched"
-    .then (result) -> result.league.games
+    .tap (result) -> @logger.verbose "#{result['league']['games'].length} results have been fetched"
+    .then (result) -> result['league']['games']
     .map @upsertGame
     .tap (results) -> @logger.verbose "#{results.length} games have been upserted"
     .return true
 
-  upsertGame: (game) ->
-    sportRadarGame = new SportRadarGame game
-    collection = @dependencies.mongodb.collection("games")
-    collection.update sportRadarGame.getSelector(), {$set: sportRadarGame}, {upsert: true}
-    .then => @emit "upserted", sportRadarGame
+  upsertGame: (data) ->
+    game = new SportRadarGame data
+
+    Promise.bind @
+    .then -> @Games.findOne game.getSelector()
+    .then (original) ->
+      game['close_processed'] = false if @isClosing original, game
+
+      @Games.update game.getSelector(), {$set: game}, {upsert: true}
+      .then => @emit "upserted", game
+
+  isClosing: (original, game) -> original and not original['completed'] and game['completed']
