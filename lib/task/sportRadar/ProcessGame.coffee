@@ -74,7 +74,7 @@ module.exports = class extends Task
           .tap -> @logger.info "Commercial flag has been clear for game (#{game.name}) because of timeout"
           .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name}) because of timeout", {gameId: game._id}
     # the game is in progress. Clear "commercial" flag if it's been set earlier.
-    else if game.commercial
+    else if game.commercial or game.commercialStartedAt
       Promise.bind @
       .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
       .tap -> @logger.info "Commercial flag has been clear for game (#{game.name})"
