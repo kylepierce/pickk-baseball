@@ -80,9 +80,7 @@ module.exports = class
 
       @buildTeam @HOME_TEAM_MARKER, homeLineups
       @buildTeam @AWAY_TEAM_MARKER, awayLineups
-      @logger.verbose @teamsByOrder
-      @logger.verbose @teamsById
-  
+
       plays = _.sortBy homePlays.concat(awayPlays), @byDate
       @lastPlay = lastPlay = @getLastPlay(plays)
       @lastPlays = lastPlays = {}
@@ -101,10 +99,8 @@ module.exports = class
           "#{awayTeamId}": @getOutcomesForHalfs splitAwayEvents
 
       if lastPlay
-        @logger.verbose "lastPlay", lastPlay
         lastPlays[@HOME_TEAM_MARKER] = @getLastPlay homePlays
         lastPlays[@AWAY_TEAM_MARKER] = @getLastPlay awayPlays
-        @logger.verbose "lastPlays", lastPlays
 
         if @isFinishedPlay lastPlay
           result.playNumber++

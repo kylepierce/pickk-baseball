@@ -1,0 +1,14 @@
+{
+  "gamePlayed": [
+    {
+      "gameId": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "userId": "Charlie",
+      "coins": 13000
+    },
+    {
+      "gameId": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "userId": "James",
+      "coins": 6000
+    }
+  ]
+}

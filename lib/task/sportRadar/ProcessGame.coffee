@@ -49,6 +49,91 @@ module.exports = class extends Task
       .then -> @handleAtBat game, result
       .then -> @handleCommercialBreak game, result
       .then -> @resolveCommercialQuestions game, result
+      .then -> @processClosingState game, result
+
+  processClosingState: (game) ->
+    return if game.close_processed isnt false
+
+    @logger.info "Process closing game (#{game.name})"
+    @logger.verbose "Process closing game (#{game.name})", {gameId: game._id}
+
+    Promise.bind @
+    .then -> @exchangeCoins game
+    .then -> @awardLeaders game
+    .then -> @SportRadarGames.update {_id: game._id}, {$set: {close_processed: true}}
+
+  exchangeCoins: (game) ->
+    Promise.bind @
+    .then -> @GamePlayed.find {gameId: game._id}
+    .map (player) ->
+      notificationId = chance.guid()
+      rate = if player['coins'] < 10000 then 2500 else 7500
+      {coins} = player
+      diamonds = Math.floor(coins / rate)
+      message = "You traded #{coins} coins you earned playing #{game.name} for #{diamonds} diamonds"
+
+      @Users.update {_id: player['userId']},
+        $inc:
+          "profile.diamonds": diamonds
+        $push:
+          pendingNotifications:
+            _id: notificationId
+            type: "diamonds"
+            tag: "exchange"
+            read: false
+            notificationId: notificationId
+            dateCreated: new Date()
+            message: message
+
+  awardLeaders: (game) ->
+    rewards = [50, 40, 30, 25, 22, 20, 17, 15, 12, 10]
+    positions = [1..10]
+    images = {1: "1st", 2: "2nd", 3: "3rd"}
+    places = {1: "First", 2: "Second", 3: "Third"}
+    trophyId = "xNMMTjKRrqccnPHiZ"
+
+    Promise.bind @
+    .then -> @GamePlayed.find({gameId: game._id}).sort({coins: -1}).limit(10)
+    .then (players) ->
+      winners = _.zip players, rewards, positions
+      winners = winners.slice 0, players.length # in case when there are less than 10 players involved
+      Promise.all (for winner in winners
+        do (winner) =>
+          [player, reward, position] = winner
+
+          notificationTrophyId = chance.guid()
+          notificationId = chance.guid()
+          now = new Date()
+
+          notifications = []
+
+          notifications.push
+            _id: notificationTrophyId
+            type: "trophy"
+            notificationId: notificationTrophyId
+            dateCreated: now
+
+          if position <= 3
+            notifications.push
+              _id: notificationId
+              type: "diamonds"
+              tag: "leader"
+              read: false
+              notificationId: notificationId
+              dateCreated: now
+              message: "<img style='max-width:100%;' src='/#{images[position]}.png'> <br>Congrats On Winning #{places[position]} Place Here is #{reward} Diamonds!"
+
+          Promise.bind @
+          .then ->
+            @Users.update {_id: player['userId']},
+              $inc:
+                "profile.diamonds": reward
+              $push:
+                "profile.trophies": trophyId
+                pendingNotifications:
+                  $each: notifications
+          .tap -> @logger.verbose "Reward user #{player['userId']} with #{reward} diamonds for position #{position} in game (#{game.name})"
+      )
 
   handleCommercialBreak: (game, result) ->
     if result.commercialBreak
@@ -420,7 +505,6 @@ module.exports = class extends Task
       triple: toMultiplier triplePercent
       homerun: toMultiplier homeRunPercent
     .catch (error) ->
-      @logger.warn "Fallback to generic multipliers for play. Player (#{playerId})"
       @logger.verbose "Fallback to generic multipliers for play. Player (#{playerId})", error
       @getGenericMultipliersForPlay()
 
@@ -483,7 +567,6 @@ module.exports = class extends Task
       hit: toMultiplier hitPercent
       foulball: @getRandomArbitrary(1.5, 2)
     .catch (error) ->
-      @logger.warn "Fallback to generic multipliers for pitch. Player (#{playerId})"
       @logger.verbose "Fallback to generic multipliers for pitch. Player (#{playerId})", error
       @getGenericMultipliersForPitch()
 

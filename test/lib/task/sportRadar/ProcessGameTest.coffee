@@ -21,6 +21,8 @@ ActiveGameEndOfInningFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/t
 ActiveGameEndOfHalfFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameEndOfHalf.json"
 ActiveGameEndOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameEndOfPlay.json"
 ActiveGameMiddleOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameMiddleOfPlay.json"
+UnhandledFinishedGameFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/UnhandledFinishedGame.json"
+GamePlayedFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/GamePlayed.json"
 TeamsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Teams.json"
 PlayersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Players.json"
 AtBatsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/AtBats.json"
@@ -42,6 +44,7 @@ describe "Process imported games and question management", ->
   AtBats = mongodb.collection("atBat")
   Users = mongodb.collection("users")
   Answers = mongodb.collection("answers")
+  GamePlayed = mongodb.collection("gamePlayed")
 
   activeGameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"
   inactiveGameId = "2b0ba18a-41f5-46d7-beb3-1e86b9a4acc0"
@@ -61,6 +64,7 @@ describe "Process imported games and question management", ->
         AtBats.remove()
         Users.remove()
         Answers.remove()
+        GamePlayed.remove()
       ]
 
   it 'should create new play question', ->
@@ -720,6 +724,62 @@ describe "Process imported games and question management", ->
 
       should.exist active
       active.should.be.equal false
+
+  it 'should exchange coins on diamonds at the end of the game', ->
+    Promise.bind @
+    .then -> loadFixtures UnhandledFinishedGameFixtures, mongodb
+    .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures GamePlayedFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Users.findOne({_id: "Charlie"})
+    .then (user) ->
+      should.exist user
+      {profile, pendingNotifications} = user
+
+      should.exist profile
+      {diamonds} = profile
+
+      should.exist diamonds
+      diamonds.should.be.equal 51
+
+      should.exist pendingNotifications
+      pendingNotifications.should.be.an "array"
+      pendingNotifications.length.should.be.equal 3
+    .then -> Users.findOne({_id: "James"})
+    .then (user) ->
+      should.exist user
+      {profile, pendingNotifications} = user
+
+      should.exist profile
+      {diamonds} = profile
+
+      should.exist diamonds
+      diamonds.should.be.equal 42
+
+      should.exist pendingNotifications
+      pendingNotifications.should.be.an "array"
+      pendingNotifications.length.should.be.equal 3
+
+  it 'shouldn\'t exchange coins more than once the end of the game', ->
+    Promise.bind @
+    .then -> loadFixtures UnhandledFinishedGameFixtures, mongodb
+    .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures GamePlayedFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Users.findOne({_id: "Charlie"})
+    .then (user) ->
+      should.exist user
+      {profile, pendingNotifications} = user
+
+      should.exist profile
+      {diamonds} = profile
+
+      should.exist diamonds
+      diamonds.should.be.equal 51
 
   it 'should enrich the game by new fields', ->
     Promise.bind @
