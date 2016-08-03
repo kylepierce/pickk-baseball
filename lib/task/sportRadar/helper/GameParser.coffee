@@ -118,7 +118,6 @@ module.exports = class
             oppositeLastPlay = lastPlays[oppositeMarker]
             @logger.verbose "oppositeLastPlay", oppositeLastPlay
 
-
             if oppositeLastPlay
               hitterId = oppositeLastPlay['hitter_id']
               @logger.verbose "hitterId", hitterId
@@ -133,9 +132,11 @@ module.exports = class
               @logger.verbose "nextPlayer", nextPlayer
 
               result.hitter = nextPlayer
-              result.commercialBreak = @isFinishedInning lastPlay
             else
               result.hitter = @getFirstPlayerForTeam oppositeMarker
+
+            result.commercialBreak = @isFinishedInning lastPlay
+            @logger.verbose "---- INNING HAS BEEN FINISHED ----" if result.commercialBreak
           else
             @logger.verbose "Play is finished, half is not"
 
@@ -214,7 +215,6 @@ module.exports = class
 
   getLastPitch: (play) ->
     pitches = @getPitches play
-    @logger.verbose "Number of pitches - #{pitches.length}"
     pitches.pop()
 
   getTeams: (game) ->
