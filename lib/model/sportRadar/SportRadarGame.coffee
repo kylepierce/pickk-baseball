@@ -19,7 +19,6 @@ module.exports = class
     @dateCreated = moment.utc(@scheduled).startOf('day').toDate()
     @live = @status is 'inprogress'
     @completed = @status is 'closed'
-    @commercial = false
 
   getSelector: ->
     "_id": @_id
