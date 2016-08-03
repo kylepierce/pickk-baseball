@@ -65,8 +65,9 @@ module.exports = class extends Task
       else
       # so here a commercial break is active and commercialStartedAt is set
       # It's necessary to calculate if time interval for a break is finished or not
-        timeout = moment().diff(game.commercialStartedAt, 'minute')
-        @logger.verbose "Commercial interval for game (#{game.name}) [#{game._id}] is #{timeout} minutes"
+        now = moment()
+        timeout = now.diff(game.commercialStartedAt, 'minute')
+        @logger.verbose "Commercial interval for game (#{game.name}) [#{game._id}] is #{timeout} minutes", {commercialStartedAt: game.commercialStartedAt, now: now.toDate()}
         if timeout >= @dependencies.settings['common']['commercialTime']
           Promise.bind @
           .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}} # do NOT unset "commercialStartedAt" here!
