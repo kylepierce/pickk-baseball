@@ -131,8 +131,7 @@ module.exports = class
             else
               result.hitter = @getFirstPlayerForTeam oppositeMarker
 
-            result.commercialBreak = @isFinishedInning lastPlay
-            @logger.verbose "---- INNING HAS BEEN FINISHED ----" if result.commercialBreak
+            result.commercialBreak = true
           else
             @logger.verbose "Play is finished, half is not"
 

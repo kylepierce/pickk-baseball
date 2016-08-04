@@ -365,9 +365,23 @@ describe "Process imported games and question management", ->
       should.exist inningNumber
       inningNumber.should.be.equal 8
 
-  it 'should determine commercial break (true)', ->
+  it 'should determine commercial break for the end of inning', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameWithLineUp, mongodb
+    .then -> SportRadarGames.findOne()
+    .then (game) -> gameParser.getPlay game
+    .then (result) ->
+      should.exist result
+      result.should.be.an "object"
+
+      {commercialBreak} = result
+
+      should.exist commercialBreak
+      commercialBreak.should.be.equal true
+
+  it 'should determine commercial break for the end of half', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfHalfFixtures, mongodb
     .then -> SportRadarGames.findOne()
     .then (game) -> gameParser.getPlay game
     .then (result) ->
