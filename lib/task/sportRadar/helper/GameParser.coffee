@@ -101,6 +101,7 @@ module.exports = class
               result.hitter = oppositeTeamData.teamByOrder[1]
 
             result.commercialBreak = true
+            result.onPitchTeamId = oppositeTeamData.id
           else
             @logger.verbose "Play is finished, half is not"
 
@@ -114,6 +115,7 @@ module.exports = class
             @logger.verbose "Next hitter (#{nextHitter['player_id']}), order (#{nextHitter['order']})"
 
             result.hitter = nextHitter
+            result.onPitchTeamId = teamData.id
         else
           @logger.verbose "Play is in progress"
 
@@ -130,6 +132,7 @@ module.exports = class
             pitchNumber: if pitch then pitch['count']['pitch_count'] + 1 else 1
             balls: if pitch then pitch['count'].balls else 0
             strikes: if pitch then pitch['count'].strikes else 0
+            onPitchTeamId: teamData.id
       else
         @logger.verbose "It's the first play of the match"
 
@@ -139,6 +142,7 @@ module.exports = class
         result.hitter = teamData.teamByOrder[1]
         result.playNumber = 1
         result.commercialBreak = true
+        result.onPitchTeamId = teamData.id
 
       result.teams = @getTeams @game
       result.details = @getDetails @game

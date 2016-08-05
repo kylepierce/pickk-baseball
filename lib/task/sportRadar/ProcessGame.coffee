@@ -188,38 +188,41 @@ module.exports = class extends Task
       outcomes: ["aHBP"]
     ]
 
-    Promise.all (for type, team of result.teams
-      Promise.bind @
-      .return team
-      .then (team) ->
-        name = team.name
-        template = _.sample templates
-        text = "Will #{name} #{template.title} in the #{inningNumber} inning?"
+    team = _.findWhere _.values(result.teams), {id: result.onPitchTeamId}
 
-        options =
-          option1: {title: "True"}
-          option2: {title: "False"}
+    Promise.bind @
+    .return team
+    .then (team) ->
+      name = team.name
+      templates = _.sample templates, 2
+      Promise.all (for template in templates
+        do (template) =>
+          text = "Will #{name} #{template.title} in the #{inningNumber} inning?"
 
-        Promise.bind @
-        .then ->
-          @Questions.insert
-            _id: @Questions.db.ObjectId().toString()
-            que: text
-            game_id: game._id
-            gameId: game._id
-            teamId: team.id
-            inning: inningNumber
-            dateCreated: new Date()
-            active: true
-            commercial: true
-            binaryChoice: true
-            options: options
-            outcomes: template.outcomes
-            usersAnswered: []
-        .tap ->
-          @logger.info "Create commercial question '#{text}' for the game (#{game.name})"
-          @logger.verbose "Create commercial question '#{text}' for the game (#{game.name})", {gameId: game._id}
-    )
+          options =
+            option1: {title: "True"}
+            option2: {title: "False"}
+
+          Promise.bind @
+          .then ->
+            @Questions.insert
+              _id: @Questions.db.ObjectId().toString()
+              que: text
+              game_id: game._id
+              gameId: game._id
+              teamId: team.id
+              inning: inningNumber
+              dateCreated: new Date()
+              active: true
+              commercial: true
+              binaryChoice: true
+              options: options
+              outcomes: template.outcomes
+              usersAnswered: []
+          .tap ->
+            @logger.info "Create commercial question '#{text}' for the game (#{game.name})"
+            @logger.verbose "Create commercial question '#{text}' for the game (#{game.name})", {gameId: game._id}
+      )
 
   resolveCommercialQuestions: (game, result) ->
     teamOutcomesList = result.outcomesList
