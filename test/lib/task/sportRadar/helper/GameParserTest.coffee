@@ -15,7 +15,7 @@ ActiveGameEndOfHalfFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/tas
 ActiveGameEndOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameEndOfPlay.json"
 ActiveGameMiddleOfPlayFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameMiddleOfPlay.json"
 
-describe "Process imported games and question management", ->
+describe "Parsing incoming game", ->
   dependencies = createDependencies settings, "PickkImport"
   mongodb = dependencies.mongodb
 
@@ -182,20 +182,6 @@ describe "Process imported games and question management", ->
 
       should.exist pitch
 
-  it 'should provide pitch by its Id', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveGameMiddleOfPlayFixtures, mongodb
-    .then -> SportRadarGames.findOne()
-    .then (game) -> gameParser.getPitchById game, '2a587da9-9b2c-4082-90d3-515e2ef6d010'
-    .then (pitch) ->
-      should.exist pitch
-      pitch.should.be.an "object"
-
-      {outcome_id} = pitch
-
-      should.exist outcome_id
-      outcome_id.should.equal "bB"
-
   it 'should calculate play and pitch number correctly for the beginning of the match', ->
     Promise.bind @
     .then -> loadFixtures ActiveGameNoPlaysFixtures, mongodb
@@ -330,26 +316,6 @@ describe "Process imported games and question management", ->
       {name} = home
       should.exist name
       name.should.be.equal "White Sox"
-
-  it 'should parse players', ->
-    Promise.bind @
-    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
-    .then -> SportRadarGames.findOne()
-    .then (game) -> gameParser.getPlay game
-    .then (result) ->
-      should.exist result
-      result.should.be.an "object"
-
-      {players} = result
-
-      should.exist players
-      players.should.be.an "array"
-      players.length.should.equal 20
-      player = _.findWhere players, {player_id: "92500d32-2314-4c7c-91c5-110f95229f9a"}
-
-      {first_name} = player
-      should.exist first_name
-      first_name.should.be.equal "Whitley"
 
   it 'should calculate current inning number correctly', ->
     Promise.bind @
