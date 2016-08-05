@@ -16,7 +16,7 @@ describe "Import brief information about games for date specified from SportRada
   importGames = undefined
   SportRadarGames = mongodb.collection("games")
 
-  date = moment("2016-06-11").toDate()
+  date = moment("2016-06-12").toDate() # in fact 2016-06-11 because of time zone shift
   gameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"
   closedGameId = "69383e6a-7b67-486c-8f36-52f174a42c62"
   closedGameDate = moment("2016-08-02").toDate() # in fact 2016-08-01 because of time zone shift
@@ -32,6 +32,7 @@ describe "Import brief information about games for date specified from SportRada
 
   it 'should import games into the clear collection', ->
     gameNumber = undefined
+    @timeout 10000
 
     new Promise (resolve, reject) ->
       nock.back "test/fixtures/task/sportRadar/importGames/request/games.json", (recordingDone) ->

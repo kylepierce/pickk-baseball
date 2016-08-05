@@ -4,7 +4,6 @@ Promise = require "bluebird"
 Task = require "../Task"
 SportRadarGame = require "../../model/sportRadar/SportRadarGame"
 dateFormat = require 'dateformat'
-moment = require "moment"
 
 module.exports = class extends Task
   constructor: (dependencies) ->
@@ -21,10 +20,6 @@ module.exports = class extends Task
     @registerEvents ['upserted']
 
   execute: (date = new Date()) ->
-    # cast to EDT timezone
-    EDT_OFFSET = 60 * 4
-    date = moment(date).subtract(EDT_OFFSET + moment(date).utcOffset(), 'minutes').toDate()
-
     Promise.bind @
     .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
     .then -> @api.getScheduledGames(date)

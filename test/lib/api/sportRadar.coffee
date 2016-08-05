@@ -7,7 +7,7 @@ _ = require "underscore"
 describe "SportRadar API", ->
   dependencies = createDependencies settings, "PickkImport"
 
-  date = moment("2016-06-11").toDate()
+  date = moment("2016-06-12").toDate() # in fact 2016-06-11 because of time zone shift
   gameId = "6a37e74c-728f-4ee5-8f99-5387cde7e397"
   teamId = "833a51a9-0d84-410f-bd77-da08c3e5e26e"
 
