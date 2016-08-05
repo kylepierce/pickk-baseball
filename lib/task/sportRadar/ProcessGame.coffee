@@ -158,12 +158,14 @@ module.exports = class extends Task
           .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}} # do NOT unset "commercialStartedAt" here!
           .tap -> @logger.info "Commercial flag has been clear for game (#{game.name}) because of timeout"
           .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name}) because of timeout", {gameId: game._id}
+          .then -> @closeActiveCommercialQuestions game
     # the game is in progress. Clear "commercial" flag if it's been set earlier.
     else if game.commercial or game.commercialStartedAt
       Promise.bind @
       .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
       .tap -> @logger.info "Commercial flag has been clear for game (#{game.name})"
       .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name})", {gameId: game._id}
+      .then -> @closeActiveCommercialQuestions game
 
   createCommercialQuestions: (game, result) ->
     inningNumber = result.inningNumber + 1
@@ -214,6 +216,7 @@ module.exports = class extends Task
               inning: inningNumber
               dateCreated: new Date()
               active: true
+              processed: false
               commercial: true
               binaryChoice: true
               options: options
@@ -224,11 +227,21 @@ module.exports = class extends Task
             @logger.verbose "Create commercial question '#{text}' for the game (#{game.name})", {gameId: game._id}
       )
 
+  closeActiveCommercialQuestions: (game) ->
+    Promise.bind @
+    .then -> @Questions.find {commercial: true, game_id: game.id, active: true}
+    .map (question) ->
+      Promise.bind @
+      .then -> @Questions.update {_id: question._id}, {$set: {active: false}}
+      .tap ->
+        @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name})"
+        @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name})", {gameId: game._id, id: question._id}
+
   resolveCommercialQuestions: (game, result) ->
     teamOutcomesList = result.outcomesList
 
     Promise.bind @
-    .then -> @Questions.find {commercial: true, game_id: game.id, active: true}
+    .then -> @Questions.find {commercial: true, game_id: game.id, active: false, processed: false}
     .map (question) ->
       @logger.verbose "Handle commercial question #{question.que}"
       inning = question['inning']
@@ -239,13 +252,13 @@ module.exports = class extends Task
         @logger.verbose "Try to resolve the commercial question #{question.que}", {expected: question['outcomes'], actual: outcomesList[inning], result: result}
         if result
           Promise.bind @
-          .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: true}
+          .then -> @Questions.update {_id: question._id}, $set: {processed: true, outcome: true}
           .tap ->
             @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with true result"
             @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with true result", {gameId: game._id}
         else if outcomesList.length > (inning + 1)
           Promise.bind @
-          .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: result}
+          .then -> @Questions.update {_id: question._id}, $set: {processed: true, outcome: result}
           .tap ->
             @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with false result"
             @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with false result", {gameId: game._id}
