@@ -256,12 +256,50 @@ module.exports = class extends Task
           .tap ->
             @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with true result"
             @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with true result", {gameId: game._id}
+          .then -> @rewardForCommercialQuestion game, question
         else if outcomesList.length > (inning + 1)
           Promise.bind @
           .then -> @Questions.update {_id: question._id}, $set: {processed: true, outcome: result}
           .tap ->
-            @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with false result"
-            @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with false result", {gameId: game._id}
+            @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with #{result} result"
+            @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with #{result} result", {gameId: game._id, result: result}
+          .then -> @rewardForCommercialQuestion game, question
+
+
+  rewardForCommercialQuestion: (game, object) ->
+    options = {}
+    options[true] = "option1"
+    options[false] = "option2"
+
+    Promise.bind @
+    .then -> @Questions.findOne {_id: object._id}
+    .then (question) ->
+      outcome = options[question.outcome]
+
+      Promise.bind @
+      .then -> @Answers.update {questionId: question._id, answered: {$ne: outcome}}, {$set: {outcome: "loose"}}, {multi: true}
+      .tap (result) -> @logger.verbose "There are (#{result.n}) negative answer(s) for question (#{question['que']})"
+      .then -> @Answers.find {questionId: question._id, answered: outcome}
+      .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
+      .map (answer) ->
+        reward = @dependencies.settings['common']['commercialReward']
+        Promise.bind @
+        .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
+        .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
+        .then ->
+          notificationId = chance.guid()
+          @Users.update {_id: answer['userId']},
+            $push:
+              pendingNotifications:
+                _id: notificationId,
+                type: "score",
+                read: false,
+                notificationId: notificationId,
+                dateCreated: new Date(),
+                message: "Nice Pickk! You got #{reward} Coins!",
+                sharable: false,
+                shareMessage: ""
+        .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
 
   handleAtBat: (game, result) ->

@@ -31,6 +31,7 @@ AtBatsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/
 ActiveAtBatFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveAtBat.json"
 UsersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Users.json"
 AnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Answers.json"
+CommercialAnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/CommercialAnswers.json"
 WrongAnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/WrongAnswers.json"
 
 describe "Process imported games and question management", ->
@@ -729,6 +730,40 @@ describe "Process imported games and question management", ->
 
       should.exist processed
       processed.should.be.equal false
+
+  it 'should reward the player for the right answer on the commercial questions', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures GamePlayedFixtures, mongodb
+    .then -> loadFixtures CommercialAnswersFixtures, mongodb
+    .then -> loadFixtures ClosedCommercialQuestionFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> GamePlayed.findOne({userId: "Charlie"})
+    .then (gamePlayed) ->
+      should.exist gamePlayed
+
+      {coins} = gamePlayed
+      should.exist coins
+      coins.should.be.equal 15000
+
+  it 'should not reward the player for the wrong answer on the commercial questions', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures GamePlayedFixtures, mongodb
+    .then -> loadFixtures CommercialAnswersFixtures, mongodb
+    .then -> loadFixtures ClosedCommercialQuestionFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> GamePlayed.findOne({userId: "James"})
+    .then (gamePlayed) ->
+      should.exist gamePlayed
+
+      {coins} = gamePlayed
+      should.exist coins
+      coins.should.be.equal 6000
 
   it 'should mark commercial questions as processed with true result', ->
     Promise.bind @
