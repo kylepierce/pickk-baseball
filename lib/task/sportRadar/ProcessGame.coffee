@@ -26,6 +26,7 @@ module.exports = class extends Task
     @Answers = dependencies.mongodb.collection("answers")
     @GamePlayed = dependencies.mongodb.collection("gamePlayed")
     @Users = dependencies.mongodb.collection("users")
+    @Users = dependencies.mongodb.collection("notifications")
     @gameParser = new GameParser dependencies
 
   execute: (game) ->
@@ -571,18 +572,18 @@ module.exports = class extends Task
       @getGenericMultipliersForPitch()
 
   getGenericMultipliersForPlay: ->
-    out: @getRandomArbitrary 1.05, 1.65
-    walk: @getRandomArbitrary 1.05, 1.65
-    single: @getRandomArbitrary 1.05, 1.65
-    double: @getRandomArbitrary 1.05, 1.65
-    triple: @getRandomArbitrary 1.05, 1.65
-    homerun: @getRandomArbitrary 1.05, 1.65
+    out: @getRandomArbitrary 1.55, 1.95
+    walk: @getRandomArbitrary 3.05, 4.65
+    single: @getRandomArbitrary 2.35, 3.65
+    double: @getRandomArbitrary 3.05, 5.65
+    triple: @getRandomArbitrary 4.05, 6.65
+    homerun: @getRandomArbitrary 4.05, 6.65
 
   getGenericMultipliersForPitch: ->
-    strike: @getRandomArbitrary 1.05, 1.65
-    ball: @getRandomArbitrary 1.05, 1.65
-    out: @getRandomArbitrary 1.05, 1.65
-    hit: @getRandomArbitrary 1.05, 1.65
-    foulball: @getRandomArbitrary 1.05, 1.65
+    strike: @getRandomArbitrary 1.55, 2.5
+    ball: @getRandomArbitrary 1.45, 2.65
+    out: @getRandomArbitrary 2.05, 3.65
+    hit: @getRandomArbitrary 2.05, 3.65
+    foulball: @getRandomArbitrary 1.65, 1.95
 
   getRandomArbitrary: (min, max) -> parseFloat((Math.random() * (max - min) + min).toFixed(2))

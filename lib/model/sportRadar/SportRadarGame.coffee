@@ -18,7 +18,7 @@ module.exports = class
     @tv = @['broadcast']['network']
     @dateCreated = moment.utc(@scheduled).startOf('day').toDate()
     @live = @status is 'inprogress'
-    @completed = @status is 'closed'
+    @completed = @status is 'complete'
 
   getSelector: ->
     "_id": @_id
