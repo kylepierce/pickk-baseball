@@ -27,6 +27,7 @@
     "url": "Define_this_key_in_environment_settings"
   },
   "common": {
-    "commercialTime": 2
+    "commercialTime": 2,
+    "commercialReward": 2000
   }
 }

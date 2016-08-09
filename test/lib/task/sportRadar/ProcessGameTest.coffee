@@ -12,9 +12,11 @@ QuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRad
 ActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActualQuestions.json"
 NonActualQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/NonActualQuestions.json"
 NonActualPitchQuestionsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/NonActualPitchQuestions.json"
-CommercialQuestionFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/CommercialQuestion.json"
+ClosedCommercialQuestionFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ClosedCommercialQuestion.json"
+ActiveCommercialQuestionFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveCommercialQuestion.json"
 ActiveFullGameFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveFullGame.json"
 ActiveFullGameWithLineUp = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveFullGameWithLineUp.json"
+ActiveGameLineupInningOnly = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameLineupInningOnly.json"
 ActiveGameNoInningsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameNoInnings.json"
 ActiveGameNoPlaysFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameNoPlays.json"
 ActiveGameEndOfInningFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveGameEndOfInning.json"
@@ -29,6 +31,7 @@ AtBatsFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/
 ActiveAtBatFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/ActiveAtBat.json"
 UsersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Users.json"
 AnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/Answers.json"
+CommercialAnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/CommercialAnswers.json"
 WrongAnswersFixtures = require "#{process.env.ROOT_DIR}/test/fixtures/task/sportRadar/processGame/collection/WrongAnswers.json"
 
 describe "Process imported games and question management", ->
@@ -579,7 +582,31 @@ describe "Process imported games and question management", ->
 
       should.not.exist commercialStartedAt
 
-  it 'should create commercial questions for each team', ->
+  it 'should create commercial questions for a team "on pitch" before the first inning', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameLineupInningOnly, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 2
+
+      for question in questions
+        should.exist question
+        {teamId, commercial, inning, binaryChoice, gameId, outcomes} = question
+        teamId.should.be.equal '833a51a9-0d84-410f-bd77-da08c3e5e26e'
+        commercial.should.be.equal true
+        inning.should.be.equal 1
+        binaryChoice.should.be.equal true
+        gameId.should.be.equal activeGameId
+        outcomes.should.be.an "array"
+
+      # questions shouldn't be the same
+      questions[0].que.should.not.be.equal questions[1].que
+
+  it 'should create commercial questions for a team "on pitch" in the next half, end of bottom half', ->
     Promise.bind @
     .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
@@ -590,23 +617,44 @@ describe "Process imported games and question management", ->
       questions.should.be.an "array"
       questions.length.should.be.equal 2
 
-      homeTeamQuestion = _.findWhere questions, {teamId: '47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8'}
-      should.exist homeTeamQuestion
-      {commercial, inning, binaryChoice, gameId, outcomes} = homeTeamQuestion
-      commercial.should.be.equal true
-      inning.should.be.equal 2
-      binaryChoice.should.be.equal true
-      gameId.should.be.equal activeGameId
-      outcomes.should.be.an "array"
+      for question in questions
+        should.exist question
+        {teamId, commercial, inning, binaryChoice, gameId, outcomes} = question
+        teamId.should.be.equal '833a51a9-0d84-410f-bd77-da08c3e5e26e'
+        commercial.should.be.equal true
+        inning.should.be.equal 2
+        binaryChoice.should.be.equal true
+        gameId.should.be.equal activeGameId
+        outcomes.should.be.an "array"
 
-      awayTeamQuestion = _.findWhere questions, {teamId: '833a51a9-0d84-410f-bd77-da08c3e5e26e'}
-      should.exist awayTeamQuestion
-      {commercial, inning, binaryChoice, gameId, outcomes} = awayTeamQuestion
-      commercial.should.be.equal true
-      inning.should.be.equal 2
-      binaryChoice.should.be.equal true
-      gameId.should.be.equal activeGameId
-      outcomes.should.be.an "array"
+      # questions shouldn't be the same
+      questions[0].que.should.not.be.equal questions[1].que
+
+  it 'should create commercial questions for a team "on pitch" in the next half, end of top half', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfHalfFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 2
+
+      for question in questions
+        should.exist question
+        {teamId, commercial, inning, binaryChoice, gameId, outcomes, active, processed} = question
+        teamId.should.be.equal '47f490cd-2f58-4ef7-9dfd-2ad6ba6c1ae8'
+        commercial.should.be.equal true
+        inning.should.be.equal 2
+        binaryChoice.should.be.equal true
+        gameId.should.be.equal activeGameId
+        outcomes.should.be.an "array"
+        active.should.be.equal true
+        processed.should.be.equal false
+
+      # questions shouldn't be the same
+      questions[0].que.should.not.be.equal questions[1].que
 
   it 'shouldn\'t create duplicate commercial questions', ->
     Promise.bind @
@@ -632,10 +680,15 @@ describe "Process imported games and question management", ->
       questions.should.be.an "array"
       questions.length.should.be.equal 0
 
-  it 'should close commercial questions with true result', ->
+  it 'should close commercial questions because of timeout', ->
+    interval = dependencies.settings['common']['commercialTime']
+    now = moment().subtract(interval + 1, 'minutes').toDate()
+
     Promise.bind @
-    .then -> loadFixtures ActiveFullGameFixtures, mongodb
-    .then -> loadFixtures CommercialQuestionFixtures, mongodb
+    .then -> loadFixtures ActiveGameEndOfInningFixtures, mongodb
+    .then -> loadFixtures ActiveCommercialQuestionFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> SportRadarGames.update {_id: game._id}, {$set: {commercial: true, commercialStartedAt: now}}
     .then -> SportRadarGames.findOne({id: activeGameId})
     .then (game) -> processGame.execute game
     .then -> Questions.find({commercial: true})
@@ -646,7 +699,87 @@ describe "Process imported games and question management", ->
 
       question = questions[0]
       should.exist question
-      {outcome, active} = question
+      {active, processed} = question
+
+      should.exist active
+      active.should.be.equal false
+
+      should.exist processed
+      processed.should.be.equal false
+
+  it 'should close commercial questions because the game becomes active', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveGameEndOfPlayFixtures, mongodb
+    .then -> loadFixtures ActiveCommercialQuestionFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> SportRadarGames.update {_id: game._id}, {$set: {commercial: true}}
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 1
+
+      question = questions[0]
+      should.exist question
+      {active, processed} = question
+
+      should.exist active
+      active.should.be.equal false
+
+      should.exist processed
+      processed.should.be.equal false
+
+  it 'should reward the player for the right answer on the commercial questions', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures GamePlayedFixtures, mongodb
+    .then -> loadFixtures CommercialAnswersFixtures, mongodb
+    .then -> loadFixtures ClosedCommercialQuestionFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> GamePlayed.findOne({userId: "Charlie"})
+    .then (gamePlayed) ->
+      should.exist gamePlayed
+
+      {coins} = gamePlayed
+      should.exist coins
+      coins.should.be.equal 15000
+
+  it 'should not reward the player for the wrong answer on the commercial questions', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures GamePlayedFixtures, mongodb
+    .then -> loadFixtures CommercialAnswersFixtures, mongodb
+    .then -> loadFixtures ClosedCommercialQuestionFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> GamePlayed.findOne({userId: "James"})
+    .then (gamePlayed) ->
+      should.exist gamePlayed
+
+      {coins} = gamePlayed
+      should.exist coins
+      coins.should.be.equal 6000
+
+  it 'should mark commercial questions as processed with true result', ->
+    Promise.bind @
+    .then -> loadFixtures ActiveFullGameFixtures, mongodb
+    .then -> loadFixtures ClosedCommercialQuestionFixtures, mongodb
+    .then -> SportRadarGames.findOne({id: activeGameId})
+    .then (game) -> processGame.execute game
+    .then -> Questions.find({commercial: true})
+    .then (questions) ->
+      should.exist questions
+      questions.should.be.an "array"
+      questions.length.should.be.equal 1
+
+      question = questions[0]
+      should.exist question
+      {outcome, active, processed} = question
 
       should.exist outcome
       outcome.should.be.equal true
@@ -654,10 +787,13 @@ describe "Process imported games and question management", ->
       should.exist active
       active.should.be.equal false
 
-  it 'should close commercial questions with false result', ->
+      should.exist processed
+      processed.should.be.equal true
+
+  it 'should mark commercial questions as processed with false result', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
-    .then -> loadFixtures CommercialQuestionFixtures, mongodb
+    .then -> loadFixtures ClosedCommercialQuestionFixtures, mongodb
     .then -> Questions.findOne({commercial: true})
     .then (question) -> Questions.update {_id: question._id}, {$set: {outcomes: ["aHR"]}}
     .then -> SportRadarGames.findOne({id: activeGameId})
@@ -670,7 +806,7 @@ describe "Process imported games and question management", ->
 
       question = questions[0]
       should.exist question
-      {outcome, active} = question
+      {outcome, active, processed} = question
 
       should.exist outcome
       outcome.should.be.equal false
@@ -678,10 +814,13 @@ describe "Process imported games and question management", ->
       should.exist active
       active.should.be.equal false
 
-  it 'shouldn\'t close commercial questions because the inning still in progress', ->
+      should.exist processed
+      processed.should.be.equal true
+
+  it 'shouldn\'t mark commercial questions as processed because the inning still in progress', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
-    .then -> loadFixtures CommercialQuestionFixtures, mongodb
+    .then -> loadFixtures ClosedCommercialQuestionFixtures, mongodb
     .then -> Questions.findOne({commercial: true})
     .then (question) -> Questions.update {_id: question._id}, {$set: {inning: 4}}
     .then -> SportRadarGames.findOne({id: activeGameId})
@@ -694,17 +833,20 @@ describe "Process imported games and question management", ->
 
       question = questions[0]
       should.exist question
-      {outcome, active} = question
+      {outcome, active, processed} = question
 
       should.not.exist outcome
 
       should.exist active
-      active.should.be.equal true
+      active.should.be.equal false
 
-  it 'should close commercial questions (inning in progress)', ->
+      should.exist processed
+      processed.should.be.equal false
+
+  it 'should mark commercial questions as processed (inning in progress)', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
-    .then -> loadFixtures CommercialQuestionFixtures, mongodb
+    .then -> loadFixtures ClosedCommercialQuestionFixtures, mongodb
     .then -> Questions.findOne({commercial: true})
     .then (question) -> Questions.update {_id: question._id}, {$set: {inning: 4, outcomes: ["kKS"]}}
     .then -> SportRadarGames.findOne({id: activeGameId})

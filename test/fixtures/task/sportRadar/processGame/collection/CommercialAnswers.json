@@ -1,0 +1,18 @@
+{
+  "answers": [
+    {
+      "userId": "Charlie",
+      "gameId": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "questionId": "closed_question_for_active_game",
+      "answered": "option1",
+      "description": ""
+    },
+    {
+      "userId": "James",
+      "gameId": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
+      "questionId": "closed_question_for_active_game",
+      "answered": "option2",
+      "description": ""
+    }
+  ]
+}

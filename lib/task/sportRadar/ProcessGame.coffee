@@ -159,12 +159,14 @@ module.exports = class extends Task
           .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}} # do NOT unset "commercialStartedAt" here!
           .tap -> @logger.info "Commercial flag has been clear for game (#{game.name}) because of timeout"
           .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name}) because of timeout", {gameId: game._id}
+          .then -> @closeActiveCommercialQuestions game
     # the game is in progress. Clear "commercial" flag if it's been set earlier.
     else if game.commercial or game.commercialStartedAt
       Promise.bind @
       .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
       .tap -> @logger.info "Commercial flag has been clear for game (#{game.name})"
       .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name})", {gameId: game._id}
+      .then -> @closeActiveCommercialQuestions game
 
   createCommercialQuestions: (game, result) ->
     inningNumber = result.inningNumber + 1
@@ -189,44 +191,58 @@ module.exports = class extends Task
       outcomes: ["aHBP"]
     ]
 
-    Promise.all (for type, team of result.teams
+    team = _.findWhere _.values(result.teams), {id: result.onPitchTeamId}
+
+    Promise.bind @
+    .return team
+    .then (team) ->
+      name = team.name
+      templates = _.sample templates, 2
+      Promise.all (for template in templates
+        do (template) =>
+          text = "Will #{name} #{template.title} in the #{inningNumber} inning?"
+
+          options =
+            option1: {title: "True"}
+            option2: {title: "False"}
+
+          Promise.bind @
+          .then ->
+            @Questions.insert
+              _id: @Questions.db.ObjectId().toString()
+              que: text
+              game_id: game._id
+              gameId: game._id
+              teamId: team.id
+              inning: inningNumber
+              dateCreated: new Date()
+              active: true
+              processed: false
+              commercial: true
+              binaryChoice: true
+              options: options
+              outcomes: template.outcomes
+              usersAnswered: []
+          .tap ->
+            @logger.info "Create commercial question '#{text}' for the game (#{game.name})"
+            @logger.verbose "Create commercial question '#{text}' for the game (#{game.name})", {gameId: game._id}
+      )
+
+  closeActiveCommercialQuestions: (game) ->
+    Promise.bind @
+    .then -> @Questions.find {commercial: true, game_id: game.id, active: true}
+    .map (question) ->
       Promise.bind @
-      .return team
-      .then (team) ->
-        name = team.name
-        template = _.sample templates
-        text = "Will #{name} #{template.title} in the #{inningNumber} inning?"
-
-        options =
-          option1: {title: "True"}
-          option2: {title: "False"}
-
-        Promise.bind @
-        .then ->
-          @Questions.insert
-            _id: @Questions.db.ObjectId().toString()
-            que: text
-            game_id: game._id
-            gameId: game._id
-            teamId: team.id
-            inning: inningNumber
-            dateCreated: new Date()
-            active: true
-            commercial: true
-            binaryChoice: true
-            options: options
-            outcomes: template.outcomes
-            usersAnswered: []
-        .tap ->
-          @logger.info "Create commercial question '#{text}' for the game (#{game.name})"
-          @logger.verbose "Create commercial question '#{text}' for the game (#{game.name})", {gameId: game._id}
-    )
+      .then -> @Questions.update {_id: question._id}, {$set: {active: false}}
+      .tap ->
+        @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name})"
+        @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name})", {gameId: game._id, id: question._id}
 
   resolveCommercialQuestions: (game, result) ->
     teamOutcomesList = result.outcomesList
 
     Promise.bind @
-    .then -> @Questions.find {commercial: true, game_id: game.id, active: true}
+    .then -> @Questions.find {commercial: true, game_id: game.id, active: false, processed: false}
     .map (question) ->
       @logger.verbose "Handle commercial question #{question.que}"
       inning = question['inning']
@@ -237,16 +253,54 @@ module.exports = class extends Task
         @logger.verbose "Try to resolve the commercial question #{question.que}", {expected: question['outcomes'], actual: outcomesList[inning], result: result}
         if result
           Promise.bind @
-          .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: true}
+          .then -> @Questions.update {_id: question._id}, $set: {processed: true, outcome: true}
           .tap ->
             @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with true result"
             @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with true result", {gameId: game._id}
+          .then -> @rewardForCommercialQuestion game, question
         else if outcomesList.length > (inning + 1)
           Promise.bind @
-          .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: result}
+          .then -> @Questions.update {_id: question._id}, $set: {processed: true, outcome: result}
           .tap ->
-            @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with false result"
-            @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with false result", {gameId: game._id}
+            @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with #{result} result"
+            @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with #{result} result", {gameId: game._id, result: result}
+          .then -> @rewardForCommercialQuestion game, question
+
+
+  rewardForCommercialQuestion: (game, object) ->
+    options = {}
+    options[true] = "option1"
+    options[false] = "option2"
+
+    Promise.bind @
+    .then -> @Questions.findOne {_id: object._id}
+    .then (question) ->
+      outcome = options[question.outcome]
+
+      Promise.bind @
+      .then -> @Answers.update {questionId: question._id, answered: {$ne: outcome}}, {$set: {outcome: "loose"}}, {multi: true}
+      .tap (result) -> @logger.verbose "There are (#{result.n}) negative answer(s) for question (#{question['que']})"
+      .then -> @Answers.find {questionId: question._id, answered: outcome}
+      .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
+      .map (answer) ->
+        reward = @dependencies.settings['common']['commercialReward']
+        Promise.bind @
+        .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
+        .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
+        .then ->
+          notificationId = chance.guid()
+          @Users.update {_id: answer['userId']},
+            $push:
+              pendingNotifications:
+                _id: notificationId,
+                type: "score",
+                read: false,
+                notificationId: notificationId,
+                dateCreated: new Date(),
+                message: "Nice Pickk! You got #{reward} Coins!",
+                sharable: false,
+                shareMessage: ""
+        .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
 
   handleAtBat: (game, result) ->
@@ -506,7 +560,7 @@ module.exports = class extends Task
       triple: toMultiplier triplePercent
       homerun: toMultiplier homeRunPercent
     .catch (error) ->
-      @logger.verbose "Fallback to generic multipliers for play. Player (#{playerId})", error
+      @logger.verbose "Fallback to generic multipliers for play. Player (#{playerId})"
       @getGenericMultipliersForPlay()
 
   calculateMultipliersForPitch: (playerId, balls, strikes) ->
@@ -568,7 +622,7 @@ module.exports = class extends Task
       hit: toMultiplier hitPercent
       foulball: @getRandomArbitrary(1.5, 2)
     .catch (error) ->
-      @logger.verbose "Fallback to generic multipliers for pitch. Player (#{playerId})", error
+      @logger.verbose "Fallback to generic multipliers for pitch. Player (#{playerId})"
       @getGenericMultipliersForPitch()
 
   getGenericMultipliersForPlay: ->

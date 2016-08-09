@@ -4,6 +4,7 @@ dateFormat = require 'dateformat'
 _ = require "underscore"
 Promise = require "bluebird"
 promiseRetry = require 'promise-retry'
+moment = require "moment"
 
 HOST = "http://api.sportradar.us/"
 MLB = "mlb-t5/"
@@ -47,6 +48,10 @@ module.exports = class
   getScheduledGames: (date, format = "json") ->
     Match.check date, Date
     Match.check format, formatPattern
+
+    # cast to EDT timezone
+    EDT_OFFSET = 60 * 4
+    date = moment(date).subtract(EDT_OFFSET + moment(date).utcOffset(), 'minutes').toDate()
 
     formattedDate = dateFormat(date, "yyyy/mm/dd")
     path = "games/#{formattedDate}/schedule.#{format}"
