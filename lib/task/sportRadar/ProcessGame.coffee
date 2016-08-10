@@ -265,6 +265,10 @@ module.exports = class extends Task
             @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name}) with #{result} result"
             @logger.verbose "Close commercial question '#{question['que']}' for the game (#{game.name}) with #{result} result", {gameId: game._id, result: result}
           .then -> @rewardForCommercialQuestion game, question
+        else
+          @logger.verbose "Unable to close commercial question '#{question['que']}' for the game (#{game.name}) because number of innings (#{outcomesList.length}) and current (#{inning + 1})", {gameId: game._id, result: result}
+      else
+        @logger.verbose "Unable to close commercial question '#{question['que']}' for the game (#{game.name}) because number of innings (#{outcomesList.length}) and current (#{inning + 1})", {gameId: game._id, result: result}
 
 
   rewardForCommercialQuestion: (game, object) ->
