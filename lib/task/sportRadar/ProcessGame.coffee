@@ -26,7 +26,7 @@ module.exports = class extends Task
     @Answers = dependencies.mongodb.collection("answers")
     @GamePlayed = dependencies.mongodb.collection("gamePlayed")
     @Users = dependencies.mongodb.collection("users")
-    @Users = dependencies.mongodb.collection("notifications")
+    @Notifications = dependencies.mongodb.collection("notifications")
     @gameParser = new GameParser dependencies
 
   execute: (game) ->
