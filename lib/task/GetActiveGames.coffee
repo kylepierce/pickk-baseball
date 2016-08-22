@@ -15,6 +15,6 @@ module.exports = class extends Task
 
   execute: ->
     Promise.bind @
-    .then -> @Games.find {status: "inprogress"}
+    .then -> @Games.find {$or: [{status: "inprogress"}, {close_processed: false}]}
     .tap (games) -> @logger.verbose "There are #{games.length} active games" 
 

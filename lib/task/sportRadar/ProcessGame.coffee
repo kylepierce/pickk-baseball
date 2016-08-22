@@ -73,18 +73,21 @@ module.exports = class extends Task
       diamonds = Math.floor(coins / rate)
       message = "You traded #{coins} coins you earned playing #{game.name} for #{diamonds} diamonds"
 
-      @Users.update {_id: player['userId']},
-        $inc:
-          "profile.diamonds": diamonds
-        $push:
-          pendingNotifications:
-            _id: notificationId
-            type: "diamonds"
-            tag: "exchange"
-            read: false
-            notificationId: notificationId
-            dateCreated: new Date()
-            message: message
+      Promise.bind @
+      .then ->
+        @Users.update {_id: player['userId']},
+          $inc:
+            "profile.diamonds": diamonds
+          $push:
+            pendingNotifications:
+              _id: notificationId
+              type: "diamonds"
+              tag: "exchange"
+              read: false
+              notificationId: notificationId
+              dateCreated: new Date()
+              message: message
+      .tap -> @logger.verbose "Exchange coins on diamonds (#{diamonds})", {userId: player['userId'], gameId: game._id}
 
   awardLeaders: (game) ->
     rewards = [50, 40, 30, 25, 22, 20, 17, 15, 12, 10]
