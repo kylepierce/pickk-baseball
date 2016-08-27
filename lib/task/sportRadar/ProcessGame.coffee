@@ -550,15 +550,15 @@ module.exports = class extends Task
 
       toMultiplier = (value) =>
         switch true
-          when value < 25 then @getRandomArbitrary 1.5, 1.95
-          when value < 50 then @getRandomArbitrary 1.7, 2.3
-          when value < 60 then @getRandomArbitrary 2.2, 2.7
-          when value < 75 then @getRandomArbitrary 2.65, 3.15
-          when value < 85 then @getRandomArbitrary 2.75, 3.35
-          when value < 90 then @getRandomArbitrary 3.25, 3.75
-          when value < 95 then @getRandomArbitrary 3.65, 3.95
-          when value < 99 then @getRandomArbitrary 3.95, 4.5
-          else @getRandomArbitrary 5.5, 7
+          when value < 25 then @getRandomArbitrary 1.95, 2.45
+          when value < 50 then @getRandomArbitrary 2.27, 3.3
+          when value < 60 then @getRandomArbitrary 3.2, 4.7
+          when value < 75 then @getRandomArbitrary 3.65, 4.15
+          when value < 85 then @getRandomArbitrary 3.75, 5.35
+          when value < 90 then @getRandomArbitrary 4.25, 6.75
+          when value < 95 then @getRandomArbitrary 5.65, 8.95
+          when value < 99 then @getRandomArbitrary 7.95, 14.5
+          else @getRandomArbitrary 5.5, 9
 
       out: toMultiplier outPercent
       walk: toMultiplier walkPercent
@@ -615,12 +615,12 @@ module.exports = class extends Task
 
       toMultiplier = (value) =>
         switch true
-          when value < 25 then @getRandomArbitrary 1.15,1.25
-          when value < 50 then @getRandomArbitrary 1.25, 1.5
-          when value < 60 then @getRandomArbitrary 1.5,1.75
-          when value < 75 then @getRandomArbitrary 1.75, 2.25
-          when value < 85 then @getRandomArbitrary 2.25, 2.75
-          when value < 90 then @getRandomArbitrary 2.75, 3.5
+          when value < 25 then @getRandomArbitrary 1.55,2.25
+          when value < 50 then @getRandomArbitrary 1.75, 2.25
+          when value < 60 then @getRandomArbitrary 2.5,2.75
+          when value < 75 then @getRandomArbitrary 2.75, 3.25
+          when value < 85 then @getRandomArbitrary 3.25, 2.75
+          when value < 90 then @getRandomArbitrary 3.75, 4.5
           else @getRandomArbitrary 3.5, 4.5
 
       strike: toMultiplier strikePercent
@@ -633,18 +633,18 @@ module.exports = class extends Task
       @getGenericMultipliersForPitch()
 
   getGenericMultipliersForPlay: ->
-    out: @getRandomArbitrary 1.55, 1.95
-    walk: @getRandomArbitrary 3.05, 4.65
-    single: @getRandomArbitrary 2.35, 3.65
-    double: @getRandomArbitrary 3.05, 5.65
-    triple: @getRandomArbitrary 4.05, 6.65
-    homerun: @getRandomArbitrary 4.05, 6.65
+    out: @getRandomArbitrary 1.95, 2.95
+    walk: @getRandomArbitrary 3.05, 5.65
+    single: @getRandomArbitrary 3.35, 5.65
+    double: @getRandomArbitrary 6.05, 8.65
+    triple: @getRandomArbitrary 9.05, 15.65
+    homerun: @getRandomArbitrary 8.05, 12.65
 
   getGenericMultipliersForPitch: ->
     strike: @getRandomArbitrary 1.55, 2.5
     ball: @getRandomArbitrary 1.45, 2.65
     out: @getRandomArbitrary 2.05, 3.65
-    hit: @getRandomArbitrary 2.05, 3.65
-    foulball: @getRandomArbitrary 1.65, 1.95
+    hit: @getRandomArbitrary 3.05, 5.65
+    foulball: @getRandomArbitrary 1.65, 2.45
 
   getRandomArbitrary: (min, max) -> parseFloat((Math.random() * (max - min) + min).toFixed(2))
