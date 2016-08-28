@@ -475,11 +475,21 @@ module.exports = class extends Task
     playNumber = result.playNumber
     pitchNumber = result.pitchNumber
 
+    @logger.verbose "Close inactive pitches", {gameId: game.id, playNumber, pitchNumber}
+
     Promise.bind @
     .then -> @Questions.find {commercial: false, game_id: game.id, active: true, atBatQuestion: {$exists: false}, $or: [{play: {$ne: playNumber}}, {pitch: {$ne: pitchNumber}}]}
     .map (question) ->
-      play = result['plays'][question['play'] - 1]
-      outcome = play.pitches[question['pitch'] - 1]
+      questionPlay = question['play']
+      questionPitch = question['pitch']
+      @logger.verbose "Close a pitch question", {questionId: question['_id'], questionPlay, questionPitch}
+
+      play = result['plays'][questionPlay - 1]
+      if not play
+        @logger.warn "Can't find a play completed for the question", {questionId: question['_id'], questionPlay, questionPitch, playsAmount: result['plays'].length}
+        return
+
+      outcome = play.pitches[questionPitch - 1]
 
       map = _.invert _.mapObject question['options'], (option) -> option['title']
       outcomeOption = map[outcome]
