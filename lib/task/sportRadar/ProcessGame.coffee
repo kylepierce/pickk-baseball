@@ -373,7 +373,14 @@ module.exports = class extends Task
     Promise.bind @
     .then -> @Questions.find {commercial: false, game_id: game.id, active: true, atBatQuestion: true, play: {$ne: playNumber}}
     .map (question) ->
-      play = result['plays'][question['play'] - 1]
+      questionPlay = question['play']
+      @logger.verbose "Close a play question", {questionId: question['_id'], questionPlay}
+
+      play = result['plays'][questionPlay - 1]
+      if not play
+        @logger.warn "Can't find a play completed for the question", {questionId: question['_id'], questionPlay, playsAmount: result['plays'].length}
+        return
+
       outcome = play.outcome
 
       map = _.invert _.mapObject question['options'], (option) -> option['title']
