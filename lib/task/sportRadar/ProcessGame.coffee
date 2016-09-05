@@ -78,15 +78,16 @@ module.exports = class extends Task
         @Users.update {_id: player['userId']},
           $inc:
             "profile.diamonds": diamonds
-          $push:
-            pendingNotifications:
-              _id: notificationId
-              type: "diamonds"
-              tag: "exchange"
-              read: false
-              notificationId: notificationId
-              dateCreated: new Date()
-              message: message
+      .then ->
+        @Notifications.insert
+          _id: notificationId
+          userId: player['userId']
+          type: "diamonds"
+          tag: "exchange"
+          read: false
+          notificationId: notificationId
+          dateCreated: new Date()
+          message: message
       .tap -> @logger.verbose "Exchange coins on diamonds (#{diamonds})", {userId: player['userId'], gameId: game._id}
 
   awardLeaders: (game) ->
@@ -113,6 +114,7 @@ module.exports = class extends Task
 
           notifications.push
             _id: notificationTrophyId
+            userId: player['userId']
             type: "trophy"
             notificationId: notificationTrophyId
             dateCreated: now
@@ -120,6 +122,7 @@ module.exports = class extends Task
           if position <= 3
             notifications.push
               _id: notificationId
+              userId: player['userId']
               type: "diamonds"
               tag: "leader"
               read: false
@@ -134,8 +137,7 @@ module.exports = class extends Task
                 "profile.diamonds": reward
               $push:
                 "profile.trophies": trophyId
-                pendingNotifications:
-                  $each: notifications
+          .then -> Promise.all (@Notifications.insert notification for notification in notifications)
           .tap -> @logger.verbose "Reward user #{player['userId']} with #{reward} diamonds for position #{position} in game (#{game.name})"
       )
 
@@ -296,17 +298,16 @@ module.exports = class extends Task
         .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
         .then ->
           notificationId = chance.guid()
-          @Users.update {_id: answer['userId']},
-            $push:
-              pendingNotifications:
-                _id: notificationId,
-                type: "score",
-                read: false,
-                notificationId: notificationId,
-                dateCreated: new Date(),
-                message: "Nice Pickk! You got #{reward} Coins!",
-                sharable: false,
-                shareMessage: ""
+          @Notifications.insert
+            _id: notificationId
+            userId: answer['userId']
+            type: "score"
+            read: false
+            notificationId: notificationId
+            dateCreated: new Date()
+            message: "Nice Pickk! You got #{reward} Coins!"
+            sharable: false
+            shareMessage: ""
         .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
 
@@ -401,17 +402,16 @@ module.exports = class extends Task
         .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
         .then ->
           notificationId = chance.guid()
-          @Users.update {_id: answer['userId']},
-            $push:
-              pendingNotifications:
-                _id: notificationId,
-                type: "score",
-                read: false,
-                notificationId: notificationId,
-                dateCreated: new Date(),
-                message: "Nice Pickk! You got #{reward} Coins!",
-                sharable: false,
-                shareMessage: ""
+          @Notifications.insert
+            _id: notificationId
+            userId: answer['userId']
+            type: "score"
+            read: false
+            notificationId: notificationId
+            dateCreated: new Date()
+            message: "Nice Pickk! You got #{reward} Coins!"
+            sharable: false
+            shareMessage: ""
         .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
   handlePitch: (game, result) ->
@@ -516,17 +516,16 @@ module.exports = class extends Task
         .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
         .then ->
           notificationId = chance.guid()
-          @Users.update {_id: answer['userId']},
-            $push:
-              pendingNotifications:
-                _id: notificationId,
-                type: "score",
-                read: false,
-                notificationId: notificationId,
-                dateCreated: new Date(),
-                message: "Nice Pickk! You got #{reward} Coins!",
-                sharable: false,
-                shareMessage: ""
+          @Notifications.insert
+            _id: notificationId
+            userId: answer['userId']
+            type: "score"
+            read: false
+            notificationId: notificationId
+            dateCreated: new Date()
+            message: "Nice Pickk! You got #{reward} Coins!"
+            sharable: false
+            shareMessage: ""
         .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
   calculateMultipliersForPlay: (bases, playerId) ->

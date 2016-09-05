@@ -48,6 +48,7 @@ describe "Process imported games and question management", ->
   Users = mongodb.collection("users")
   Answers = mongodb.collection("answers")
   GamePlayed = mongodb.collection("gamePlayed")
+  Notifications = mongodb.collection("notifications")
 
   activeGameId = "fec58a7a-eff7-4eec-9535-f64c42cc4870"
   inactiveGameId = "2b0ba18a-41f5-46d7-beb3-1e86b9a4acc0"
@@ -68,6 +69,7 @@ describe "Process imported games and question management", ->
         Users.remove()
         Answers.remove()
         GamePlayed.remove()
+        Notifications.remove()
       ]
 
   it 'should create new play question', ->
@@ -214,7 +216,7 @@ describe "Process imported games and question management", ->
       # should be still active
       active.should.be.equal false
 
-  it.skip 'should reward the user for right answer on pitch question', ->
+  it 'should reward the user for right answer on pitch question', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualPitchQuestionsFixtures, mongodb
@@ -231,11 +233,16 @@ describe "Process imported games and question management", ->
       should.exist profile
       profile.should.be.an "object"
 
-      {coins} = profile
-      should.exist coins
-      coins.should.be.equal 10435
+#      {coins} = profile
+#      should.exist coins
+#      coins.should.be.equal 10435
+    .then -> Notifications.find({userId: "Charlie"})
+    .then (notifications) ->
+      should.exist notifications
+      notifications.should.be.an "array"
+      notifications.length.should.be.equal 1
 
-  it.skip 'should reward the user for right answer on play question', ->
+  it 'should reward the user for right answer on play question', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualQuestionsFixtures, mongodb
@@ -252,9 +259,14 @@ describe "Process imported games and question management", ->
       should.exist profile
       profile.should.be.an "object"
 
-      {coins} = profile
-      should.exist coins
-      coins.should.be.equal 10735
+#      {coins} = profile
+#      should.exist coins
+#      coins.should.be.equal 10735
+    .then -> Notifications.find({userId: "Charlie"})
+    .then (notifications) ->
+      should.exist notifications
+      notifications.should.be.an "array"
+      notifications.length.should.be.equal 1
 
   it 'shouldn\'t reward the user for wrong answer on pitch question', ->
     Promise.bind @
@@ -747,6 +759,11 @@ describe "Process imported games and question management", ->
       {coins} = gamePlayed
       should.exist coins
       coins.should.be.equal 15000
+    .then -> Notifications.find({userId: "Charlie"})
+    .then (notifications) ->
+      should.exist notifications
+      notifications.should.be.an "array"
+      notifications.length.should.be.equal 1
 
   it 'should not reward the player for the wrong answer on the commercial questions', ->
     Promise.bind @
@@ -877,31 +894,33 @@ describe "Process imported games and question management", ->
     .then -> Users.findOne({_id: "Charlie"})
     .then (user) ->
       should.exist user
-      {profile, pendingNotifications} = user
+      {profile} = user
 
       should.exist profile
       {diamonds} = profile
 
       should.exist diamonds
       diamonds.should.be.equal 51
-
-      should.exist pendingNotifications
-      pendingNotifications.should.be.an "array"
-      pendingNotifications.length.should.be.equal 3
+    .then -> Notifications.find({userId: "Charlie"})
+    .then (notifications) ->
+      should.exist notifications
+      notifications.should.be.an "array"
+      notifications.length.should.be.equal 3
     .then -> Users.findOne({_id: "James"})
     .then (user) ->
       should.exist user
-      {profile, pendingNotifications} = user
+      {profile} = user
 
       should.exist profile
       {diamonds} = profile
 
       should.exist diamonds
       diamonds.should.be.equal 42
-
-      should.exist pendingNotifications
-      pendingNotifications.should.be.an "array"
-      pendingNotifications.length.should.be.equal 3
+    .then -> Notifications.find({userId: "James"})
+    .then (notifications) ->
+      should.exist notifications
+      notifications.should.be.an "array"
+      notifications.length.should.be.equal 3
 
   it 'shouldn\'t exchange coins more than once the end of the game', ->
     Promise.bind @
@@ -915,7 +934,7 @@ describe "Process imported games and question management", ->
     .then -> Users.findOne({_id: "Charlie"})
     .then (user) ->
       should.exist user
-      {profile, pendingNotifications} = user
+      {profile} = user
 
       should.exist profile
       {diamonds} = profile
