@@ -221,21 +221,16 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualPitchQuestionsFixtures, mongodb
     .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures GamePlayedFixtures, mongodb
     .then -> loadFixtures AnswersFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
     .then (game) -> processGame.execute game
-    .then -> Users.findOne({_id: "Charlie"})
-    .then (user) ->
-      should.exist user
-      user.should.be.an "object"
-
-      {profile} = user
-      should.exist profile
-      profile.should.be.an "object"
-
-#      {coins} = profile
-#      should.exist coins
-#      coins.should.be.equal 10435
+    .then -> GamePlayed.findOne({userId: "Charlie"})
+    .then (gamePlayed) ->
+      should.exist gamePlayed
+      {coins} = gamePlayed
+      should.exist coins
+      coins.should.be.equal 13435
     .then -> Notifications.find({userId: "Charlie"})
     .then (notifications) ->
       should.exist notifications
@@ -247,21 +242,16 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualQuestionsFixtures, mongodb
     .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures GamePlayedFixtures, mongodb
     .then -> loadFixtures AnswersFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
     .then (game) -> processGame.execute game
-    .then -> Users.findOne({_id: "Charlie"})
-    .then (user) ->
-      should.exist user
-      user.should.be.an "object"
-
-      {profile} = user
-      should.exist profile
-      profile.should.be.an "object"
-
-#      {coins} = profile
-#      should.exist coins
-#      coins.should.be.equal 10735
+    .then -> GamePlayed.findOne({userId: "Charlie"})
+    .then (gamePlayed) ->
+      should.exist gamePlayed
+      {coins} = gamePlayed
+      should.exist coins
+      coins.should.be.equal 13735
     .then -> Notifications.find({userId: "Charlie"})
     .then (notifications) ->
       should.exist notifications
@@ -273,42 +263,32 @@ describe "Process imported games and question management", ->
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualQuestionsFixtures, mongodb
     .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures GamePlayedFixtures, mongodb
     .then -> loadFixtures WrongAnswersFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
     .then (game) -> processGame.execute game
-    .then -> Users.findOne({_id: "Charlie"})
-    .then (user) ->
-      should.exist user
-      user.should.be.an "object"
-
-      {profile} = user
-      should.exist profile
-      profile.should.be.an "object"
-
-      {coins} = profile
+    .then -> GamePlayed.findOne({userId: "Charlie"})
+    .then (gamePlayed) ->
+      should.exist gamePlayed
+      {coins} = gamePlayed
       should.exist coins
-      coins.should.be.equal 10000
+      coins.should.be.equal 13000
 
   it 'shouldn\'t reward the user for wrong answer on play question', ->
     Promise.bind @
     .then -> loadFixtures ActiveFullGameFixtures, mongodb
     .then -> loadFixtures NonActualQuestionsFixtures, mongodb
     .then -> loadFixtures UsersFixtures, mongodb
+    .then -> loadFixtures GamePlayedFixtures, mongodb
     .then -> loadFixtures WrongAnswersFixtures, mongodb
     .then -> SportRadarGames.findOne({id: activeGameId})
     .then (game) -> processGame.execute game
-    .then -> Users.findOne({_id: "Charlie"})
-    .then (user) ->
-      should.exist user
-      user.should.be.an "object"
-
-      {profile} = user
-      should.exist profile
-      profile.should.be.an "object"
-
-      {coins} = profile
+    .then -> GamePlayed.findOne({userId: "Charlie"})
+    .then (gamePlayed) ->
+      should.exist gamePlayed
+      {coins} = gamePlayed
       should.exist coins
-      coins.should.be.equal 10000
+      coins.should.be.equal 13000
 
   it 'should works correctly when no innings are present', ->
     Promise.bind @

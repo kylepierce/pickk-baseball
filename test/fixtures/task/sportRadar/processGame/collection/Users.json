@@ -5,7 +5,6 @@
       "profile": {
         "firstName": "Charlie",
         "lastName": "Dalton",
-        "coins": 10000,
         "role": "admin"
       }
     },
@@ -13,8 +12,7 @@
       "_id": "James",
       "profile": {
         "firstName": "James",
-        "lastName": "Smith",
-        "coins": 15000
+        "lastName": "Smith"
       }
     }
   ]
