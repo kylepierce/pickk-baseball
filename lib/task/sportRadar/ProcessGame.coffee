@@ -82,6 +82,7 @@ module.exports = class extends Task
           userId: player['userId']
           type: "diamonds"
           source: "Exchange"
+          gameId: game._id
           read: false
           notificationId: notificationId
           dateCreated: new Date()
@@ -114,6 +115,7 @@ module.exports = class extends Task
             _id: notificationTrophyId
             userId: player['userId']
             type: "trophy"
+            gameId: game._id
             notificationId: notificationTrophyId
             dateCreated: now
 
@@ -123,6 +125,7 @@ module.exports = class extends Task
               userId: player['userId']
               type: "diamonds"
               tag: "leader"
+              gameId: game._id
               read: false
               notificationId: notificationId
               dateCreated: now
@@ -298,7 +301,9 @@ module.exports = class extends Task
           @Notifications.insert
             _id: notificationId
             userId: answer['userId']
-            type: "score"
+            gameId: game.id
+            type: "coins"
+            value: reward
             read: false
             notificationId: notificationId
             dateCreated: new Date()
@@ -402,7 +407,9 @@ module.exports = class extends Task
           @Notifications.insert
             _id: notificationId
             userId: answer['userId']
-            type: "score"
+            gameId: game.id
+            type: "coins"
+            value: reward
             read: false
             notificationId: notificationId
             dateCreated: new Date()
