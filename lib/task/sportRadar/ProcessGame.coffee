@@ -75,15 +75,14 @@ module.exports = class extends Task
 
       Promise.bind @
       .then ->
-        @Users.update {_id: player['userId']},
-          $inc:
-            "profile.diamonds": diamonds
+        @GamePlayed.update {userId: player['userId'], gameId: game._id}, {$inc: {diamonds: diamonds}}
       .then ->
         @Notifications.insert
           _id: notificationId
           userId: player['userId']
           type: "diamonds"
-          tag: "exchange"
+          source: "Exchange"
+          gameId: game._id
           read: false
           notificationId: notificationId
           dateCreated: new Date()
@@ -116,6 +115,7 @@ module.exports = class extends Task
             _id: notificationTrophyId
             userId: player['userId']
             type: "trophy"
+            gameId: game._id
             notificationId: notificationTrophyId
             dateCreated: now
 
@@ -125,6 +125,7 @@ module.exports = class extends Task
               userId: player['userId']
               type: "diamonds"
               tag: "leader"
+              gameId: game._id
               read: false
               notificationId: notificationId
               dateCreated: now
@@ -132,9 +133,8 @@ module.exports = class extends Task
 
           Promise.bind @
           .then ->
+            @GamePlayed.update {userId: player['userId'], gameId: game._id}, {$inc: {diamonds: reward}}
             @Users.update {_id: player['userId']},
-              $inc:
-                "profile.diamonds": reward
               $push:
                 "profile.trophies": trophyId
           .then -> Promise.all (@Notifications.insert notification for notification in notifications)
@@ -301,7 +301,9 @@ module.exports = class extends Task
           @Notifications.insert
             _id: notificationId
             userId: answer['userId']
-            type: "score"
+            gameId: game.id
+            type: "coins"
+            value: reward
             read: false
             notificationId: notificationId
             dateCreated: new Date()
@@ -405,7 +407,9 @@ module.exports = class extends Task
           @Notifications.insert
             _id: notificationId
             userId: answer['userId']
-            type: "score"
+            gameId: game.id
+            type: "coins"
+            value: reward
             read: false
             notificationId: notificationId
             dateCreated: new Date()
