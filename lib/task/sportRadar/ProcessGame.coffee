@@ -134,6 +134,7 @@ module.exports = class extends Task
           Promise.bind @
           .then ->
             @GamePlayed.update {userId: player['userId'], gameId: game._id}, {$inc: {diamonds: reward}}
+          .then ->
             @Users.update {_id: player['userId']},
               $push:
                 "profile.trophies": trophyId
