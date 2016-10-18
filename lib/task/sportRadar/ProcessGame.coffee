@@ -216,6 +216,7 @@ module.exports = class extends Task
             @Questions.insert
               _id: @Questions.db.ObjectId().toString()
               que: text
+              type: "freePickk"
               game_id: game._id
               gameId: game._id
               teamId: team.id
@@ -354,6 +355,7 @@ module.exports = class extends Task
               game_id: game.id
               player_id: player['player_id']
               atBatQuestion: true
+              type: "atBat"
               play: play
               dateCreated: new Date()
               gameId: game['_id']
@@ -468,6 +470,7 @@ module.exports = class extends Task
               player_id: player['player_id']
               play: play
               pitch: pitch
+              type: "pitch"
               dateCreated: new Date()
               gameId: game['_id']
               active: true
