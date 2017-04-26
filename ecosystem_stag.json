@@ -1,42 +1,42 @@
-{
-  "apps": [
-    {
-      "name": "ImportGames",
-      "script": "./bin/worker",
-      "args": [
-        "--settings", "settings/stag.json",
-        "--delay=1000",
-        "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
-      ],
-      "exec_interpreter": "coffee",
-      "exec_mode": "fork",
-      "instances": 1,
-      "max_memory_restart": "1024M"
-    },
-    {
-      "name": "ImportFutureGames",
-      "script": "./bin/worker",
-      "args": [
-        "--settings", "settings/stag.json",
-        "--delay=3600000",
-        "lib/strategy/sportRadar/ImportFutureGamesStrategy.coffee"
-      ],
-      "exec_interpreter": "coffee",
-      "exec_mode": "fork",
-      "instances": 1,
-      "max_memory_restart": "1024M"
-    }
+// {
+//   "apps": [
+//     {
+//       "name": "ImportGames",
+//       "script": "./bin/worker",
+//       "args": [
+//         "--settings", "settings/stag.json",
+//         "--delay=1000",
+//         "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
+//       ],
+//       "exec_interpreter": "coffee",
+//       "exec_mode": "fork",
+//       "instances": 1,
+//       "max_memory_restart": "1024M"
+//     },
+//     {
+//       "name": "ImportFutureGames",
+//       "script": "./bin/worker",
+//       "args": [
+//         "--settings", "settings/stag.json",
+//         "--delay=3600000",
+//         "lib/strategy/sportRadar/ImportFutureGamesStrategy.coffee"
+//       ],
+//       "exec_interpreter": "coffee",
+//       "exec_mode": "fork",
+//       "instances": 1,
+//       "max_memory_restart": "1024M"
+//     }
 
-  ],
+//   ],
 
-  "deploy": {
-    "stag": {
-      "user": "root",
-      "host": "do.pickk-stag",
-      "ref": "origin/master",
-      "repo": "git@bitbucket.org:IcyEagle/pickk-import.git",
-      "path": "/opt/pickk-import",
-      "post-deploy": "npm install && pm2 startOrRestart ecosystem_stag.json --env stag"
-    }
-  }
-}
+//   "deploy": {
+//     "stag": {
+//       "user": "root",
+//       "host": "do.pickk-stag",
+//       "ref": "origin/master",
+//       "repo": "git@bitbucket.org:pickk/pickk-import.git",
+//       "path": "/opt/pickk-import",
+//       "post-deploy": "npm install && pm2 startOrRestart ecosystem_stag.json --env stag"
+//     }
+//   }
+// }
