@@ -31,7 +31,6 @@
   "deploy": {
     "prod": {
       "user": "root",
-      "password": "f61742834a8c0418",
       "host": "do.pickk-prod",
       "ref": "origin/master",
       "repo": "git@bitbucket.org:IcyEagle/pickk-import.git",
