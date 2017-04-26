@@ -33,7 +33,7 @@
       "user": "root",
       "host": "do.pickk-prod",
       "ref": "origin/master",
-      "repo": "git@bitbucket.org:IcyEagle/pickk-import.git",
+      "repo": "git@bitbucket.org:pickk/pickk-import.git",
       "path": "/opt/pickk-import",
       "post-deploy": "npm install && pm2 startOrRestart ecosystem_prod.json --env prod"
     }
