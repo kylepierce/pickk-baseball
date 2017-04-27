@@ -8,16 +8,19 @@ module.exports = class
 
     _.extend @, data
 
-    home = @['home'] or @['scoring']['home']
-    away = @['away'] or @['scoring']['away']
+    away = @['teams'][0]
+    home = @['teams'][1]
 
-    @_id = @id
-    @scheduled = moment(@scheduled).toDate()
-    @name = "#{home['name']} vs #{away['name']}"
+    @_id = @['eventId']
+    @home = home
+    @away = away
+    @scheduled = moment(@['startDate'][1]['full']).toDate()
+    @name = "#{home.nickname} vs #{away.nickname}"
     @gameDate = moment.utc(@scheduled).format('MMM Do LT')
-    @tv = @['broadcast']['network']
+    @sport = "MLB"
+    # @tv = @['tvStations']['callLetters']
     @dateCreated = moment.utc(@scheduled).startOf('day').toDate()
-    @live = @status is 'inprogress'
+    @live = @['eventStatus']['name'] is "In-Progress"
     @completed = @status in ['complete', 'closed']
 
   getSelector: ->

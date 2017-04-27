@@ -23,15 +23,14 @@ module.exports = class extends Task
     Promise.bind @
     .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
     .then -> @api.getScheduledGames(date)
-    .tap (result) -> @logger.verbose "#{result['league']['games'].length} results have been fetched"
-    .then (result) -> result['league']['games']
+    .then (result) -> result.apiResults[0].league.season.eventType[0].events
     .map @upsertGame
     .tap (results) -> @logger.verbose "#{results.length} games have been upserted"
     .return true
 
   upsertGame: (data) ->
     game = new SportRadarGame data
-
+    console.log data.eventId
     Promise.bind @
     .then -> @Games.findOne game.getSelector()
     .then (original) ->

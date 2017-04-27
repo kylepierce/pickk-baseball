@@ -14,7 +14,8 @@
     "url": "mongodb://localhost:3001/meteor"
   },
   "sportRadar": {
-    "apiKey": "kw3k3f8n9zcy92ufe7g8gwy4"
+    "apiKey": "994p92zwctw9s7tyafqbecta",
+    "secret": "8ssJGgsBcN"
   }
 
 }
