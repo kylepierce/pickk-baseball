@@ -277,7 +277,6 @@ module.exports = class extends Task
       else
         @logger.verbose "Unable to close commercial question '#{question['que']}' for the game (#{game.name}) because number of innings (#{outcomesList.length}) and current (#{inning + 1})", {gameId: game._id, result: result}
 
-
   rewardForCommercialQuestion: (game, object) ->
     options = {}
     options[true] = "option1"
@@ -313,7 +312,6 @@ module.exports = class extends Task
             sharable: false
             shareMessage: ""
         .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
-
 
   handleAtBat: (game, result) ->
     Promise.bind @

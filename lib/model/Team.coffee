@@ -16,6 +16,5 @@ module.exports = class
     @updatedAt = now
     console.log @
 
-
   getSelector: ->
     "_id": @_id

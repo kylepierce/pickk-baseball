@@ -19,9 +19,8 @@ module.exports = class extends Task
 
     Promise.bind @
     .then -> api.getPlayByPlay gameId
-    # .then (result) -> console.log result.apiResults
-    # .then (result) -> result.apiResults
-    # .then @upsertGame
+    .then (result) -> result.apiResults[0].league.season.eventType[0].events[0]
+    .then @upsertGame
 
   upsertGame: (game) ->
     sportRadarGame = new SportRadarGame game
