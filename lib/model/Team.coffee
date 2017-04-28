@@ -5,16 +5,17 @@ moment = require "moment"
 module.exports = class
   constructor: (data) ->
     Match.check data, Object
-
-    @_id = data['id']
-    @nickname = data['name']
-    @fullName = "#{data['market']} #{data['name']}"
-    @computerName = data['abbr'].toLowerCase()
-    @city = data['market']
-    @state = data['venue']['state']
+    @_id = data['teamId']
+    @nickname = data['nickname']
+    @fullName = "#{data['location']} #{data['nickname']}"
+    @computerName = data['abbreviation'].toLowerCase()
+    @city = data['location']
+    @state = data['venue']['state']['abbreviation']
 
     now = new Date()
     @updatedAt = now
+    console.log @
+
 
   getSelector: ->
     "_id": @_id

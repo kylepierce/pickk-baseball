@@ -67,16 +67,16 @@ module.exports = class
     @_mlbRequest path
 
   # game -> innings -> halfs -> events -> {at_bat} -> events
-  # getPlayByPlay: (gameId, format = "json") ->
-  #   Match.check gameId, String
-  #   Match.check format, formatPattern
-  #
-  #   path = "games/#{gameId}/pbp.#{format}"
-  #   @_mlbRequest path
-  #
-  # getTeamProfile: (teamId, format = "json") ->
-  #   Match.check teamId, String
-  #   Match.check format, formatPattern
-  #
-  #   path = "teams/#{teamId}/profile.#{format}"
-  #   @_mlbRequest path
+  getPlayByPlay: (gameId, format = "json") ->
+    Match.check gameId, Number
+    Match.check format, formatPattern
+
+    path = "events/#{gameId}?pbp=true&accept=#{format}"
+    @_mlbRequest path
+
+  getTeamProfile: (teamId, format = "json") ->
+    Match.check teamId, Number
+    Match.check format, formatPattern
+
+    path = "teams/#{teamId}"
+    @_mlbRequest path

@@ -2,7 +2,7 @@
   "games": [
     {
       "id": "fec58a7a-eff7-4eec-9535-f64c42cc4944",
-      "status": "inprogress",
+      "status": "In-Progress",
       "coverage": "full",
       "attendance": 31182,
       "duration": "2:37",
@@ -20,7 +20,7 @@
     },
     {
       "id": "fec58a7a-eff7-4eec-9535-f64c42cc4870",
-      "status": "inprogress",
+      "status": "In-Progress",
       "coverage": "full",
       "attendance": 31183,
       "duration": "3:32",

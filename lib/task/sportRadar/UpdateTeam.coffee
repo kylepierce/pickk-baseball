@@ -45,6 +45,7 @@ module.exports = class extends Task
 
     @fetchTeam teamId
     .then (team) ->
+      console.log "fetch"
       object = new Team team
 
       Promise.bind @
@@ -56,22 +57,24 @@ module.exports = class extends Task
   createTeam: (teamId) ->
     @fetchTeam teamId
     .then (team) ->
+      team_fix = team.apiResults[0].league.season.conferences[0].divisions[0].teams[0]
       now = new Date()
-      object = new Team team
+      object = new Team team_fix
       object.createdAt = now
-
+      console.log object
       Promise.bind @
       .then -> @Teams.insert object
       .tap -> @logger.verbose "Team #{object['fullName']} has been successfully created."
-      .return team.players
-      .tap (players) -> _.each players, (player) -> player['team_id'] = teamId # enrich original data
-      .map @handlePlayer
+      # .return team.players
+      # .tap (players) -> _.each players, (player) -> player['team_id'] = teamId # enrich original data
+      # .map @handlePlayer
 
   fetchTeam: (teamId) ->
     Promise.bind @
     .tap -> @logger.verbose "Get getTeamProfile for team (#{teamId})"
+    .then -> console.log teamId
     .then -> @dependencies.sportRadar.getTeamProfile teamId
-    .tap (response) -> @logger.verbose "Got response for getTeamProfile. Players number (#{response.players.length})"
+    # .tap (response) -> @logger.verbose "Got response for getTeamProfile. Players number (#{response.players.length})"
 
   handlePlayer: (playerData) ->
     playerId = playerData['id']

@@ -17,7 +17,7 @@ module.exports = class extends Strategy
     # do not allow it to crash!
     promiseRetry {retries: 1000, factor: 1}, (retry) =>
       Promise.bind @
-      .return [1..7]
+      .return [2]
       .map (days) ->
         date = moment().add(days, "days").toDate()
         Promise.bind @

@@ -30,7 +30,6 @@ module.exports = class extends Task
 
   upsertGame: (data) ->
     game = new SportRadarGame data
-    console.log data.eventId
     Promise.bind @
     .then -> @Games.findOne game.getSelector()
     .then (original) ->

@@ -79,7 +79,7 @@ describe "Import brief information about games for date specified from SportRada
 
           {status} = result
           should.exist status
-          status.should.be.equal "inprogress"
+          status.should.be.equal "In-Progress"
         .then -> dependencies.sportRadar.getScheduledGames date
         .then (result) -> gameNumber = result.league.games.length
         .then -> importGames.execute(date)
@@ -163,7 +163,7 @@ describe "Import brief information about games for date specified from SportRada
 
           {status, completed} = game
           should.exist status
-          status.should.be.equal "inprogress"
+          status.should.be.equal "In-Progress"
 
           should.exist completed
           completed.should.be.equal false

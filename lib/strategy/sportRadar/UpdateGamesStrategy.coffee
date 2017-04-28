@@ -29,13 +29,14 @@ module.exports = class extends Strategy
     # do not allow it to crash!
     promiseRetry {retries: 1000, factor: 1}, (retry) =>
       Promise.bind @
+      # .then -> console.log "I am important"
       .then -> @importGames.execute()
       .then -> @closeInactiveQuestions.execute()
       .then -> @closeInactiveAtBats.execute()
       .then -> @getActiveGames.execute()
       .map (game) ->
         Promise.bind @
-        .then -> @importGameDetails.execute game['id']
+        .then -> @importGameDetails.execute game['eventId']
         .then -> @updateTeam.execute game['home_team']
         .then -> @updateTeam.execute game['away_team']
         .then -> @processGame.execute game
