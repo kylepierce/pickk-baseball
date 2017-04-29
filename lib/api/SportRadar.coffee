@@ -51,7 +51,7 @@ module.exports = class
       .catch (error) ->
         # TODO @logger
         console.log error.message #, _.extend({stack: error.stack}, error.details)
-        console.log uri
+        # console.log uri
         retry(error)
 
   getScheduledGames: (date, format = "json") ->
@@ -79,4 +79,11 @@ module.exports = class
     Match.check format, formatPattern
 
     path = "teams/#{teamId}"
+    @_mlbRequest path
+
+  getTeamPlayers: (teamId, format = "json") ->
+    Match.check teamId, Number
+    Match.check format, formatPattern
+
+    path = "participants/teams/#{teamId}"
     @_mlbRequest path

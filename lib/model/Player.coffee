@@ -5,13 +5,13 @@ module.exports = class
   constructor: (data) ->
     Match.check data, Object
 
-    @_id = data['id']
-    @playerId = data['id']
-    @name = data['full_name']
-    @firstName = data['first_name']
-    @lastName = data['last_name']
-    @team = data['team_id']
-    @position = data['position']
+    @_id = data['playerId']
+    @playerId = data['playerId']
+    @name = data['firstName'] + " " + data['lastName']
+    @firstName = data['firstName']
+    @lastName = data['lastName']
+    @team = data['team']['teamId']
+    @position = data['positions'][0]['name']
 
     now = new Date()
     @updatedAt = now

@@ -29,7 +29,6 @@ module.exports = class extends Strategy
     # do not allow it to crash!
     promiseRetry {retries: 1000, factor: 1}, (retry) =>
       Promise.bind @
-      # .then -> console.log "I am important"
       .then -> @importGames.execute()
       .then -> @closeInactiveQuestions.execute()
       .then -> @closeInactiveAtBats.execute()

@@ -21,11 +21,11 @@ module.exports = class extends Task
 
   execute: (date = new Date()) ->
     Promise.bind @
-    .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
+    .tap -> @logger.log "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
     .then -> @api.getScheduledGames(date)
     .then (result) -> result.apiResults[0].league.season.eventType[0].events
     .map @upsertGame
-    .tap (results) -> @logger.verbose "#{results.length} games have been upserted"
+    .tap (results) -> @logger.warn "#{results.length} games have been upserted"
     .return true
 
   upsertGame: (data) ->

@@ -21,6 +21,5 @@ module.exports = class extends Task
     .then (games) -> _.pluck games, "_id"
     .tap (ids) -> @logger.verbose "Close atBats related to games not equal [#{ids}]"
     .then (ids) -> @AtBats.update {manual: {$exists: false}, gameId: {$nin: ids}, active: true}, {$set: {active: false}}, {multi: true}
-    .tap (result) -> @logger.verbose result, "#{result.nModified} atBat(s) have been closed as inactive"
+    .tap (result) -> @logger.verbose "#{result.nModified} atBat(s) have been closed as inactive"
     .tap -> @logger.verbose "End CloseInactiveAtBats"
-

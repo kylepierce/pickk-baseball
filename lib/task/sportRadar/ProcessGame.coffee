@@ -44,13 +44,14 @@ module.exports = class extends Task
 
     if result
       Promise.bind @
-      .then -> @enrichGame game, result.details
-      .then -> @handlePlay game, result
-      .then -> @handlePitch game, result
-      .then -> @handleAtBat game, result
-      .then -> @handleCommercialBreak game, result
-      .then -> @resolveCommercialQuestions game, result
-      .then -> @processClosingState game, result
+      # .then -> @logger.verbose "Result: #{result}. Game #{game}"
+      # .then -> @enrichGame game, result.details
+      # .then -> @handlePlay game, result
+      # .then -> @handlePitch game, result
+      # .then -> @handleAtBat game, result
+      # .then -> @handleCommercialBreak game, result
+      # .then -> @resolveCommercialQuestions game, result
+      # .then -> @processClosingState game, result
 
   processClosingState: (game) ->
     return if game.close_processed isnt false
@@ -315,11 +316,13 @@ module.exports = class extends Task
 
   handleAtBat: (game, result) ->
     Promise.bind @
-    .then -> @AtBats.update {gameId: game._id, playerId: result.hitter['player_id'], active: true}, {$set: {ballCount: result.balls, strikeCount: result.strikes, dateCreated: new Date()}}, {upsert: true}
-    .then -> @AtBats.update {gameId: game._id, playerId: {$ne: result.hitter['player_id']}}, {$set: {active: false}}, {multi: true}
+    .then -> @logger.verbose "#{result.hitter}"
+
+    # .then -> @AtBats.update {gameId: game._id, playerId: result.hitter['player_id'], active: true}, {$set: {ballCount: result.balls, strikeCount: result.strikes, dateCreated: new Date()}}, {upsert: true}
+    # .then -> @AtBats.update {gameId: game._id, playerId: {$ne: result.hitter['player_id']}}, {$set: {active: false}}, {multi: true}
 
   enrichGame: (game, details) ->
-    @logger.verbose "Enrich game (#{game.id})"
+    @logger.verbose "Enrich game (#{game.id}). #{details}"
 
     @SportRadarGames.update {_id: game._id}, {$set: details}
 

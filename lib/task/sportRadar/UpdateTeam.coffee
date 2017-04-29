@@ -22,6 +22,7 @@ module.exports = class extends Task
     @logger = @dependencies.logger
 
   execute: (teamId) ->
+
     Promise.bind @
     .tap -> @logger.verbose "Start UpdateTeam with teamId (#{teamId})"
     .then -> @Teams.findOne({_id: teamId})
@@ -73,11 +74,13 @@ module.exports = class extends Task
     Promise.bind @
     .tap -> @logger.verbose "Get getTeamProfile for team (#{teamId})"
     .then -> console.log teamId
+    # It might be possible to store these two sections together somewhere else. But for now I will just create one oject and put the player in that object to save headaches down the road.
     .then -> @dependencies.sportRadar.getTeamProfile teamId
+    # .then -> @dependencies.sportRadar.getTeamPlayers teamId
     # .tap (response) -> @logger.verbose "Got response for getTeamProfile. Players number (#{response.players.length})"
 
   handlePlayer: (playerData) ->
-    playerId = playerData['id']
+    playerId = playerData['playerId']
     playerName = playerData['full_name']
 
     Promise.bind @

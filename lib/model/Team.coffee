@@ -14,7 +14,6 @@ module.exports = class
 
     now = new Date()
     @updatedAt = now
-    console.log @
 
   getSelector: ->
     "_id": @_id

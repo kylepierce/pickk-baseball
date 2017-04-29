@@ -18,7 +18,7 @@
       "script": "./bin/worker",
       "args": [
         "--settings", "settings/dev.json",
-        "--delay=20000",
+        "--delay=360000",
         "lib/strategy/sportRadar/ImportFutureGamesStrategy.coffee"
       ],
       "exec_interpreter": "coffee",

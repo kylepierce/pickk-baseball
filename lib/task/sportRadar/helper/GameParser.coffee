@@ -4,82 +4,38 @@ moment = require "moment"
 module.exports = class
   constructor: (dependencies) ->
     @logger = dependencies.logger
-    
+
   getPlay: (game) ->
     @game = game
-
     @innings = @getInnings()
-    @logger.verbose "Number of innings - #{@innings.length}"
 
-    if @innings.length
-      @propagateData()
+    #Is the game live?
+    if @innings.length > 1
+      # @propagateData()
 
       @halfs = @getHalfs()
       @topHalfs = _.filter @halfs, @isTopHalf
       @bottomHalfs = _.filter @halfs, @isBottomHalf
-      @logger.verbose "Halfs - (#{@halfs.length}) [Top - (#{@topHalfs.length}), Bottom - (#{@bottomHalfs.length})]"
-
       @homeTeamId = @getHomeTeamId()
       @awayTeamId = @getAwayTeamId()
-      @logger.verbose "Home team (#{@homeTeamId}), Away team (#{@awayTeamId})"
-
       @events = @getEvents()
-      @topEvents = _.filter @events, @isTopHalfEvent.bind(@)
-      @bottomEvents = _.filter @events, @isBottomHalfEvent.bind(@)
-      @logger.verbose "Events - (#{@events.length}) [Top - (#{@topEvents.length}), Bottom - (#{@bottomEvents.length})]"
 
-      @lineups = @getLineups @events
-      @homeLineups = @getHomeLineups()
-      @awayLineups = @getAwayLineups()
-      @logger.verbose "Lineups - (#{@lineups.length}) [Home - (#{@homeLineups.length}), Away - (#{@awayLineups.length})]"
+      # @lineups = @getLineups @events
+      @homeLineups = @getHomeLineups @events
+      @awayLineups = @getAwayLineups @events
+      # @logger.verbose "Lineups - [Home - (#{@homeLineups.length}), Away - (#{@awayLineups.length})]"
 
-      @homeTeamByOrder = @indexTeamByOrder @homeLineups
-      @homeTeamById = @indexTeamById @homeLineups
-      @awayTeamByOrder = @indexTeamByOrder @awayLineups
-      @awayTeamById = @indexTeamById @awayLineups
+      # @plays = @getPlays @events
+      @currentAtBat = @getLastBatter @events
+      @lastPitch = @getLastPitch @currentAtBat
 
-      @plays = @getPlays @events
-      @topPlays = _.filter @plays, @isTopHalf
-      @bottomPlays = _.filter @plays, @isBottomHalf
-      @logger.verbose "Plays - (#{@plays.length}) [Top - (#{@topPlays.length}), Bottom - (#{@bottomPlays.length})]"
+      # is the last batter still in pitch?
+      # Did the halfs increase?
 
-      @lastPlay = @getLastPlay @plays
-      @topLastPlay = @getLastPlay @topPlays
-      @bottomLastPlay = @getLastPlay @bottomPlays
-      @homeLastPlay = @getHomeLastPlay()
-      @awayLastPlay = @getAwayLastPlay()
-      @logger.verbose "Last play - (#{@lastPlay?.id}) [Home - (#{@homeLastPlay?.id}), Away - (#{@awayLastPlay?.id})]"
-
-      @homeTeamData =
-        id: @homeTeamId
-        lastPlay: @homeLastPlay
-        teamByOrder: @homeTeamByOrder
-        teamById: @homeTeamById
-
-      @awayTeamData =
-        id: @awayTeamId
-        lastPlay: @awayLastPlay
-        teamByOrder: @awayTeamByOrder
-        teamById: @awayTeamById
-
-      # there is no plays at the beginning of the match
-      inningNumber = if @lastPlay then @lastPlay.inning else 0
-
-      # set default values
-      result =
-        balls: 0
-        strikes: 0
-        playNumber: @plays.length
-        pitchNumber: 1
-        inningNumber: inningNumber
-        commercialBreak: false
-        outcomesList:
-          "#{@getTopHalfTeamId()}": @getOutcomes @topHalfs
-          "#{@getBottomHalfTeamId()}": @getOutcomes @bottomHalfs
-
-      if @lastPlay
+      if @lastPitch
 
         if @isFinishedPlay @lastPlay
+          @logger.verbose "Play is finished"
           result.playNumber++
 
           if @isFinishedHalf @lastPlay
@@ -150,78 +106,56 @@ module.exports = class
 
       result
     else
-      # no innings, no line ups, nothing to do
+      @logger.verbose "No Game Right Now"
+      #no innings, no line ups, nothing to do
 
   getInnings: ->
-    innings = @game['innings'] or []
-    _.sortBy innings, 'number'
+    innings = @game['pbp'] or []
 
   getHalfs: ->
-    _.flatten _.map @innings, (inning) =>
-      halfs = inning['halfs'] or []
-      _.sortBy halfs, @isBottomHalf
+    _.flatten _.map @innings, (half) =>
+      halfs = half or []
 
-  isTopHalf: (half) -> half['half'] is 'T'
+  isTopHalf: (half) ->
+    if half['inningDivision'] is 'Top'
+      return true
 
-  isBottomHalf: (half) -> half['half'] is 'B'
+  isBottomHalf: (half) ->
+    if half['inningDivision'] is 'Bottom'
+      return true
 
-  isTopHalfEvent: (event) ->
-    key = _.keys(event).pop()
-    @isTopHalf event[key]
-
-  isBottomHalfEvent: (event) ->
-    key = _.keys(event).pop()
-    @isBottomHalf event[key]
-
-  getEvents: -> _.flatten _.pluck @halfs, 'events'
-
-  getLineups: (events) ->
-    _.pluck (_.filter(events, @isLineup)), 'lineup'
+  getEvents: -> _.flatten _.pluck @innings, 'pbpDetails'
 
   getPlays: (events) ->
-    _.pluck (_.filter(events, @isPlay)), 'at_bat'
+    _.pluck (_.filter(events, @isPlay)), 'pitchDetails'
 
-  getHomeLineups: ->
-    _.filter @lineups, (lineup) => lineup['team_id'] is @getHomeTeamId()
+  getHomeLineups: (events) ->
+    _.pluck (_.filter(events, @isHomeLineup)), 'batter'
 
-  getAwayLineups: ->
-    _.filter @lineups, (lineup) => lineup['team_id'] is @getAwayTeamId()
+  getAwayLineups: (events) ->
+    _.pluck (_.filter(events, @isAwayLineup)), 'batter'
 
   propagateData: ->
-    for inning in @innings when inning['halfs']
-      for half in inning['halfs'] when half['events']
-        for event in half['events']
-          for type, data of event
-            _.extend data,
-              inning: inning['number']
-              half: half['half']
-              type: type
+    # for inning in @innings when inning['halfs']
+    #   for half in inning['halfs'] when half['pbpDetails']
+    #     for event in half['pbpDetails']
+    #       for type, data of event
+    #         _.extend data,
+    #           inning: inning['number']
+    #           half: half['inningDivision']
+    #           type: type
+    #
+    #         # extend play events
+    #         if type is 'at_bat' and data['pbpDetails']
+    #           for pitch in data['pbpDetails']
+    #             _.extend pitch,
+    #               inning: inning['number']
+    #               half: half['inningDivision']
+    #               hitter_id: data['hitter_id']
 
-            # extend play events
-            if type is 'at_bat' and data['events']
-              for pitch in data['events']
-                _.extend pitch,
-                  inning: inning['number']
-                  half: half['half']
-                  hitter_id: data['hitter_id']
+  getHomeTeamId: -> @game['teams'][0].teamId
 
-  getHomeTeamId: -> @game['scoring']['home'].id
-
-  getAwayTeamId: -> @game['scoring']['away'].id
-
-  getTopHalfTeamId: ->
-    if @lineups.length
-      @lineups[0]['team_id']
-    else
-      # away team is first by default
-      @getAwayTeamId()
-
-  getBottomHalfTeamId: ->
-    if @lineups.length and @lineups[0]['team_id'] is @getHomeTeamId()
-      @getAwayTeamId()
-    else
-      # home team is first by default
-      @getHomeTeamId()
+  getAwayTeamId: -> @game['teams'][0].teamId
 
   getHomeLastPlay: ->
     if @getTopHalfTeamId() is @getHomeTeamId() then @topLastPlay else @bottomLastPlay
@@ -229,29 +163,20 @@ module.exports = class
   getAwayLastPlay: ->
     if @getTopHalfTeamId() is @getAwayTeamId() then @topLastPlay else @bottomLastPlay
 
-  isLineup: (event) -> event['lineup']
-  isPlay: (event) -> event['at_bat']
+  isHomeLineup: (event) -> event['pbpDetailId'] is 96
+  isAwayLineup: (event) -> event['pbpDetailId'] is 97
+  isPlay: (event) -> event['pbpDetailId'] isnt 96 or 97
   isPitch: (event) -> event['type'] is 'pitch'
   isFinishedPlay: (play) -> @getLastPitch(play)?['flags']['is_ab_over']
   isFinishedHalf: (play) -> @getLastPitch(play)?['count']['outs'] is 3
   isFinishedInning: (play) -> @isFinishedHalf(play) and play.half is 'B'
 
-  indexTeamByOrder: (lineups) ->
-    teams = {}
-    # override order in case of replaces
-    teams[lineup['order']] = lineup for lineup in lineups
-    teams
-
-  indexTeamById: (lineups) ->
-    _.indexBy lineups, 'player_id'
-
-  getLastPlay: (plays) -> if plays.length then plays[plays.length - 1] or undefined
-
-  getPitches: (play) -> _.sortBy(_.filter(play['events'], @isPitch), (pitch) -> moment(pitch['created_at']).toDate())
+  getLastBatter: (plays) -> if plays.length then plays[plays.length - 1] or undefined
 
   getLastPitch: (play) ->
-    pitches = @getPitches play
-    pitches.pop()
+    # @logger.verbose "Pitch details: #{play['pitchDetails']}"
+    # pitches = @getPitches play
+    play['pitchDetails'].pop()
 
   getTeams: (game) ->
     game['scoring']
@@ -286,20 +211,6 @@ module.exports = class
     users: game.users or []
     nonActive: game.nonActive or []
 
-  buildTeamInfo: (teamData) ->
-    team =
-      teamId: teamData.id
-      pitcher: []
-      battingLineUp: _.keys teamData.teamById
-
-    lastPlay = teamData.lastPlay
-    if lastPlay
-      lastBatter = teamData.teamById[lastPlay['hitter_id']]
-      team.batterNum = lastBatter['order']
-      team.batterNum-- if not @isFinishedPlay lastPlay
-
-    team
-
   getPlayResults: (plays) ->
     nonEmptyPlays = _.filter plays, (play) => @getPitches(play).length
 
@@ -312,7 +223,7 @@ module.exports = class
 
   getPlayOutcomeByPlay: (play) ->
     pitch = @getLastPitch play
-    
+
     return 'Walk' if pitch['count']['balls'] is 4
 
     runners = pitch['runners']
@@ -330,7 +241,7 @@ module.exports = class
   getPitchOutcome: (pitches) ->
     last = pitches.pop()
     previous = pitches.pop() or {count: {balls: 0, strikes: 0, outs: 0}}
-    
+
     return 'Foul Ball' if last['outcome_id'] is 'kF' and previous['count']['strikes'] is 2
     return 'Ball' if last['count']['balls'] isnt previous['count']['balls']
     return 'Strike Out' if (last['count']['strikes'] is 3) and (last['count']['outs'] isnt previous['count']['outs'])
@@ -340,7 +251,59 @@ module.exports = class
 
   getOutcomes: (halfs) ->
     _.map halfs, (half) =>
-      events = half['events']
+      events = half['pbpDetails']
       plays = @getPlays events
       pitches = _.flatten _.map plays, @getPitches.bind(@)
       _.uniq _.pluck pitches, "outcome_id"
+
+
+
+  # isTopHalfEvent: (event) ->
+  #   key = _.keys(event).pop()
+  #   @isTopHalf event[key]
+
+  # isBottomHalfEvent: (event) ->
+  #   key = _.keys(event).pop()
+  #   @isBottomHalf event[key]
+
+  # getLineups: (events) ->
+  #   _.pluck (_.filter(events, @isLineup)), 'batter'
+
+  # indexTeamByOrder: (lineups) ->
+  #   teams = {}
+  #   # override order in case of replaces
+  #   teams[lineup['order']] = lineup for lineup in lineups
+  #   teams
+
+  # indexTeamById: (lineups) ->
+  #   _.indexBy lineups, 'player_id'
+
+  # getPitches: (play) -> _.sortBy(_.filter(play['pbpDetails'], @isPitch), (pitch) -> moment(pitch['created_at']).toDate())
+
+  # buildTeamInfo: (teamData) ->
+  #   team =
+  #     teamId: teamData.id
+  #     pitcher: []
+  #     battingLineUp: _.keys teamData.teamById
+  #
+  #   lastPlay = teamData.lastPlay
+  #   if lastPlay
+  #     lastBatter = teamData.teamById[lastPlay['hitter_id']]
+  #     team.batterNum = lastBatter['order']
+  #     team.batterNum-- if not @isFinishedPlay lastPlay
+  #
+  #   team
+
+# getTopHalfTeamId: ->
+#   if @lineups.length
+#     @lineups[0]['team_id']
+#   else
+#     # away team is first by default
+#     @getAwayTeamId()
+#
+# getBottomHalfTeamId: ->
+#   if @lineups.length and @lineups[0]['team_id'] is @getHomeTeamId()
+#     @getAwayTeamId()
+#   else
+#     # home team is first by default
+#     @getHomeTeamId()
