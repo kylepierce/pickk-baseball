@@ -44,8 +44,7 @@ module.exports = class extends Task
 
     if result
       Promise.bind @
-      # .then -> @logger.verbose "Result: #{result}. Game #{game}"
-      # .then -> @enrichGame game, result.details
+      .then -> @enrichGame game, result.details
       # .then -> @handlePlay game, result
       # .then -> @handlePitch game, result
       # .then -> @handleAtBat game, result
