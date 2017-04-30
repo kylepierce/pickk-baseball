@@ -7,8 +7,13 @@ module.exports = class
 
   getPlay: (game) ->
     @game = game
-    old = game['old']
     @innings = @getInnings()
+
+    if game['old']
+      @old = @game['old']
+    else
+      @old =
+        commercialBreak: false
 
     #Is the game live?
     if @innings.length > 1
@@ -17,53 +22,41 @@ module.exports = class
       @currentAtBat = @getLast @events
       @halfs = @getHalfs()
 
-      result =
-        lastUpdated: new Date()
+      if @currentAtBat['pitchDetails']
+        @lastPitch = @currentAtBat['pitchDetails']
 
-      if @currentAtBat isnt undefined
-        # @logger.verbose "Play is finished"
-        @lastPitch = @getLast @currentAtBat['pitchDetails']
-      else
-        @logger.verbose "Has the game really started yet?"
+        if @old['lastCount']
+          diff = @lastPitch.length - @old['lastCount'].length
+          @logger.verbose "[#{@events.length}] #{diff}"
+          if diff < 0
+            @logger.verbose "New play!"
+            @updateOld()
+          else if diff is 1
+            @logger.verbose "One New play!"
+            @updateOld()
+          else if diff > 1
+            @logger.verbose "Missed a play?!"
+            @updateOld()
+          # @updateOld()
+          # unless diff is 0
+          #   @logger.verbose "Same old play!"
 
-      # Is the pitch count larger then previous?
-      if @isDifferentPlay()
-          @logger.verbose "Play is finished"
+
           # What is different?
           # Update last count
 
-        if @isDifferentBatter()
-          @logger.verbose "At Bat is finished"
-          # Find the next batter
-          # Reset counter
+          # if @isDifferentBatter @currentAtBat['batter']['playerId']
+          #   @logger.verbose "At Bat is finished"
+            # Find the next batter
+            # Reset counter
 
-          if @isDifferentHalf()
-            @logger.verbose "End of Half"
-            result.commercialBreak = true
+            # if @isDifferentHalf @halfs
+            #   @logger.verbose "End of Half"
+            #   result.commercialBreak = true
 
-            if @isDifferentInning()
-              @logger.verbose "End of Inning"
-      else
-        @logger.verbose "Play is in progress"
-
-    # How to compare to the next play
-    old =
-      commercialBreak: false
-      lastCount: @currentAtBat['pitches']
-      events: @events.length
-      hitter: @currentAtBat['batter']
-      playerId: @currentAtBat['batter']['playerId']
-      outs: @game['eventStatus']['outs']
-      halfs: @halfs.length
-      inning: @game['eventStatus']['inning']
-
-    result.old = old
-    result.details = @getDetails @game
-    # result.plays = @getPlayResults @plays
-
-    result
     else
-      @logger.verbose "No Game Right Now"
+      @logger.verbose "Play is in progress"
+
 
   getInnings: ->
     innings = @game['pbp'] or []
@@ -80,17 +73,49 @@ module.exports = class
   isPlay: (event) -> event['pbpDetailId'] isnt 96 or 97
   getLast: (plays) -> if plays.length then plays[plays.length - 1] or undefined
 
-  isDifferentPlay: (new) -> _.isEqual(old['lastCount'], new)
+  isDifferent: (old, current) ->
+    list = []
+    _.map old, (key, value) ->
+      oldValue = old[value]
+      currentValue = current[value]
+      if not _.isEqual(oldValue, currentValue)
+        list.push value
+    return list
 
-  isDifferentBatter: (new) ->
+  isDifferentBatter: (current) ->
+    if @old['playerId']
+      result = @isDifferent(@old['playerId'], current)
+      # @logger.verbose result
 
-  isDifferentHalf: (new) ->
+  isDifferentHalf: (current) ->
+    # Has the number of half increased?
+    # if new > old['halfs']
 
-  isDifferentInning: (new) ->
+  updateOld: () ->
+    # @logger.verbose "\n \n First \n"
+    # @logger.verbose @old
+    # @old.sequence = @getLast @currentAtBat['sequence']
+    @old.lastUpdated = new Date()
+    @old.lastCount = @lastPitch
+    @old.events = @events.length
+    # @old.hitter = @currentAtBat['batter']
+    # @old.playerId = @currentAtBat['batter']['playerId']
+    # @old.outs = @game['eventStatus']['outs']
+    # @old.halfs = @halfs.length
+    # @old.inning = @game['eventStatus']['inning']
+
+    result = @old
+    # @logger.verbose "\n \n Second \n"
+    # @logger.verbose @old.lastCount
+    # result.old = @old
+    # result.details = @getDetails @game
+    # result.plays = @getPlayResults @plays
+    result
 
   getDetails: (game) ->
     users: game.users or []
     nonActive: game.nonActive or []
+    registered: game.registered or []
 
   getPlayResults: (plays) ->
     nonEmptyPlays = _.filter plays, (play) => @getPitches(play).length

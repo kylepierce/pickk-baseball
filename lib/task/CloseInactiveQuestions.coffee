@@ -16,10 +16,10 @@ module.exports = class extends Task
 
   execute: ->
     Promise.bind @
-    .tap -> @logger.verbose "Start CloseInactiveQuestions"
+    # .tap -> @logger.verbose "Start CloseInactiveQuestions"
     .then -> @Games.find {status: "In-Progress"}, {_id: 1}
     .then (games) -> _.pluck games, "_id"
-    .tap (ids) -> @logger.verbose "Close questions related to games not equal [#{ids}]"
+    # .tap (ids) -> @logger.verbose "Close questions related to games not equal [#{ids}]"
     .then (ids) -> @Questions.update {manual: {$exists: false}, gameId: {$nin: ids}, active: true}, {$set: {active: false}}, {multi: true}
-    .tap (result) -> @logger.verbose "#{result.nModified} questions have been closed as inactive"
-    .tap -> @logger.verbose "End CloseInactiveQuestions"
+    # .tap (result) -> @logger.verbose "#{result.nModified} questions have been closed as inactive"
+    # .tap -> @logger.verbose "End CloseInactiveQuestions"

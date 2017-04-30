@@ -24,7 +24,7 @@ module.exports = class extends Task
   execute: (teamId) ->
 
     Promise.bind @
-    .tap -> @logger.verbose "Start UpdateTeam with teamId (#{teamId})"
+    # .tap -> @logger.verbose "Start UpdateTeam with teamId (#{teamId})"
     .then -> @Teams.findOne({_id: teamId})
     .then (team) ->
       if team
@@ -32,14 +32,14 @@ module.exports = class extends Task
 
         shouldUpdate = not team.updatedAt or moment().diff(team.updatedAt, 'days') > 0
         if shouldUpdate
-          @logger.info "Update team #{teamName}"
+          # @logger.info "Update team #{teamName}"
           @updateTeam team
         else
-          @logger.verbose "Team #{teamName} has been updated recently. Don't update it now."
+          # @logger.verbose "Team #{teamName} has been updated recently. Don't update it now."
       else
-        @logger.info "Create team with ID #{teamId}"
+        # @logger.info "Create team with ID #{teamId}"
         @createTeam teamId
-    .tap -> @logger.verbose "End UpdateTeam with teamId (#{teamId})"
+    # .tap -> @logger.verbose "End UpdateTeam with teamId (#{teamId})"
 
   updateTeam: (team) ->
     teamId = team['_id']
@@ -51,7 +51,7 @@ module.exports = class extends Task
 
       Promise.bind @
       .then -> @Teams.update object.getSelector(), {$set: object}
-      .tap -> @logger.verbose "Team #{object['fullName']} has been successfully updated."
+      # .tap -> @logger.verbose "Team #{object['fullName']} has been successfully updated."
       .return team.players
       .map @handlePlayer
 
@@ -65,15 +65,14 @@ module.exports = class extends Task
       console.log object
       Promise.bind @
       .then -> @Teams.insert object
-      .tap -> @logger.verbose "Team #{object['fullName']} has been successfully created."
+      # .tap -> @logger.verbose "Team #{object['fullName']} has been successfully created."
       # .return team.players
       # .tap (players) -> _.each players, (player) -> player['team_id'] = teamId # enrich original data
       # .map @handlePlayer
 
   fetchTeam: (teamId) ->
     Promise.bind @
-    .tap -> @logger.verbose "Get getTeamProfile for team (#{teamId})"
-    .then -> console.log teamId
+    # .tap -> @logger.verbose "Get getTeamProfile for team (#{teamId})"
     # It might be possible to store these two sections together somewhere else. But for now I will just create one oject and put the player in that object to save headaches down the road.
     .then -> @dependencies.sportRadar.getTeamProfile teamId
     # .then -> @dependencies.sportRadar.getTeamPlayers teamId
@@ -93,7 +92,7 @@ module.exports = class extends Task
           @logger.info "Update player #{playerName}"
           @updatePlayer playerData
         else
-          @logger.verbose "Player #{playerName} has been updated recently. Don't update it now."
+          # @logger.verbose "Player #{playerName} has been updated recently. Don't update it now."
       else
         @logger.info "Create player (#{playerName})[#{playerId}]"
         @createPlayer playerData
