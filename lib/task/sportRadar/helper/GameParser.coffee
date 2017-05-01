@@ -11,40 +11,41 @@ module.exports = class
     @totalEvents = @getEvents @halfs # Select only the events.
     @currentHalf = @getLast @halfs # Get the current inning half
     @currentHalfEvents = @getEvents @halfs
+    
+    # if @game.status is "In-Progress"
+    #❗️Should be solved already since the games are already filter by "In-Progress" in updateGameStrategy's -- getActiveGames
+    @currentAtBat = @getLast @currentHalfEvents
+    @lastPitch = @getLast @currentAtBat['pitchDetails']
+    @pitches = @currentAtBat['pitchDetails']
 
-    if game['old'] then @old = game['old']
+    if game['old']
+      @old = game['old']
+      @pitchDiff = @pitches.length - @old['lastCount'].length
+      @eventDiff = @totalEvents.length - @old['events']
+      @halfDiff = @halfs.length - @old['halfs']
 
-    if @game.status is "In-Progress"
-      @currentAtBat = @getLast @currentHalfEvents
-      @lastPitch = @getLast @currentAtBat['pitchDetails']
-      @pitches = @currentAtBat['pitchDetails']
+      @isDifferentPitch @pitchDiff
+      @isDifferentEvent @eventDiff
+      @isDifferentHalf @halfDiff
 
-      if @old['lastCount']
-        @pitchDiff = @pitches.length - @old['lastCount'].length
-        @eventDiff = @totalEvents.length - @old['events']
-        @halfDiff = @halfs.length - @old['halfs']
+      # @logger.verbose "Old - [#{@game.name}] Pitch: #{@old['lastCount'].length} -  Event: #{@old['events']} - Half: #{@old['halfs']}"
+      # @logger.verbose "New - [#{@game.name}] Pitch: #{@pitches.length} -  Event: #{@totalEvents.length} - Half: #{@halfs.length}"
+      # @logger.verbose "Diff - [#{@game.name}] Pitch: #{@pitchDiff} -  Event: #{@eventDiff} - Half: #{@halfDiff}"
+      return @updateOld()
 
-        @isDifferentPitch @pitchDiff
-        @isDifferentEvent @eventDiff
-        @isDifferentHalf @halfDiff
-
-        # @logger.verbose "Old - [#{@game.name}] Pitch: #{@old['lastCount'].length} -  Event: #{@old['events']} - Half: #{@old['halfs']}"
-        # @logger.verbose "New - [#{@game.name}] Pitch: #{@pitches.length} -  Event: #{@totalEvents.length} - Half: #{@halfs.length}"
-        # @logger.verbose "Diff - [#{@game.name}] Pitch: #{@pitchDiff} -  Event: #{@eventDiff} - Half: #{@halfDiff}"
-        return @updateOld()
-
-      else
-        @logger.verbose "Old has not been set. Doing that now!"
-        return @updateOld()
+    else
+      return @updateOld()
 
   updateOld: ->
     @old.outs = @game['eventStatus']['outs'] #👍
     @old.halfs = @halfs.length #👍
     @old.lastUpdated = new Date() #👍
     @old.inning = @game['eventStatus']['inning'] #👍
-    @old.events = @totalEvents.length #❓
 
-    #These are nested in an if statement. That seems to be the issue.
+    @old.events = @totalEvents.length #❓ Testing this after moving outside the if statement.
+
+    # These are nested in an if statement. That seems to be the issue.
+    # These should be fixed now that they are outside the if statement.
     @old.lastCount = @pitches
     @old.sequence = @currentAtBat['sequence']
     @old.hitter = @currentAtBat['batter']

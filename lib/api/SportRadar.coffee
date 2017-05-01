@@ -67,8 +67,6 @@ module.exports = class
     lastDate = moment().add(days, "days").toDate()
     formattedLastDate = dateFormat(lastDate, "yyyy-mm-dd")
 
-    console.log formattedDate, formattedLastDate
-
     path = "events/?startDate=#{formattedDate}&endDate=#{formattedLastDate}&accept=#{format}"
     @_mlbRequest path
 

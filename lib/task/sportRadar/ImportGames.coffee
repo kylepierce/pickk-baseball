@@ -3,6 +3,7 @@ Match = require "mtr-match"
 Promise = require "bluebird"
 Task = require "../Task"
 SportRadarGame = require "../../model/sportRadar/SportRadarGame"
+UpdateTeam = require "../../task/sportRadar/UpdateTeam"
 dateFormat = require 'dateformat'
 
 module.exports = class extends Task
@@ -16,16 +17,18 @@ module.exports = class extends Task
     @api = @dependencies.sportRadar
     @logger = @dependencies.logger
     @Games = @dependencies.mongodb.collection("games")
+    @updateTeam = new UpdateTeam dependencies
 
     @registerEvents ['upserted']
 
   execute: ->
     Promise.bind @
-    # .tap -> @logger.verbose "Fetching information about games for #{days}"
     .then -> @api.getScheduledGames 7
+    # .then -> @updateTeam.execute game['home_team']
+    # .then -> @updateTeam.execute game['away_team']
     .then (result) -> result.apiResults[0].league.season.eventType[0].events
     .map @upsertGame
-    # .tap (results) -> @logger.warn "#{results.length} games have been upserted"
+    .tap (results) -> @logger.warn "#{results.length} games have been upserted"
     .return true
 
   upsertGame: (data) ->

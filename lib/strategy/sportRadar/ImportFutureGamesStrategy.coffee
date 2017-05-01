@@ -11,6 +11,7 @@ module.exports = class extends Strategy
     super
 
     @importGames = new ImportGames dependencies
+
     @logger = dependencies.logger
 
   execute: ->

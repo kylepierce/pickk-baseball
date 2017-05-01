@@ -8,7 +8,6 @@ ImportGameDetails = require "../../task/sportRadar/ImportGameDetails"
 CloseInactiveAtBats = require "../../task/CloseInactiveAtBats"
 CloseInactiveQuestions = require "../../task/CloseInactiveQuestions"
 ProcessGame = require "../../task/sportRadar/ProcessGame"
-UpdateTeam = require "../../task/sportRadar/UpdateTeam"
 promiseRetry = require 'promise-retry'
 
 module.exports = class extends Strategy
@@ -20,7 +19,6 @@ module.exports = class extends Strategy
     @importGameDetails = new ImportGameDetails dependencies
     @closeInactiveAtBats = new CloseInactiveAtBats dependencies
     @closeInactiveQuestions = new CloseInactiveQuestions dependencies
-    @updateTeam = new UpdateTeam dependencies
     @processGame = new ProcessGame dependencies
 
     @logger = dependencies.logger
@@ -29,18 +27,15 @@ module.exports = class extends Strategy
     # do not allow it to crash!
     promiseRetry {retries: 1000, factor: 1}, (retry) =>
       Promise.bind @
-      .then -> @importGames.execute()
-      .then -> @closeInactiveQuestions.execute()
-      .then -> @closeInactiveAtBats.execute()
-      .then -> @getActiveGames.execute()
+      .then -> @importGames.execute() # This is required to get the "In-Progress" games.
+      .then -> @closeInactiveQuestions.execute() # This just closes the questions. It does not award the users.
+      .then -> @closeInactiveAtBats.execute() # This just closes the questions. It does not award the users.
+      .then -> @getActiveGames.execute() # 👍
       .map (game) ->
         Promise.bind @
-        .tap -> @logger.verbose game['old']
-        .then -> @importGameDetails.execute game['eventId']
-        .then -> @updateTeam.execute game['home_team']
-        .then -> @updateTeam.execute game['away_team']
-        .then -> @processGame.execute game
-      , {concurrency: 1}
+        .then -> @importGameDetails.execute game['eventId'] #❓This is where the latest data should be imported. We need to check if the old data is still there. It should be....
+        .then -> @processGame.execute game # This is the heavy lifting
+      # , {concurrency: 1} #❗️ This is probably causing the issue. Its updating the file after starting the process. Game is the new data.
       .catch (error) =>
         @logger.error error.message, _.extend({stack: error.stack}, error.details)
         retry error
