@@ -35,6 +35,7 @@ module.exports = class extends Strategy
       .then -> @getActiveGames.execute()
       .map (game) ->
         Promise.bind @
+        .tap -> @logger.verbose game['old']
         .then -> @importGameDetails.execute game['eventId']
         .then -> @updateTeam.execute game['home_team']
         .then -> @updateTeam.execute game['away_team']

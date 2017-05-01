@@ -34,7 +34,7 @@ module.exports = class extends Task
         if shouldUpdate
           # @logger.info "Update team #{teamName}"
           @updateTeam team
-        else
+        # else
           # @logger.verbose "Team #{teamName} has been updated recently. Don't update it now."
       else
         # @logger.info "Create team with ID #{teamId}"
@@ -91,10 +91,10 @@ module.exports = class extends Task
         if shouldUpdate
           @logger.info "Update player #{playerName}"
           @updatePlayer playerData
-        else
-          # @logger.verbose "Player #{playerName} has been updated recently. Don't update it now."
+        # else
+        #   @logger.verbose "Player #{playerName} has been updated recently. Don't update it now."
       else
-        @logger.info "Create player (#{playerName})[#{playerId}]"
+        # @logger.info "Create player (#{playerName})[#{playerId}]"
         @createPlayer playerData
 
   updatePlayer: (data) ->
@@ -107,7 +107,7 @@ module.exports = class extends Task
 
       Promise.bind @
       .then -> @Players.update object.getSelector(), {$set: object}
-      .tap -> @logger.verbose "Player #{object['name']} has been successfully updated."
+      # .tap -> @logger.verbose "Player #{object['name']} has been successfully updated."
 
   createPlayer: (data) ->
     now = new Date()
@@ -121,14 +121,14 @@ module.exports = class extends Task
 
       Promise.bind @
       .then -> @Players.insert object
-      .tap -> @logger.verbose "Player #{object['name']} has been successfully created."
+      # .tap -> @logger.verbose "Player #{object['name']} has been successfully created."
 
   fetchPlayerStats: (player) ->
     query = player.name
 
     promiseRetry (retry, number) =>
       Promise.bind @
-        .tap -> @logger.verbose "Fetch statistics about player (#{query})"
+        # .tap -> @logger.verbose "Fetch statistics about player (#{query})"
         .then ->
           options =
             uri: "http://espn.go.com/mlb/players"

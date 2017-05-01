@@ -51,19 +51,25 @@ module.exports = class
       .catch (error) ->
         # TODO @logger
         console.log error.message #, _.extend({stack: error.stack}, error.details)
-        # console.log uri
+        console.log uri
         retry(error)
 
-  getScheduledGames: (date, format = "json") ->
-    Match.check date, Date
+  getScheduledGames: (days, format = "json") ->
+    Match.check days, Number
     Match.check format, formatPattern
 
+    date = new Date()
     # cast to EDT timezone
     EDT_OFFSET = 60 * 4
     date = moment(date).subtract(EDT_OFFSET + moment(date).utcOffset(), 'minutes').toDate()
 
-    formattedDate = dateFormat(date, "yyyy/mm/dd")
-    path = "events/?date=#{formattedDate}&accept=#{format}"
+    formattedDate = dateFormat(date, "yyyy-mm-dd")
+    lastDate = moment().add(days, "days").toDate()
+    formattedLastDate = dateFormat(lastDate, "yyyy-mm-dd")
+
+    console.log formattedDate, formattedLastDate
+
+    path = "events/?startDate=#{formattedDate}&endDate=#{formattedLastDate}&accept=#{format}"
     @_mlbRequest path
 
   # game -> innings -> halfs -> events -> {at_bat} -> events

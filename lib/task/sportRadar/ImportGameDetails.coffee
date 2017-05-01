@@ -16,6 +16,7 @@ module.exports = class extends Task
     Match.check gameId, Number
 
     api = @dependencies.sportRadar
+    @logger = @dependencies.logger
 
     Promise.bind @
     .then -> api.getPlayByPlay gameId
@@ -24,5 +25,6 @@ module.exports = class extends Task
 
   upsertGame: (game) ->
     sportRadarGame = new SportRadarGame game
+    @logger.verbose "First import #{sportRadarGame.old}"
     collection = @dependencies.mongodb.collection("games")
     collection.update sportRadarGame.getSelector(), {$set: sportRadarGame}, {upsert: true}

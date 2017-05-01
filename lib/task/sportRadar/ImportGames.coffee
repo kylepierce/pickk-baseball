@@ -19,10 +19,10 @@ module.exports = class extends Task
 
     @registerEvents ['upserted']
 
-  execute: (date = new Date()) ->
+  execute: (days) ->
     Promise.bind @
-    # .tap -> @logger.log "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
-    .then -> @api.getScheduledGames(date)
+    # .tap -> @logger.verbose "Fetching information about games for #{dateFormat(date, "yyyy/mm/dd")}"
+    .then -> @api.getScheduledGames days
     .then (result) -> result.apiResults[0].league.season.eventType[0].events
     .map @upsertGame
     # .tap (results) -> @logger.warn "#{results.length} games have been upserted"

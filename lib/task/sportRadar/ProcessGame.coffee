@@ -32,7 +32,6 @@ module.exports = class extends Task
   execute: (game) ->
     promiseRetry (retry) =>
       Promise.bind @
-      # .tap -> @logger.verbose "Start ProcessGames"
       .then -> @handleGame game
       .return true
       .catch (error) =>
@@ -51,6 +50,10 @@ module.exports = class extends Task
       # .then -> @handleCommercialBreak game, result
       # .then -> @resolveCommercialQuestions game, result
       # .then -> @processClosingState game, result
+
+  enrichGame: (game, details) ->
+    game.old = details
+    @SportRadarGames.update {_id: game._id}, {$set: game}
 
   processClosingState: (game) ->
     return if game.close_processed isnt false
@@ -321,15 +324,9 @@ module.exports = class extends Task
 
   handleAtBat: (game, result) ->
     Promise.bind @
-    # .then -> @logger.verbose "#{result.hitter}"
-
-    # .then -> @AtBats.update {gameId: game._id, playerId: result.hitter['player_id'], active: true}, {$set: {ballCount: result.balls, strikeCount: result.strikes, dateCreated: new Date()}}, {upsert: true}
-    # .then -> @AtBats.update {gameId: game._id, playerId: {$ne: result.hitter['player_id']}}, {$set: {active: false}}, {multi: true}
-
-  enrichGame: (game, details) ->
-    game.old = details
-
-    @SportRadarGames.update {_id: game._id}, {$set: game}
+    .then -> @logger.verbose "#{result.hitter}"
+    .then -> @AtBats.update {gameId: game._id, playerId: result.hitter['player_id'], active: true}, {$set: {ballCount: result.balls, strikeCount: result.strikes, dateCreated: new Date()}}, {upsert: true}
+    .then -> @AtBats.update {gameId: game._id, playerId: {$ne: result.hitter['player_id']}}, {$set: {active: false}}, {multi: true}
 
   handlePlay: (game, result) ->
     player = result['hitter']
@@ -400,12 +397,12 @@ module.exports = class extends Task
 
       Promise.bind @
       .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
-      .tap -> @logger.info "Close play question (#{question['que']}) with outcome (#{outcome})"
+      # .tap -> @logger.info "Close play question (#{question['que']}) with outcome (#{outcome})"
       # .tap -> @logger.verbose "Close play question (#{question['que']}) with outcome (#{outcome})", {questionId: question['_id'], outcome: outcomeOption, play: question['play']}
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "loose"}}, {multi: true}
       # .tap (result) -> @logger.verbose "There are (#{result.n}) negative answer(s) for question (#{question['que']})"
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
-      .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
+      # .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
       .map (answer) ->
         reward = Math.floor answer['wager'] * answer['multiplier']
         Promise.bind @
@@ -496,14 +493,14 @@ module.exports = class extends Task
     playNumber = result.playNumber
     pitchNumber = result.pitchNumber
 
-    # @logger.verbose "Close inactive pitches", {gameId: game.id, playNumber, pitchNumber}
+    @logger.verbose "Close inactive pitches", {gameId: game.id, playNumber, pitchNumber}
 
     Promise.bind @
     .then -> @Questions.find {commercial: false, game_id: game.id, active: true, atBatQuestion: {$exists: false}, $or: [{play: {$ne: playNumber}}, {pitch: {$ne: pitchNumber}}]}
     .map (question) ->
       questionPlay = question['play']
       questionPitch = question['pitch']
-      # @logger.verbose "Close a pitch question", {questionId: question['_id'], questionPlay, questionPitch}
+      @logger.verbose "Close a pitch question", {questionId: question['_id'], questionPlay, questionPitch}
 
       play = result['plays'][questionPlay - 1]
       if not play
@@ -518,9 +515,9 @@ module.exports = class extends Task
       Promise.bind @
       .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
       .tap -> @logger.info "Close pitch question (#{question['que']})  with outcome (#{outcome})"
-      # .tap -> @logger.verbose "Close pitch question (#{question['que']})  with outcome (#{outcome})", {questionId: question['_id'], outcome: outcomeOption, play: question['play'], pitch: question['pitch']}
+      .tap -> @logger.verbose "Close pitch question (#{question['que']})  with outcome (#{outcome})", {questionId: question['_id'], outcome: outcomeOption, play: question['play'], pitch: question['pitch']}
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "loose"}}, {multi: true}
-      # .tap (result) -> @logger.verbose "There are (#{result.n}) negative answer(s) for question (#{question['que']})"
+      .tap (result) -> @logger.verbose "There are (#{result.n}) negative answer(s) for question (#{question['que']})"
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
       .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
       .map (answer) ->

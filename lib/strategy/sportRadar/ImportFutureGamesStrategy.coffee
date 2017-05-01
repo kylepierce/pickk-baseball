@@ -13,15 +13,11 @@ module.exports = class extends Strategy
     @importGames = new ImportGames dependencies
     @logger = dependencies.logger
 
-  execute: ->
+  execute: (days) ->
     # do not allow it to crash!
     promiseRetry {retries: 1000, factor: 1}, (retry) =>
       Promise.bind @
-      .return [0..7]
-      .map (days) ->
-        date = moment().add(days, "days").toDate()
-        Promise.bind @
-        .then -> @importGames.execute date
+      .then ->  @importGames.execute days
       .catch (error) =>
         @logger.error error.message, _.extend({stack: error.stack}, error.details)
         retry error
