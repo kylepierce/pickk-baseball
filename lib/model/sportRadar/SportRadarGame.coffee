@@ -1,6 +1,7 @@
 Match = require "mtr-match"
 _ = require "underscore"
 moment = require "moment"
+sid = require "shortid"
 
 module.exports = class
   constructor: (data) ->
@@ -11,9 +12,11 @@ module.exports = class
     away = @['teams'][0]
     home = @['teams'][1]
 
-    @_id = @['eventId']
-    @id = @['eventId']
+    # @_id = @id
+    @id =  @['eventId']
+    @home = home
     @home_team = home.teamId
+    @away = away
     @away_team = away.teamId
     @scheduled =  moment(@['startDate'][1]['full']).toDate()
     @iso = new Date(@['startDate'][1]['full']).toISOString()
@@ -26,4 +29,4 @@ module.exports = class
     @completed = @status in ['complete', 'closed']
 
   getSelector: ->
-    "_id": @_id
+    "eventId": @['eventId']

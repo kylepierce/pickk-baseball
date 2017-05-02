@@ -23,7 +23,7 @@ module.exports = class extends Task
 
   execute: ->
     Promise.bind @
-    .then -> @api.getScheduledGames 7
+    .then -> @api.getScheduledGames 1
     # .then -> @updateTeam.execute game['home_team']
     # .then -> @updateTeam.execute game['away_team']
     .then (result) -> result.apiResults[0].league.season.eventType[0].events
@@ -32,10 +32,22 @@ module.exports = class extends Task
     .return true
 
   upsertGame: (data) ->
-    console.log data.eventId
-    # game = new SportRadarGame data
-    # Promise.bind @
-    # .then -> @Games.findOne game.getSelector()
+    game = new SportRadarGame data
+    Promise.bind @
+    .then -> @Games.findOne game.getSelector()
+    .then (found) ->
+      if not found
+        game["_id"] = @Games.db.ObjectId().toString()
+        Promise.bind @
+        .then ->
+          @Games.insert game, (err, result) ->
+            if err
+              console.log err
+            else
+              console.log result['_id']
+            # _id: @Games.db.ObjectId().toString()
+            # eventId: game["eventId"]
+            # status: "Pre-Game"
     # .then (original) ->
     #   game['close_processed'] = false if @isClosing original, game
     #

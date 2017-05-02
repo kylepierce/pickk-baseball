@@ -21,8 +21,11 @@ module.exports = class extends Task
     Promise.bind @
     .then -> api.getPlayByPlay gameId
     .then (result) -> result.apiResults[0].league.season.eventType[0].events[0]
+    .map @upsertGame
+    .tap (results) -> @logger.verbose "#{results.length} games have been upserted"
+    .return true
 
-  # upsertGame: (game) ->
-  #   sportRadarGame = new SportRadarGame game
-  #   collection = @dependencies.mongodb.collection("games")
-  #   collection.update sportRadarGame.getSelector(), {$set: sportRadarGame}, {upsert: true}
+  upsertGame: (game) ->
+    sportRadarGame = new SportRadarGame game
+    collection = @dependencies.mongodb.collection("games")
+    collection.update sportRadarGame.getSelector(), {$set: sportRadarGame}, {upsert: true}

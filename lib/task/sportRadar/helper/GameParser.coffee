@@ -7,7 +7,6 @@ module.exports = class
 
   getPlay: (game) ->
     @game = game
-    @logger.verbose game['eventStatus']
     @innings =  @game['pbp']
     @halfs = @loopHalfs @innings
 
@@ -18,49 +17,49 @@ module.exports = class
     @atBats = @getAtBats @currentHalfEvents
     @currentAtBat = @getLast @atBats
 
-    @lastPitch = @getLast @currentAtBat['pitchDetails']
-    @pitches = @currentAtBat['pitchDetails']
+    if @currentAtBat
+      @logger.verbose "Event: #{@game["eventId"]}"
+      @logger.verbose "Event Id: #{@currentAtBat["pbpDetailId"]}"
+      @logger.verbose "Pitch Sequence: #{@currentAtBat['pitchDetails']}"
 
-    # if @game['old']
-    #   @old = game['old']
-    # @pitchDiff = @pitches.length - @old['lastCount'].length
-    # @eventDiff = @totalEvents.length - @old['events']
-    # @halfDiff = @halfs.length - @old['halfs']
-    #
-    #   @isDifferentPitch @pitchDiff
-    #   @isDifferentEvent @eventDiff
-    #   @isDifferentHalf @halfDiff
-    #
-    #   # @logger.verbose "Old - [#{@game.name}] Pitch: #{@old['lastCount'].length} -  Event: #{@old['events']} - Half: #{@old['halfs']}"
-    #   # @logger.verbose "New - [#{@game.name}] Pitch: #{@pitches.length} -  Event: #{@totalEvents.length} - Half: #{@halfs.length}"
-    #   # @logger.verbose "Diff - [#{@game.name}] Pitch: #{@pitchDiff} -  Event: #{@eventDiff} - Half: #{@halfDiff}"
-    #   return @updateOld()
-    # else
-    #   @game['old'] = {}
-    @old =
-      outs: @game['eventStatus']['outs']
-      halfs: @halfs.length
-      lastUpdated: new Date()
-      inning: @game['eventStatus']['inning']
-      events: @totalEvents.length
-      lastCount: @pitches
-      sequence: @currentAtBat['sequence']
-      hitter: @currentAtBat['batter']
-      playerId: @currentAtBat['batter']['playerId']
+      @lastPitch = @getLast @currentAtBat['pitchDetails']
+      @pitches = @currentAtBat['pitchDetails']
 
-    @game['old'] = @old
-    result = @game
-    # result.details = @getDetails @game
-    return result
+      @old =
+        outs: @game['eventStatus']['outs']
+        halfs: @halfs.length
+        lastUpdated: new Date()
+        inning: @game['eventStatus']['inning']
+        events: @totalEvents.length
+        lastCount: if @pitches then @pitches else []
+        sequence: @currentAtBat['sequence']
+        hitter: @currentAtBat['batter']
+        playerId: @currentAtBat['batter']['playerId']
+
+      @game['old'] = @old
+      result = @game
+      result.details = @getDetails @game
+      return result
 
   getEvents: (selector) ->  _.flatten _.pluck selector, 'pbpDetails'
 
-  getAtBats: (selector) ->
-    _.flatten _.filter(selector, @isPlay)
+  getAtBats: (selector) -> _.flatten _.filter(selector, @isPlay)
 
-  # Dont grab events that are lineups (96, 97), substitutions (98), scores on a pitcher (42). Make this into array
-  isPlay: (event) -> event['pbpDetailId'] isnt 96 or 97 or 98 or 42
-  getLast: (plays) -> if plays or plays.length then plays[plays.length - 1] or 0
+  isPlay: (event) ->
+    # event['pbpDetailId'] isnt (96 or 97 or 98 or 42)
+    list = [96, 97, 98, 42]
+    if event && event['pbpDetailId'] not in list
+      return event
+    else
+      # console.log event['pbpDetailId']
+      # console.log "THIS IS NOT A LEGIT EVENT ID"
+
+  getLast: (plays) ->
+    if plays and plays.length > 0
+      plays[plays.length - 1]
+    else
+      @logger.verbose plays
+      # undefined
 
   loopHalfs: (innings) ->
     array = _.map innings, (half) ->
@@ -77,41 +76,6 @@ module.exports = class
         playText: if event.playText then event.playText
 
     return  _.toArray array
-
-  # cleanHalf: (half) ->
-  #   # Take one object and return one object
-  #   @logger.verbose half
-  #   result =
-  #     inning: half.inning
-  #     inningDivision: half.inningDivision
-  #     linescore: half.linescore
-  #     pbpDetails: _.each half.pbpDetails, (event) ->
-  #       @cleanEvent(event) # Loop over array of objects and return an array
-
-  # cleanEvent: (event) ->
-  #   # Take in one object and return one object
-  #   result =
-
-
-  isDifferentPitch: (diff) ->
-    if diff is 1
-      @logger.verbose "One New play!"
-    else if diff > 1
-      @logger.verbose "Missed plays?!"
-    else if diff < 0
-      @logger.verbose "New batter?"
-
-  isDifferentEvent: (diff) ->
-    if diff is 1
-      @logger.verbose "One New Event!"
-    else if diff > 1
-      @logger.verbose "Missed Events?!"
-
-  isDifferentHalf: (diff) ->
-    if diff is 1
-      @logger.verbose "One Half!"
-    else if diff > 1
-      @logger.verbose "Missed Halfs?!"
 
   getDetails: (game) ->
     users: game.users or []

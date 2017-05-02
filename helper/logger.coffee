@@ -2,7 +2,6 @@ util = require "util"
 shelljs = require "shelljs"
 winston = require "winston"
 path = require "path"
-loggly = require "winston-loggly"
 sanitize = require "./sanitize"
 
 winston.addColors
