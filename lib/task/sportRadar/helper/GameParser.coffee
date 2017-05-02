@@ -31,6 +31,7 @@ module.exports = class
         lastUpdated: new Date()
         inning: @game['eventStatus']['inning']
         events: @totalEvents.length
+        eventStatus: @game['eventStatus']
         lastCount: if @pitches then @pitches else []
         sequence: @currentAtBat['sequence']
         hitter: @currentAtBat['batter']

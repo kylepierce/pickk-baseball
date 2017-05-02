@@ -45,7 +45,7 @@ module.exports = class extends Task
     if result
       Promise.bind @
       .then -> @enrichGame old, result
-      # .then -> @handlePlay game, result
+      # .then -> @handlePlay old, update
       # .then -> @handlePitch game, result
       # .then -> @handleAtBat game, result
       # .then -> @handleCommercialBreak game, result
@@ -373,42 +373,45 @@ module.exports = class extends Task
 
   # 👍
   handlePlay: (old, update) ->
+    # @logger.verbose old
+    # @logger.verbose update
     player = update['old']['hitter']
     playerId = update['old']['player_id']
     playId = old["_id"] + "-" + playerId + "-" + update['old']["events"]
-    bases = update['old']['eventStatus']['runnersOnBase']
-    question = "End of #{player['first_name']} #{player['last_name']}'s at bat."
+    # bases = update['old']['eventStatus']['runnersOnBase']
+    question = "End of #{player['firstName']} #{player['lastName']}'s at bat."
 
     # @logger.verbose "Handle play of hitter (#{player['first_name']} #{player['last_name']})", {gameId: game.id, playerId: playerId}
 
     Promise.bind @
-    .then -> @getGenericMultipliersForPlay() bases, playerId
+    .then -> @getGenericMultipliersForPlay() #bases, playerId
     .then (multipliers) ->
       options =
-        option1: {title: "Out", multiplier: multipliers['out'] }
-        option2: {title: "Walk", multiplier: multipliers['walk'] }
-        option3: {title: "Single", multiplier: multipliers['single'] }
-        option4: {title: "Double", multiplier: multipliers['double'] }
-        option5: {title: "Triple", multiplier: multipliers['triple'] }
-        option6: {title: "Home Run", multiplier: multipliers['homerun'] }
+        option1: {title: "Out", number: 1, multiplier: multipliers['out'] }
+        option2: {title: "Walk", number: 2, multiplier: multipliers['walk'] }
+        option3: {title: "Single", number: 3, multiplier: multipliers['single'] }
+        option4: {title: "Double", number: 4, multiplier: multipliers['double'] }
+        option5: {title: "Triple", number: 5, multiplier: multipliers['triple'] }
+        option6: {title: "Home Run", number: 6, multiplier: multipliers['homerun'] }
 
       Promise.bind @
-      .then -> @closeInactivePlays game, update
-      .then -> @Questions.count {commercial: false, game_id: game.id, player_id: player['player_id'], atBatQuestion: true, playId: playId}
+      # .then -> @closeInactivePlays game, update
+      .then -> @Questions.count {commercial: false, game_id: old["_id"], player_id: player['player_id'], atBatQuestion: true, playId: playId}
       .then (found) ->
         if not found
           Promise.bind @
           .then ->
             @Questions.insert
-              game_id: game.id
+              game_id: old["_id"]
               player_id: playerId
               atBatQuestion: true
+              period: 0
               type: "atBat"
               playId: playId
               dateCreated: new Date()
-              gameId: game['_id']
+              gameId: old["_id"]
               active: true
-              player: player
+              background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('/bball2.png'); height: 75px; background-position-x: 46%; background-position-y: 100%; "
               commercial: false
               que: question
               options: options
