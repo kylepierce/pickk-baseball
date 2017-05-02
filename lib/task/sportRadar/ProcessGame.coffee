@@ -29,21 +29,22 @@ module.exports = class extends Task
     @Notifications = dependencies.mongodb.collection("notifications")
     @gameParser = new GameParser dependencies
 
-  execute: (game) ->
+  execute: (old, update) ->
     promiseRetry (retry) =>
       Promise.bind @
-      .then -> @handleGame game
+      .then -> @handleGame old, update
       .return true
       .catch (error) =>
         @logger.error error.message, _.extend({stack: error.stack}, error.details)
         retry(error)
 
-  handleGame: (game) ->
-    result = @gameParser.getPlay game
+  handleGame: (old, update) ->
+    result = @gameParser.getPlay update
 
     if result
       Promise.bind @
-      .then -> @enrichGame game, result
+      # .then -> @checkGameStatus old, result
+      .then -> @enrichGame old, result
       # .then -> @handlePlay game, result
       # .then -> @handlePitch game, result
       # .then -> @handleAtBat game, result
@@ -51,9 +52,35 @@ module.exports = class extends Task
       # .then -> @resolveCommercialQuestions game, result
       # .then -> @processClosingState game, result
 
-  enrichGame: (game, details) ->
-    game.old = details
-    @SportRadarGames.update {_id: game._id}, {$set: game}
+  enrichGame: (old, update) ->
+    @logger.verbose "Old:", old['old']
+    @logger.verbose "Updated: ", update['old']
+    @oldPitch = old["old"]['lastCount'].length
+    @newPitch = update["old"]['lastCount'].length
+
+    @pitchDiff = @oldPitch - @newPitch
+    @eventDiff = update["old"]['events'] - old['events']
+    @halfDiff = update["old"]['halfs'] - old['halfs']
+
+    # @isDifferentPitch @pitchDiff
+    # @isDifferentEvent @eventDiff
+    # @isDifferentHalf @halfDiff
+
+    # @logger.verbose "Old - Pitch: #{old['lastCount'].length} -  Event: #{old['events']} - Half: #{old['halfs']}"
+    # @logger.verbose "New - Pitch: #{update["old"]['lastCount'].length} -  Event: #{update["old"]['events']} - Half: #{update["old"]['halfs']}"
+    # @logger.verbose "Diff - [#{old.name}] Pitch: #{@pitchDiff} -  Event: #{@eventDiff} - Half: #{@halfDiff}"
+
+    @SportRadarGames.update {_id: update.eventId}, {$set: update}
+
+  checkGameStatus: (old, update) ->
+    # if update['eventStatus']['eventStatusId'] isnt 2
+    #   #This should be a method!
+    #   update['status'] = "completed"
+    #   update['close_processed'] = true
+    #   update['live'] = false
+    #   @SportRadarGames.update {_id: update.eventId}, {$set: update}
+    #   @logger.verbose "Game is not live"
+    #   @logger.verbose update['live']
 
   processClosingState: (game) ->
     return if game.close_processed isnt false

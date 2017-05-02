@@ -7,66 +7,91 @@ module.exports = class
 
   getPlay: (game) ->
     @game = game
-    @halfs = @getHalfs() # Get the innings data broken into halfs
-    @totalEvents = @getEvents @halfs # Select only the events.
-    @currentHalf = @getLast @halfs # Get the current inning half
-    @currentHalfEvents = @getEvents @halfs
-    
-    # if @game.status is "In-Progress"
-    #❗️Should be solved already since the games are already filter by "In-Progress" in updateGameStrategy's -- getActiveGames
-    @currentAtBat = @getLast @currentHalfEvents
+    @logger.verbose game['eventStatus']
+    @innings =  @game['pbp']
+    @halfs = @loopHalfs @innings
+
+    @totalEvents = @getEvents @halfs
+    @currentHalf = @getLast @halfs
+    @currentHalfEvents = @currentHalf['pbpDetails']
+
+    @atBats = @getAtBats @currentHalfEvents
+    @currentAtBat = @getLast @atBats
+
     @lastPitch = @getLast @currentAtBat['pitchDetails']
     @pitches = @currentAtBat['pitchDetails']
 
-    if game['old']
-      @old = game['old']
-      @pitchDiff = @pitches.length - @old['lastCount'].length
-      @eventDiff = @totalEvents.length - @old['events']
-      @halfDiff = @halfs.length - @old['halfs']
+    # if @game['old']
+    #   @old = game['old']
+    # @pitchDiff = @pitches.length - @old['lastCount'].length
+    # @eventDiff = @totalEvents.length - @old['events']
+    # @halfDiff = @halfs.length - @old['halfs']
+    #
+    #   @isDifferentPitch @pitchDiff
+    #   @isDifferentEvent @eventDiff
+    #   @isDifferentHalf @halfDiff
+    #
+    #   # @logger.verbose "Old - [#{@game.name}] Pitch: #{@old['lastCount'].length} -  Event: #{@old['events']} - Half: #{@old['halfs']}"
+    #   # @logger.verbose "New - [#{@game.name}] Pitch: #{@pitches.length} -  Event: #{@totalEvents.length} - Half: #{@halfs.length}"
+    #   # @logger.verbose "Diff - [#{@game.name}] Pitch: #{@pitchDiff} -  Event: #{@eventDiff} - Half: #{@halfDiff}"
+    #   return @updateOld()
+    # else
+    #   @game['old'] = {}
+    @old =
+      outs: @game['eventStatus']['outs']
+      halfs: @halfs.length
+      lastUpdated: new Date()
+      inning: @game['eventStatus']['inning']
+      events: @totalEvents.length
+      lastCount: @pitches
+      sequence: @currentAtBat['sequence']
+      hitter: @currentAtBat['batter']
+      playerId: @currentAtBat['batter']['playerId']
 
-      @isDifferentPitch @pitchDiff
-      @isDifferentEvent @eventDiff
-      @isDifferentHalf @halfDiff
-
-      # @logger.verbose "Old - [#{@game.name}] Pitch: #{@old['lastCount'].length} -  Event: #{@old['events']} - Half: #{@old['halfs']}"
-      # @logger.verbose "New - [#{@game.name}] Pitch: #{@pitches.length} -  Event: #{@totalEvents.length} - Half: #{@halfs.length}"
-      # @logger.verbose "Diff - [#{@game.name}] Pitch: #{@pitchDiff} -  Event: #{@eventDiff} - Half: #{@halfDiff}"
-      return @updateOld()
-
-    else
-      return @updateOld()
-
-  updateOld: ->
-    @old.outs = @game['eventStatus']['outs'] #👍
-    @old.halfs = @halfs.length #👍
-    @old.lastUpdated = new Date() #👍
-    @old.inning = @game['eventStatus']['inning'] #👍
-
-    @old.events = @totalEvents.length #❓ Testing this after moving outside the if statement.
-
-    # These are nested in an if statement. That seems to be the issue.
-    # These should be fixed now that they are outside the if statement.
-    @old.lastCount = @pitches
-    @old.sequence = @currentAtBat['sequence']
-    @old.hitter = @currentAtBat['batter']
-    @old.playerId = @currentAtBat['batter']['playerId']
-
-    # result = @game
-    result = @old
+    @game['old'] = @old
+    result = @game
     # result.details = @getDetails @game
-    result
-
-  getHalfs: ->
-    innings = @game['pbp'] or []
+    return result
 
   getEvents: (selector) ->  _.flatten _.pluck selector, 'pbpDetails'
 
-  getPlays: (selector) ->
-    _.pluck (_.filter(selector, @isPlay)), 'pbpDetailId'
+  getAtBats: (selector) ->
+    _.flatten _.filter(selector, @isPlay)
 
   # Dont grab events that are lineups (96, 97), substitutions (98), scores on a pitcher (42). Make this into array
   isPlay: (event) -> event['pbpDetailId'] isnt 96 or 97 or 98 or 42
-  getLast: (plays) -> if plays.length then plays[plays.length - 1] or undefined
+  getLast: (plays) -> if plays or plays.length then plays[plays.length - 1] or 0
+
+  loopHalfs: (innings) ->
+    array = _.map innings, (half) ->
+      inning: half.inning
+      inningDivision: half.inningDivision
+      linescore: half.linescore
+      pbpDetails: _.toArray _.map half.pbpDetails, (event) ->
+        pbpDetailId: event.pbpDetailId
+        sequence: event.sequence
+        pitches: if event.pitches then event.pitches
+        batter: if event.batter then event.batter
+        pitchSequence: if event.pitchSequence then event.pitchSequence
+        pitchDetails: if event.pitchDetails then event.pitchDetails
+        playText: if event.playText then event.playText
+
+    return  _.toArray array
+
+  # cleanHalf: (half) ->
+  #   # Take one object and return one object
+  #   @logger.verbose half
+  #   result =
+  #     inning: half.inning
+  #     inningDivision: half.inningDivision
+  #     linescore: half.linescore
+  #     pbpDetails: _.each half.pbpDetails, (event) ->
+  #       @cleanEvent(event) # Loop over array of objects and return an array
+
+  # cleanEvent: (event) ->
+  #   # Take in one object and return one object
+  #   result =
+
 
   isDifferentPitch: (diff) ->
     if diff is 1

@@ -21,10 +21,8 @@ module.exports = class extends Task
     Promise.bind @
     .then -> api.getPlayByPlay gameId
     .then (result) -> result.apiResults[0].league.season.eventType[0].events[0]
-    .then @upsertGame
 
-  upsertGame: (game) ->
-    sportRadarGame = new SportRadarGame game
-    @logger.verbose "First import #{sportRadarGame.old}"
-    collection = @dependencies.mongodb.collection("games")
-    collection.update sportRadarGame.getSelector(), {$set: sportRadarGame}, {upsert: true}
+  # upsertGame: (game) ->
+  #   sportRadarGame = new SportRadarGame game
+  #   collection = @dependencies.mongodb.collection("games")
+  #   collection.update sportRadarGame.getSelector(), {$set: sportRadarGame}, {upsert: true}

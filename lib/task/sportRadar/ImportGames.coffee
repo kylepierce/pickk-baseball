@@ -32,13 +32,14 @@ module.exports = class extends Task
     .return true
 
   upsertGame: (data) ->
-    game = new SportRadarGame data
-    Promise.bind @
-    .then -> @Games.findOne game.getSelector()
-    .then (original) ->
-      game['close_processed'] = false if @isClosing original, game
-
-      @Games.update game.getSelector(), {$set: game}, {upsert: true}
-      .then => @emit "upserted", game
+    console.log data.eventId
+    # game = new SportRadarGame data
+    # Promise.bind @
+    # .then -> @Games.findOne game.getSelector()
+    # .then (original) ->
+    #   game['close_processed'] = false if @isClosing original, game
+    #
+    #   @Games.update game.getSelector(), {$set: game}, {upsert: true}
+    #   .then => @emit "upserted", game
 
   isClosing: (original, game) -> original and not original['completed'] and game['completed']

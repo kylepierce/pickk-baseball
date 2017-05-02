@@ -27,14 +27,15 @@ module.exports = class extends Strategy
     # do not allow it to crash!
     promiseRetry {retries: 1000, factor: 1}, (retry) =>
       Promise.bind @
-      .then -> @importGames.execute() # This is required to get the "In-Progress" games.
-      .then -> @closeInactiveQuestions.execute() # This just closes the questions. It does not award the users.
-      .then -> @closeInactiveAtBats.execute() # This just closes the questions. It does not award the users.
-      .then -> @getActiveGames.execute() # 👍
+      # .then -> @importGames.execute()
+      # .then -> @closeInactiveQuestions.execute() # This just closes the questions. It does not award the users.
+      # .then -> @closeInactiveAtBats.execute() # This just closes the questions. It does not award the users.
+      .then -> @getActiveGames.execute()
       .map (game) ->
         Promise.bind @
-        .then -> @importGameDetails.execute game['eventId'] #❓This is where the latest data should be imported. We need to check if the old data is still there. It should be....
-        .then -> @processGame.execute game # This is the heavy lifting
+        # Old data is game
+        .then -> @importGameDetails.execute game['eventId']
+        .then (result) -> @processGame.execute game, result
       # , {concurrency: 1} #❗️ This is probably causing the issue. Its updating the file after starting the process. Game is the new data.
       .catch (error) =>
         @logger.error error.message, _.extend({stack: error.stack}, error.details)
