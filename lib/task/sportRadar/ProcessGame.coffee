@@ -32,7 +32,7 @@ module.exports = class extends Task
   execute: (old, update) ->
     promiseRetry (retry) =>
       Promise.bind @
-      .then -> @checkGameStatus old, update
+      # .then -> @checkGameStatus old, update
       .then -> @handleGame old, update
       .return true
       .catch (error) =>
@@ -53,24 +53,21 @@ module.exports = class extends Task
       # .then -> @processClosingState game, result
 
   enrichGame: (old, update) ->
-    @oldPitch = old["old"]['lastCount'].length
-    @newPitch = update["old"]['lastCount'].length
+    if old["old"]
+      @oldPitch = old["old"]['lastCount'].length
+      @newPitch = update["old"]['lastCount'].length
+      @pitchDiff = @oldPitch - @newPitch
+      @eventDiff = update["old"]['events'] - old['old']['events']
+      @halfDiff = update["old"]['halfs'] - old['old']['halfs']
 
-    @pitchDiff = @oldPitch - @newPitch
-    @eventDiff = update["old"]['events'] - old['old']['events']
-    @halfDiff = update["old"]['halfs'] - old['old']['halfs']
+      console.log old['_id'], update["name"]
+      @isDifferentHalf @halfDiff, old, update
+      @isDifferentEvent @eventDiff, old, update
+      @isDifferentPitch @pitchDiff, old, update
 
-    @isDifferentPitch @pitchDiff
-    @isDifferentEvent @eventDiff
-    @isDifferentHalf @halfDiff
+    @SportRadarGames.update {_id: update.eventId}, {$set: update}
 
-    # @logger.verbose "Old - Pitch: #{old['old']['lastCount'].length} -  Event: #{old['old']['events']} - Half: #{old['old']['halfs']}"
-    # @logger.verbose "New - Pitch: #{update["old"]['lastCount'].length} -  Event: #{update["old"]['events']} - Half: #{update["old"]['halfs']}"
-    # @logger.verbose "Diff - [#{old.name}] Pitch: #{@pitchDiff} -  Event: #{@eventDiff} - Half: #{@halfDiff}"
-
-    # @SportRadarGames.update {_id: update.eventId}, {$set: update}
-
-  isDifferentPitch: (diff) ->
+  isDifferentPitch: (diff, old, update) ->
     if diff is 1
       @logger.verbose "One New play!"
     else if diff > 1
@@ -78,13 +75,14 @@ module.exports = class extends Task
     else if diff < 0
       @logger.verbose "New batter?"
 
-  isDifferentEvent: (diff) ->
+  isDifferentEvent: (diff, old, update) ->
     if diff is 1
       @logger.verbose "One New Event!"
+      # @logger.verbose "New Play Id is: #{update['old']['playId']}"
     else if diff > 1
       @logger.verbose "Missed Events?!"
 
-  isDifferentHalf: (diff) ->
+  isDifferentHalf: (diff, old, update) ->
     if diff is 1
       @logger.verbose "One Half!"
     else if diff > 1

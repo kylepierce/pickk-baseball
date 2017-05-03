@@ -18,36 +18,35 @@ module.exports = class
     @currentAtBat = @getLast @atBats
 
     if @currentAtBat
-      @logger.verbose "Event: #{@game["eventId"]}"
-      @logger.verbose "Event Id: #{@currentAtBat["pbpDetailId"]}"
-      @logger.verbose "Pitch Sequence: #{@currentAtBat['pitchDetails']}"
+      # @logger.verbose "Event: #{@game["eventId"]}"
+      # @logger.verbose "Event Id: #{@currentAtBat["pbpDetailId"]}"
+      # @logger.verbose "Pitch Sequence: #{@currentAtBat['pitchDetails']}"
 
       @lastPitch = @getLast @currentAtBat['pitchDetails']
       @pitches = @currentAtBat['pitchDetails']
 
-      @old =
-        outs: @game['eventStatus']['outs']
-        halfs: @halfs.length
-        lastUpdated: new Date()
-        inning: @game['eventStatus']['inning']
-        events: @totalEvents.length
-        eventStatus: @game['eventStatus']
-        lastCount: if @pitches then @pitches else []
-        sequence: @currentAtBat['sequence']
-        hitter: @currentAtBat['batter']
-        playerId: @currentAtBat['batter']['playerId']
+    @old =
+      outs: @game['eventStatus']['outs']
+      halfs: @halfs.length
+      lastUpdated: new Date()
+      inning: @game['eventStatus']['inning']
+      events: @totalEvents.length
+      eventStatus: @game['eventStatus']
+      lastCount: if @pitches then @pitches else []
+      # sequence: @currentAtBat['sequence']
+      # hitter: @currentAtBat['batter']
+      # playerId: @currentAtBat['batter']['playerId']
 
-      @game['old'] = @old
-      result = @game
-      result.details = @getDetails @game
-      return result
+    @game['old'] = @old
+    result = @game
+    result.details = @getDetails @game
+    return result
 
   getEvents: (selector) ->  _.flatten _.pluck selector, 'pbpDetails'
 
   getAtBats: (selector) -> _.flatten _.filter(selector, @isPlay)
 
   isPlay: (event) ->
-    # event['pbpDetailId'] isnt (96 or 97 or 98 or 42)
     list = [96, 97, 98, 42]
     if event && event['pbpDetailId'] not in list
       return event

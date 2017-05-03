@@ -59,7 +59,7 @@ module.exports = class
 
     date = new Date()
     # cast to EDT timezone
-    EDT_OFFSET = 60 * 4
+    EDT_OFFSET = 60 * 12
     date = moment(date).subtract(EDT_OFFSET + moment(date).utcOffset(), 'minutes').toDate()
 
     formattedDate = dateFormat(date, "yyyy-mm-dd")

@@ -40,18 +40,11 @@ module.exports = class extends Task
         game["_id"] = @Games.db.ObjectId().toString()
         Promise.bind @
         .then ->
-          @Games.insert game, (err, result) ->
-            if err
-              console.log err
-            else
-              console.log result['_id']
-            # _id: @Games.db.ObjectId().toString()
-            # eventId: game["eventId"]
-            # status: "Pre-Game"
-    # .then (original) ->
-    #   game['close_processed'] = false if @isClosing original, game
-    #
-    #   @Games.update game.getSelector(), {$set: game}, {upsert: true}
-    #   .then => @emit "upserted", game
+          @Games.insert game
+    .catch (original) ->
+      game['close_processed'] = false if @isClosing original, game
+
+      @Games.update game.getSelector(), {$set: game}, {upsert: true}
+      .then => @emit "upserted", game
 
   isClosing: (original, game) -> original and not original['completed'] and game['completed']
