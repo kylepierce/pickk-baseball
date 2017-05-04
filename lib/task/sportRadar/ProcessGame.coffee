@@ -56,11 +56,10 @@ module.exports = class extends Task
     if old["old"]
       @oldPitch = old["old"]['lastCount'].length
       @newPitch = update["old"]['lastCount'].length
-      @pitchDiff = @oldPitch - @newPitch
+      @pitchDiff = @newPitch - @oldPitch
       @eventDiff = update["old"]['events'] - old['old']['events']
       @halfDiff = update["old"]['halfs'] - old['old']['halfs']
 
-      console.log old['_id'], update["name"]
       @isDifferentHalf @halfDiff, old, update
       @isDifferentEvent @eventDiff, old, update
       @isDifferentPitch @pitchDiff, old, update
@@ -68,25 +67,33 @@ module.exports = class extends Task
     @SportRadarGames.update {_id: update.eventId}, {$set: update}
 
   isDifferentPitch: (diff, old, update) ->
+    if diff isnt 0
+      console.log old['name'], " - ", diff
     if diff is 1
       @logger.verbose "One New play!"
     else if diff > 1
       @logger.verbose "Missed plays?!"
     else if diff < 0
-      @logger.verbose "New batter?"
+      @logger.verbose "Old Count: ", old["old"]['lastCount'], old["old"]['eventId']
+      @logger.verbose "New Count: ", update['old']['lastCount'], old["old"]['eventId']
 
   isDifferentEvent: (diff, old, update) ->
-    if diff is 1
-      @logger.verbose "One New Event!"
-      # @logger.verbose "New Play Id is: #{update['old']['playId']}"
-    else if diff > 1
-      @logger.verbose "Missed Events?!"
+    if diff isnt 0
+      console.log old['name'], " - ", diff
+      if diff is 1
+        @logger.verbose "One New Event!"
+        @logger.verbose "Old batter: ", old["old"]['playerId']
+        @logger.verbose "New batter: ", update['old']['playerId']
+      else if diff > 1
+        @logger.verbose "Missed Events?!"
 
   isDifferentHalf: (diff, old, update) ->
-    if diff is 1
-      @logger.verbose "One Half!"
-    else if diff > 1
-      @logger.verbose "Missed Halfs?!"
+    if diff isnt 0
+      console.log old['name'], " - ", diff
+      if diff is 1
+        @logger.verbose "One Half!"
+      else if diff > 1
+        @logger.verbose "Missed Halfs?!"
 
   checkGameStatus: (old, update) ->
     if update['eventStatus']['eventStatusId'] isnt 2

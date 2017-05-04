@@ -51,7 +51,7 @@ module.exports = class
       .catch (error) ->
         # TODO @logger
         console.log error.message #, _.extend({stack: error.stack}, error.details)
-        retry(error)
+        retry(error) 
 
   getScheduledGames: (days, format = "json") ->
     Match.check days, Number

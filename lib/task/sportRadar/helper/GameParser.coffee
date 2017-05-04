@@ -34,8 +34,9 @@ module.exports = class
       eventStatus: @game['eventStatus']
       lastCount: if @pitches then @pitches else []
       # sequence: @currentAtBat['sequence']
-      # hitter: @currentAtBat['batter']
-      # playerId: @currentAtBat['batter']['playerId']
+      hitter: if @currentAtBat then @currentAtBat['batter'] else undefined
+      playerId: if @currentAtBat then @currentAtBat['batter']['playerId'] else undefined
+      eventId: if @currentAtBat then @currentAtBat['pbpDetailId'] else undefined
 
     @game['old'] = @old
     result = @game

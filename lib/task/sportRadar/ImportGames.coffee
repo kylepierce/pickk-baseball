@@ -24,11 +24,9 @@ module.exports = class extends Task
   execute: ->
     Promise.bind @
     .then -> @api.getScheduledGames 1
-    # .then -> @updateTeam.execute game['home_team']
-    # .then -> @updateTeam.execute game['away_team']
     .then (result) -> result.apiResults[0].league.season.eventType[0].events
     .map @upsertGame
-    .tap (results) -> @logger.warn "#{results.length} games have been upserted"
+    # .tap (results) -> @logger.warn "#{results.length} games have been upserted"
     .return true
 
   upsertGame: (data) ->
@@ -37,6 +35,7 @@ module.exports = class extends Task
     .then -> @Games.findOne game.getSelector()
     .then (found) ->
       if not found
+        @logger.verbose "Game Not Found"
         game["_id"] = @Games.db.ObjectId().toString()
         Promise.bind @
         .then ->
