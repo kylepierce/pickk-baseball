@@ -23,10 +23,12 @@ module.exports = class
     @name = "#{home.nickname} vs #{away.nickname}"
     @gameDate = moment.utc(@scheduled).format('MMM Do LT')
     @sport = "MLB"
-    @period = @['eventStatus']['inning']
+    @period = 0
+    # @period = @['eventStatus']['inning']
     @live = @['eventStatus']['name'] is "In-Progress"
     @status = @['eventStatus']['name']
     @completed = @status in ['complete', 'closed']
+    @commercial = false
 
   getSelector: ->
     "eventId": @['eventId']

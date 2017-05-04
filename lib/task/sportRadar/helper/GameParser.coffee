@@ -19,7 +19,7 @@ module.exports = class
 
     if @currentAtBat
       # @logger.verbose "Event: #{@game["eventId"]}"
-      # @logger.verbose "Event Id: #{@currentAtBat["pbpDetailId"]}"
+      @logger.verbose "Event Id: #{@currentAtBat["pbpDetailId"]}"
       # @logger.verbose "Pitch Sequence: #{@currentAtBat['pitchDetails']}"
 
       @lastPitch = @getLast @currentAtBat['pitchDetails']
@@ -48,7 +48,7 @@ module.exports = class
   getAtBats: (selector) -> _.flatten _.filter(selector, @isPlay)
 
   isPlay: (event) ->
-    list = [96, 97, 98, 42]
+    list = [96, 97, 98, 42, 35]
     if event && event['pbpDetailId'] not in list
       return event
     else
