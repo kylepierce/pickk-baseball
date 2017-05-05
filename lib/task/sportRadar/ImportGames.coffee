@@ -26,7 +26,6 @@ module.exports = class extends Task
     .then -> @api.getScheduledGames 1
     .then (result) -> result.apiResults[0].league.season.eventType[0].events
     .map @upsertGame
-    # .tap (results) -> @logger.warn "#{results.length} games have been upserted"
     .return true
 
   upsertGame: (data) ->

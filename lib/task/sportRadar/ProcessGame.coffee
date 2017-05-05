@@ -390,7 +390,7 @@ module.exports = class extends Task
         option6: {title: "Home Run", number: 6, multiplier: multipliers['homerun'] }
 
       Promise.bind @
-      # .then -> @closeInactivePlays game, update
+      .then -> @closeInactivePlays game, update
       .then -> @Questions.count {commercial: false, game_id: old["_id"], player_id: player['player_id'], atBatQuestion: true, playId: playId}
       .then (found) ->
         if not found
@@ -417,10 +417,10 @@ module.exports = class extends Task
             # @logger.verbose "Create play question (#{question})", {gameId: result['gameId'], playerId: playerId, play: play, questionId: questionId}
 
   closeInactivePlays: (old, update) ->
-    playNumber = result.playNumber
+    playNumber = update.atBatId
 
     Promise.bind @
-    .then -> @Questions.find {commercial: false, gameId: game.id, active: true, atBatQuestion: true, atBatId: {$ne: atBatId}}
+    .then -> @Questions.find {commercial: false, gameId: old['_id'], active: true, atBatQuestion: true, atBatId: {$ne: atBatId}}
     .map (question) ->
       atBatId = question['atBatId']
       # @logger.verbose "Close a play question", {questionId: question['_id'], questionPlay}

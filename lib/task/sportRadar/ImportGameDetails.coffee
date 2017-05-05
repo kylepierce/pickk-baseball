@@ -22,7 +22,6 @@ module.exports = class extends Task
     .then -> api.getPlayByPlay gameId
     .then (result) -> result.apiResults[0].league.season.eventType[0].events
     .map @upsertGame
-    # .then (result) -> return result
 
   upsertGame: (game) ->
     sportRadarGame = new SportRadarGame game
