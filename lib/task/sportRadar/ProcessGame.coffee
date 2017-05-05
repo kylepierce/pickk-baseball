@@ -44,7 +44,7 @@ module.exports = class extends Task
 
     if result
       Promise.bind @
-      .then -> @enrichGame old, result
+      # .then -> @enrichGame old, result
       .then -> @detectChange old, result
       # .then -> @handleAtBat game, result
       # .then -> @handleCommercialBreak game, result
@@ -60,12 +60,9 @@ module.exports = class extends Task
     newStuff = update['eventStatus']
     list = ["strikes", "balls", "outs", "currentBatter", "eventStatusId", "innings", "inningDivision"]
 
-    # Foul Ball detection
     @oldPitch = old["old"]['lastCount'].length
     @newPitch = update["old"]['lastCount'].length
     pitchDiff = @newPitch - @oldPitch
-
-    # change = _.isEqual oldStuff, newStuff
 
     diff = []
     _.map list, (key) ->
@@ -73,20 +70,19 @@ module.exports = class extends Task
       if not compare
         diff.push key
 
-    if diff.length >= 1
-      if diff.indexOf "balls" > 0 || diff.indexOf "strikes" > 0 || pitchDiff
-        @logger.verbose "Count Change!"
-        @handlePitch old, update
+    if diff.length > 0
+      if (diff.indexOf "balls") > -1|| (diff.indexOf "strikes") > -1 || pitchDiff isnt 0
+        @logger.verbose "Increase in Count!"
+        @createPitch old, update, diff
 
-      if diff.indexOf "currentBatter" || diff.indexOf "outs" > 0
+      if (diff.indexOf "currentBatter") > -1 || (diff.indexOf "outs") > -1
         @logger.verbose "Batter changed!"
-        if diff.indexOf "eventStatusId" > 0
-          # Make sure its not a false flag.
-          @handlePlay old, update
+        @createAtBat old, update, diff
 
-      if diff.indexOf "innings" || diff.indexOf "inningDivision" > 0
-        # Set the comerical status to true and create a new time + 2 minutes
-        # @handleCommercialBreak old, update
+      # if (diff.indexOf "innings") > -1 || (diff.indexOf "inningDivision") > -1
+      #   @logger.verbose "Doing stuff"
+      #   #Set the comerical status to true and create a new time + 2 minutes
+      #   @handleCommercialBreak old, update
 
   checkGameStatus: (old, update) ->
     if update['eventStatus']['eventStatusId'] isnt 2
@@ -360,23 +356,17 @@ module.exports = class extends Task
             shareMessage: ""
         # .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
-  handleAtBat: (game, result) ->
-    Promise.bind @
-    .then -> @logger.verbose "#{result.hitter}"
-    .then -> @AtBats.update {gameId: game._id, playerId: result.hitter['player_id'], active: true}, {$set: {ballCount: result.balls, strikeCount: result.strikes, dateCreated: new Date()}}, {upsert: true}
-    .then -> @AtBats.update {gameId: game._id, playerId: {$ne: result.hitter['player_id']}}, {$set: {active: false}}, {multi: true}
-
-  handlePlay: (old, update) ->
-    if !update['old']['hitter']
-      @logger.verbose "No Hitter"
-      return
-    player = update['old']['hitter']
-    playerId = update['old']['player_id']
+  createAtBat: (old, update, diff) ->
+    player = update['eventStatus']['currentBatter']
+    playerId = player['playerId']
     atBatId = old['_id'] + "-" + update['eventStatus']['inning'] + "-" + update['old']["eventCount"] + "-" + playerId
     # bases = update['old']['eventStatus']['runnersOnBase']
     question = "End of #{player['firstName']} #{player['lastName']}'s at bat."
 
-    # @logger.verbose "Handle play of hitter (#{player['first_name']} #{player['last_name']})", {gameId: game.id, playerId: playerId}
+    if (diff.indexOf 'inningDivision') > -1
+      createDate = moment().add 2, "minutes"
+    else
+      createDate = new Date()
 
     Promise.bind @
     .then -> @getGenericMultipliersForPlay() #bases, playerId
@@ -390,92 +380,102 @@ module.exports = class extends Task
         option6: {title: "Home Run", number: 6, multiplier: multipliers['homerun'] }
 
       Promise.bind @
-      .then -> @closeInactivePlays game, update
-      .then -> @Questions.count {commercial: false, game_id: old["_id"], player_id: player['player_id'], atBatQuestion: true, playId: playId}
+      .then -> @closeInactiveAtBats old, atBatId
+      .then -> @Questions.count {commercial: false, game_id: old["_id"], player_id: playerId, atBatQuestion: true, atBatId: atBatId}
       .then (found) ->
         if not found
           Promise.bind @
           .then ->
             @Questions.insert
+              _id: @Questions.db.ObjectId().toString()
+              dateCreated: createDate
+              gameId: old["_id"]
+              playerId: playerId
               game_id: old["_id"]
               player_id: playerId
               atBatQuestion: true
+              inning: update['old']['inning']
+              eventCount: update['old']['eventCount']
               period: 0
               type: "atBat"
-              # playId: playId
-              dateCreated: new Date()
-              gameId: old["_id"]
               active: true
               background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('/bball2.png'); height: 75px; background-position-x: 46%; background-position-y: 100%; "
               commercial: false
               que: question
               options: options
-              _id: @Questions.db.ObjectId().toString()
               usersAnswered: []
           .tap (result) ->
             questionId = result.upserted?[0]?._id
             # @logger.verbose "Create play question (#{question})", {gameId: result['gameId'], playerId: playerId, play: play, questionId: questionId}
 
-  closeInactivePlays: (old, update) ->
-    playNumber = update.atBatId
+  closeInactiveAtBats: (update, atBatId) ->
+    playNumber = atBatId
 
     Promise.bind @
-    .then -> @Questions.find {commercial: false, gameId: old['_id'], active: true, atBatQuestion: true, atBatId: {$ne: atBatId}}
+    .then -> @Questions.find {commercial: false, gameId: update['_id'], active: true, atBatQuestion: true, atBatId: {$ne: atBatId}}
     .map (question) ->
       atBatId = question['atBatId']
-      # @logger.verbose "Close a play question", {questionId: question['_id'], questionPlay}
-      play = result['plays'][questionPlay - 1]
-      if not play
-        @logger.warn "Can't find a play completed for the question", {questionId: question['_id'], questionPlay, playsAmount: result['plays'].length}
-        return
+      inning = update['inning']
+      eventCount = update['eventCount']
+      playerId = update['playerId']
 
-      outcome = play.outcome
-      map = _.invert _.mapObject question['options'], (option) -> option['title']
-      outcomeOption = map[outcome]
+      halfs = @gameParser.loopHalfs inning
+      totalEvents = @gameParser.getEvents halfs
+      atBats = @gameParser.getAtBats totalEvents
+      atBat = atBats[eventCount]
+      if atBat
+        matchesBatter = atBat['batter']['playerId'] is playerId
 
-      Promise.bind @
-      .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
-      # .tap -> @logger.info "Close play question (#{question['que']}) with outcome (#{outcome})"
-      # .tap -> @logger.verbose "Close play question (#{question['que']}) with outcome (#{outcome})", {questionId: question['_id'], outcome: outcomeOption, play: question['play']}
-      .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true}
-      # .tap (result) -> @logger.verbose "There are (#{result.n}) negative answer(s) for question (#{question['que']})"
-      .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
-      # .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
-      .map (answer) ->
-        reward = Math.floor answer['wager'] * answer['multiplier']
+      if atBat and matchesBatter
+        outcome = @eventTitle atBat['eventStatusId']
+        map = _.invert _.mapObject question['options'], (option) -> option['title']
+        # This event['eventStatusId'] matches one of the options?
+        outcomeOption = map[outcome]
+
         Promise.bind @
-        .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
-        .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
-        .then ->
-          notificationId = chance.guid()
-          @Notifications.insert
-            _id: notificationId
-            userId: answer['userId']
-            gameId: game.id
-            type: "coins"
-            value: reward
-            read: false
-            notificationId: notificationId
-            dateCreated: new Date()
-            message: "Nice Pickk! You got #{reward} Coins!"
-            sharable: false
-            shareMessage: ""
-        # .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
+        .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
+        .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true}
+        .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
+        .map (answer) ->
+          reward = Math.floor answer['wager'] * answer['multiplier']
+          Promise.bind @
+          .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
+          .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
+          .then ->
+            notificationId = chance.guid()
+            @Notifications.insert
+              _id: notificationId
+              userId: answer['userId']
+              gameId: game.id
+              type: "coins"
+              value: reward
+              read: false
+              notificationId: notificationId
+              dateCreated: new Date()
+              message: "Nice Pickk! You got #{reward} Coins!"
+              sharable: false
+              shareMessage: ""
+      else if not matchesBatter
+        @logger.verbose "The player for event selected does not match the question batter. Increasing by 1 until event found..."
+      else
+        @logger.warn "Can't find a play completed for the question",
 
-  handlePitch: (old, update) ->
-    if !update['hitter']
-      @logger.verbose "No Hitter"
-      return
+  createPitch: (old, update, diff) ->
+    player = update['eventStatus']['currentBatter']
+    playerId = player['playerId']
     gameId = old['_id']
-    player = update['hitter']
-    playerId = update['playerId']
     balls = update['eventStatus']['balls']
     strikes = update['eventStatus']['strikes']
-    atBatId = old['_id'] + "-" + update['eventStatus']['inning'] + "-" + update['old']["eventCount"] + "-" + playerId
-    pitchId = update['lastCount'].length
+    eventCount = update['old']["eventCount"]
+    inning = update['eventStatus']['inning']
+    atBatId = gameId + "-" + inning + "-" + eventCount + "-" + playerId
+    pitchId = update['old']['lastCount'].length
     question = "#{player['firstName']} #{player['lastName']}: " + balls + " - " + strikes
 
-    # @logger.verbose "Handle pitch of hitter (#{player['firstName']} #{player['lastName']}) with count (#{balls} - #{strikes})",
+    if (diff.indexOf 'inningDivision') > -1
+      createDate = moment().add 2, "minutes"
+    else
+      createDate = new Date()
 
     Promise.bind @
     .then -> @getGenericMultipliersForPitch()
@@ -501,6 +501,7 @@ module.exports = class extends Task
 
       Promise.bind @
       # .then -> @closeInactivePitches game, result
+      .tap -> @logger.verbose "Creating the pitch Questions"
       .then -> @Questions.count {commercial: false, gameId: gameId, playerId: playerId, atBatQuestion: {$exists: false}, atBatId: atBatId, pitchId: pitchId}
       .then (found) ->
         if not found
@@ -508,13 +509,15 @@ module.exports = class extends Task
             .then ->
               @Questions.insert
                 _id: @Questions.db.ObjectId().toString()
-                dateCreated: new Date()
+                dateCreated: createDate
                 gameId: gameId
                 playerId: playerId
                 game_id: gameId
                 player_id: playerId
                 atBatId: atBatId
                 pitchId: pitchId
+                eventCount: eventCount
+                inning: inning
                 type: "pitch"
                 period: 0
                 active: true
@@ -522,9 +525,9 @@ module.exports = class extends Task
                 que: question
                 options: options
                 usersAnswered: []
-            .tap ->
+            .tap (result) ->
               questionId = result.upserted?[0]?._id
-              @logger.verbose "Create pitch question (#{question})", {gameId: gameId, playerId: playerId, atBatId: atBatId, pitchId: pitchId, questionId: questionId}
+              # @logger.verbose "Create pitch question (#{question})", {gameId: gameId, playerId: playerId, atBatId: atBatId, pitchId: pitchId, questionId: _id}
 
   closeInactivePitches: (game, result) ->
     playNumber = result.playNumber
@@ -553,7 +556,7 @@ module.exports = class extends Task
       .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
       .tap -> @logger.info "Close pitch question (#{question['que']})  with outcome (#{outcome})"
       .tap -> @logger.verbose "Close pitch question (#{question['que']})  with outcome (#{outcome})", {questionId: question['_id'], outcome: outcomeOption, play: question['play'], pitch: question['pitch']}
-      .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "loose"}}, {multi: true}
+      .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true}
       .tap (result) -> @logger.verbose "There are (#{result.n}) negative answer(s) for question (#{question['que']})"
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
       .tap (answers) -> @logger.info "There are (#{answers.length}) positive answer(s) for question (#{question['que']})"
@@ -575,6 +578,29 @@ module.exports = class extends Task
             sharable: false
             shareMessage: ""
         # .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
+
+  eventTitle: (eventStatusId) ->
+    results = [
+      title: "Single"
+      outcomes: [1, 2, 3, 4, 5, 6, 122]
+    ,
+      title: "Double"
+      outcomes: [7, 8, 9, 10, 11, 123]
+    ,
+      title: "Triple"
+      outcomes: [12, 13, 124]
+    ,
+      title: "Home Run"
+      outcomes: [15, 16, 17, 18]
+    ,
+      title: "Out"
+      outcomes: [15, 16, 17, 18]
+    ]
+
+    _.each results, (option) ->
+      onList = option['outcomes'].indexOf(eventStatusId)
+      if onList
+        return option['title']
 
   calculateMultipliersForPlay: (bases, playerId) ->
     Promise.bind @

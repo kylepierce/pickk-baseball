@@ -26,7 +26,7 @@ module.exports = class extends Strategy
   execute: ->
     promiseRetry {retries: 1000, factor: 1}, (retry) =>
       Promise.bind @
-      .then -> @importGames.execute()
+      # .then -> @importGames.execute()
       .then -> @getActiveGames.execute()
       .map (game) ->
         Promise.bind @
