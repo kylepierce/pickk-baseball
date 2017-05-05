@@ -40,7 +40,7 @@ module.exports = class extends Task
         Promise.bind @
         .then ->
           @Games.insert game
-    .catch (original) ->
+    .then (original) ->
       game['close_processed'] = false if @isClosing original, game
 
       @Games.update game.getSelector(), {$set: game}, {upsert: true}

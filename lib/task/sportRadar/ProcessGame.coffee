@@ -45,57 +45,48 @@ module.exports = class extends Task
     if result
       Promise.bind @
       .then -> @enrichGame old, result
-      # .then -> @handlePlay old, update
-      # .then -> @handlePitch game, result
+      .then -> @detectChange old, result
       # .then -> @handleAtBat game, result
       # .then -> @handleCommercialBreak game, result
       # .then -> @resolveCommercialQuestions game, result
       # .then -> @processClosingState game, result
 
   enrichGame: (old, update) ->
-    if old["old"]
-      @oldPitch = old["old"]['lastCount'].length
-      @newPitch = update["old"]['lastCount'].length
-      @pitchDiff = @newPitch - @oldPitch
-      @eventDiff = update["old"]['events'] - old['old']['events']
-      @halfDiff = update["old"]['halfs'] - old['old']['halfs']
+    if !old['old']
+      @SportRadarGames.update {_id: update.eventId}, {$set: update}
 
-      @isDifferentHalf @halfDiff, old, update
-      @isDifferentEvent @eventDiff, old, update
-      @isDifferentPitch @pitchDiff, old, update
+  detectChange: (old, update) ->
+    oldStuff = old['old']['eventStatus']
+    newStuff = update['eventStatus']
+    list = ["strikes", "balls", "outs", "currentBatter", "eventStatusId", "innings", "inningDivision"]
 
-    @SportRadarGames.update {_id: update.eventId}, {$set: update}
+    # Foul Ball detection
+    @oldPitch = old["old"]['lastCount'].length
+    @newPitch = update["old"]['lastCount'].length
+    pitchDiff = @newPitch - @oldPitch
 
-  isDifferentPitch: (diff, old, update) ->
-    if diff isnt 0
-      console.log old['name'], " - Pitch - ", diff
-    if diff is 1
-      @logger.verbose "One New play!"
-      @handlePitch old, update
-    else if diff > 1
-      @logger.verbose "Missed plays?!"
-    else if diff < 0
-      @logger.verbose "Old Count: ", old["old"]['lastCount'], old["old"]['eventId']
-      @logger.verbose "New Count: ", update['old']['lastCount'], old["old"]['eventId']
+    # change = _.isEqual oldStuff, newStuff
 
-  isDifferentEvent: (diff, old, update) ->
-    if diff isnt 0
-      console.log old['name'], " - Events:  - ", diff
-      if diff is 1
-        @handlePlay old, update
-        @logger.verbose "One New Event!"
-        @logger.verbose "Old batter: ", old["old"]['playerId']
-        @logger.verbose "New batter: ", update['old']['playerId']
-      else if diff > 1
-        @logger.verbose "Missed Events?!"
+    diff = []
+    _.map list, (key) ->
+      compare = _.isEqual oldStuff[key], newStuff[key]
+      if not compare
+        diff.push key
 
-  isDifferentHalf: (diff, old, update) ->
-    if diff isnt 0
-      console.log old['name'], " - Halfs: - ", diff
-      if diff is 1
-        @logger.verbose "One Half!"
-      else if diff > 1
-        @logger.verbose "Missed Halfs?!"
+    if diff.length >= 1
+      if diff.indexOf "balls" > 0 || diff.indexOf "strikes" > 0 || pitchDiff
+        @logger.verbose "Count Change!"
+        @handlePitch old, update
+
+      if diff.indexOf "currentBatter" || diff.indexOf "outs" > 0
+        @logger.verbose "Batter changed!"
+        if diff.indexOf "eventStatusId" > 0
+          # Make sure its not a false flag.
+          @handlePlay old, update
+
+      if diff.indexOf "innings" || diff.indexOf "inningDivision" > 0
+        # Set the comerical status to true and create a new time + 2 minutes
+        # @handleCommercialBreak old, update
 
   checkGameStatus: (old, update) ->
     if update['eventStatus']['eventStatusId'] isnt 2
@@ -109,7 +100,6 @@ module.exports = class extends Task
     return if game.close_processed isnt false
 
     @logger.info "Process closing game (#{game.name})"
-    # @logger.verbose "Process closing game (#{game.name})", {gameId: game._id}
 
     Promise.bind @
     .then -> @exchangeCoins game
@@ -196,39 +186,37 @@ module.exports = class extends Task
       )
 
   handleCommercialBreak: (game, result) ->
-    if result.commercialBreak
-      # @logger.verbose "Commercial break is active"
-      # it's time to start commercial break
-      # It's necessary to check commercialStartedAt is undefined so it means
-      # that "commercial" hasn't been unset because of timeout
-      if not game.commercial and not game.commercialStartedAt
-        Promise.bind @
-        .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: true, commercialStartedAt: new Date()}}
-        .tap -> @logger.info "Commercial flag has been set for game (#{game.name})"
-        # .tap -> @logger.verbose "Commercial flag has been set for game (#{game.name})", {gameId: game._id}
-        .then -> @createCommercialQuestions game, result
-      else
+    # @logger.verbose "Commercial break is active"
+    # it's time to start commercial break
+    # It's necessary to check commercialStartedAt is undefined so it means
+    # that "commercial" hasn't been unset because of timeout
+    if not game.commercial and not game.commercialStartedAt
+      Promise.bind @
+      .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: true, commercialStartedAt: new Date()}}
+      .tap -> @logger.info "Commercial flag has been set for game (#{game.name})"
+      # .tap -> @logger.verbose "Commercial flag has been set for game (#{game.name})", {gameId: game._id}
+      .then -> @createCommercialQuestions game, result
+    else
       # so here a commercial break is active and commercialStartedAt is set
       # It's necessary to calculate if time interval for a break is finished or not
-        now = moment()
-        timeout = now.diff(game.commercialStartedAt, 'minute')
-        # @logger.verbose "Commercial interval for game (#{game.name}) [#{game._id}] is #{timeout} minutes", {commercialStartedAt: game.commercialStartedAt, now: now.toDate()}
-        if timeout >= @dependencies.settings['common']['commercialTime']
-          Promise.bind @
-          .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}} # do NOT unset "commercialStartedAt" here!
-          .tap -> @logger.info "Commercial flag has been clear for game (#{game.name}) because of timeout"
-          # .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name}) because of timeout", {gameId: game._id}
-          .then -> @closeActiveCommercialQuestions game
-    # the game is in progress. Clear "commercial" flag if it's been set earlier.
-    else if game.commercial or game.commercialStartedAt
-      Promise.bind @
-      .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
-      .tap -> @logger.info "Commercial flag has been clear for game (#{game.name})"
-      # .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name})", {gameId: game._id}
-      .then -> @closeActiveCommercialQuestions game
+      now = moment()
+      timeout = now.diff(game.commercialStartedAt, 'minute')
+      # @logger.verbose "Commercial interval for game (#{game.name}) [#{game._id}] is #{timeout} minutes", {commercialStartedAt: game.commercialStartedAt, now: now.toDate()}
+      if timeout >= @dependencies.settings['common']['commercialTime']
+        Promise.bind @
+        .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}} # do NOT unset "commercialStartedAt" here!
+        .tap -> @logger.info "Commercial flag has been clear for game (#{game.name}) because of timeout"
+        # .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name}) because of timeout", {gameId: game._id}
+        .then -> @closeActiveCommercialQuestions game
+      # the game is in progress. Clear "commercial" flag if it's been set earlier.
+      else if game.commercial or game.commercialStartedAt
+        Promise.bind @
+        .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
+        .tap -> @logger.info "Commercial flag has been clear for game (#{game.name})"
+        # .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name})", {gameId: game._id}
+        .then -> @closeActiveCommercialQuestions game
 
   createCommercialQuestions: (game, result) ->
-    inningNumber = result.inningNumber + 1
 
     templates = [
       title: "Hit a Single"
@@ -378,11 +366,13 @@ module.exports = class extends Task
     .then -> @AtBats.update {gameId: game._id, playerId: result.hitter['player_id'], active: true}, {$set: {ballCount: result.balls, strikeCount: result.strikes, dateCreated: new Date()}}, {upsert: true}
     .then -> @AtBats.update {gameId: game._id, playerId: {$ne: result.hitter['player_id']}}, {$set: {active: false}}, {multi: true}
 
-  # 👍
   handlePlay: (old, update) ->
+    if !update['old']['hitter']
+      @logger.verbose "No Hitter"
+      return
     player = update['old']['hitter']
     playerId = update['old']['player_id']
-    playId = old["_id"] + "-" + playerId + "-" + update['old']["events"]
+    atBatId = old['_id'] + "-" + update['eventStatus']['inning'] + "-" + update['old']["eventCount"] + "-" + playerId
     # bases = update['old']['eventStatus']['runnersOnBase']
     question = "End of #{player['firstName']} #{player['lastName']}'s at bat."
 
@@ -424,16 +414,15 @@ module.exports = class extends Task
               usersAnswered: []
           .tap (result) ->
             questionId = result.upserted?[0]?._id
-            # @logger.info "Create play question (#{question})"
             # @logger.verbose "Create play question (#{question})", {gameId: result['gameId'], playerId: playerId, play: play, questionId: questionId}
 
   closeInactivePlays: (old, update) ->
     playNumber = result.playNumber
 
     Promise.bind @
-    .then -> @Questions.find {commercial: false, game_id: game.id, active: true, atBatQuestion: true, play: {$ne: playNumber}}
+    .then -> @Questions.find {commercial: false, gameId: game.id, active: true, atBatQuestion: true, atBatId: {$ne: atBatId}}
     .map (question) ->
-      questionPlay = question['play']
+      atBatId = question['atBatId']
       # @logger.verbose "Close a play question", {questionId: question['_id'], questionPlay}
       play = result['plays'][questionPlay - 1]
       if not play
@@ -474,23 +463,22 @@ module.exports = class extends Task
         # .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
   handlePitch: (old, update) ->
+    if !update['hitter']
+      @logger.verbose "No Hitter"
+      return
     gameId = old['_id']
-    player = update['old']['hitter']
-    playerId = update['old']['player_id']
-    balls = update['old']['eventStatus']['balls']
-    strikes = update['old']['eventStatus']['strikes']
-    # play = result.playNumber
-    # pitch = result.pitchNumber
-    question = "#{player['first_name']} #{player['last_name']}: " + balls + " - " + strikes
+    player = update['hitter']
+    playerId = update['playerId']
+    balls = update['eventStatus']['balls']
+    strikes = update['eventStatus']['strikes']
+    atBatId = old['_id'] + "-" + update['eventStatus']['inning'] + "-" + update['old']["eventCount"] + "-" + playerId
+    pitchId = update['lastCount'].length
+    question = "#{player['firstName']} #{player['lastName']}: " + balls + " - " + strikes
 
-    # @logger.verbose "Handle pitch of hitter (#{player['first_name']} #{player['last_name']}) with count (#{balls} - #{strikes})",
-
-    # play: play
-    # pitch: pitch
+    # @logger.verbose "Handle pitch of hitter (#{player['firstName']} #{player['lastName']}) with count (#{balls} - #{strikes})",
 
     Promise.bind @
     .then -> @getGenericMultipliersForPitch()
-    # .tap (results) -> @logger.verbose results
     # .then -> @calculateMultipliersForPitch playerId, balls, strikes
     .then (multipliers) ->
       option1 = {title: "Strike", number: 1, multiplier: multipliers['strike']}
@@ -511,55 +499,32 @@ module.exports = class extends Task
       options = {option1, option2, option3, option4}
       options.option5 = option5 if option5
 
-      @logger.verbose "Creating question?", gameId
-
-      @Questions.insert
-        game_id: gameId
-        player_id: playerId
-        # play: play
-        # pitch: pitch
-        type: "pitch"
-        dateCreated: new Date()
-        gameId: gameId
-        playerId: playerId
-        period: 0
-        active: true
-        # player: player
-        commercial: false
-        que: question
-        options: options
-        _id: @Questions.db.ObjectId().toString()
-        usersAnswered: []
-
-
-      # Promise.bind @
+      Promise.bind @
       # .then -> @closeInactivePitches game, result
-      # .then -> @Questions.count {commercial: false, game_id: gameId, player_id: player['player_id'], atBatQuestion: {$exists: false}, play: play, pitch: pitch}
-      # .then -> @Questions.count {commercial: false, game_id: gameId, player_id: player['player_id'], atBatQuestion: {$exists: false}, play: play, pitch: pitch}
-      # .then ->
-        # if not found
-    # Promise.bind @
-    #   .then ->
-      # @Questions.insert
-      #   game_id: gameId
-      #   player_id: playerId
-      #   # play: play
-      #   # pitch: pitch
-      #   type: "pitch"
-      #   dateCreated: new Date()
-      #   gameId: gameId
-      #   playerId: playerId
-      #   active: true
-      #   # player: player
-      #   commercial: false
-      #   que: question
-      #   options: options
-      #   _id: @Questions.db.ObjectId().toString()
-      #   usersAnswered: []
-      # .tap ->
-      #   questionId = result.upserted?[0]?._id
-      #   @logger.info "Create pitch question (#{question})"
-      #   @logger.verbose "Create pitch question (#{question})", {gameId: game.id, playerId: playerId, play: play, pitch: pitch, questionId: questionId}
+      .then -> @Questions.count {commercial: false, gameId: gameId, playerId: playerId, atBatQuestion: {$exists: false}, atBatId: atBatId, pitchId: pitchId}
+      .then (found) ->
+        if not found
+          Promise.bind @
+            .then ->
+              @Questions.insert
+                _id: @Questions.db.ObjectId().toString()
+                dateCreated: new Date()
+                gameId: gameId
+                playerId: playerId
+                game_id: gameId
+                player_id: playerId
+                atBatId: atBatId
+                pitchId: pitchId
+                type: "pitch"
+                period: 0
+                active: true
+                commercial: false
+                que: question
+                options: options
+                usersAnswered: []
+            .tap ->
+              questionId = result.upserted?[0]?._id
+              @logger.verbose "Create pitch question (#{question})", {gameId: gameId, playerId: playerId, atBatId: atBatId, pitchId: pitchId, questionId: questionId}
 
   closeInactivePitches: (game, result) ->
     playNumber = result.playNumber

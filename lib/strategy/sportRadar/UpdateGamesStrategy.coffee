@@ -26,13 +26,13 @@ module.exports = class extends Strategy
   execute: ->
     promiseRetry {retries: 1000, factor: 1}, (retry) =>
       Promise.bind @
-      .then -> @importGames.execute()
+      # .then -> @importGames.execute()
       .then -> @getActiveGames.execute()
       .map (game) ->
         Promise.bind @
         .then -> @importGameDetails.execute game['eventId']
         .then (result) -> @processGame.execute game, result[0]
-      , {concurrency: 1} #❗️ This is probably causing the issue. Its updating the file after starting the process. Game is the new data.
+      #, {concurrency: 1} #❗️ This is probably causing the issue. Its updating the file after starting the process. Game is the new data.
       .catch (error) =>
         @logger.error error.message, _.extend({stack: error.stack}, error.details)
         retry error

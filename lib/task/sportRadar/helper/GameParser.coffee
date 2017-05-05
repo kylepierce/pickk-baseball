@@ -19,7 +19,7 @@ module.exports = class
 
     if @currentAtBat
       # @logger.verbose "Event: #{@game["eventId"]}"
-      @logger.verbose "Event Id: #{@currentAtBat["pbpDetailId"]}"
+      # @logger.verbose "Event Id: #{@currentAtBat["pbpDetailId"]}"
       # @logger.verbose "Pitch Sequence: #{@currentAtBat['pitchDetails']}"
 
       @lastPitch = @getLast @currentAtBat['pitchDetails']
@@ -28,7 +28,7 @@ module.exports = class
     @old =
       outs: @game['eventStatus']['outs']
       halfs: @halfs.length
-      lastUpdated: new Date()
+      # lastUpdated: new Date()
       inning: @game['eventStatus']['inning']
       events: @totalEvents.length
       eventStatus: @game['eventStatus']
