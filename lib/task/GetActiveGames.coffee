@@ -2,6 +2,7 @@ _ = require "underscore"
 Match = require "mtr-match"
 Promise = require "bluebird"
 Task = require "./Task"
+moment = require "moment"
 
 module.exports = class extends Task
   constructor: (dependencies) ->

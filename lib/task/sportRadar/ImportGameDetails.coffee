@@ -21,6 +21,8 @@ module.exports = class extends Task
     Promise.bind @
     .then -> api.getPlayByPlay gameId
     .then (result) -> result.apiResults[0].league.season.eventType[0].events
+    # .tap (result) -> @logger.verbose result
+    # .tap (result) -> @logger.verbose "Batter: #{result[0]['eventStatus']['currentBatter']['playerId']} - #{result[0]['eventStatus']['balls']} - #{result[0]['eventStatus']['strikes']}"
     .map @upsertGame
 
   upsertGame: (game) ->

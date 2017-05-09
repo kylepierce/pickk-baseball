@@ -23,7 +23,7 @@ module.exports = class extends Task
 
   execute: ->
     Promise.bind @
-    .then -> @api.getScheduledGames 1
+    .then -> @api.getScheduledGames 7
     .then (result) -> result.apiResults[0].league.season.eventType[0].events
     .map @upsertGame
     .return true

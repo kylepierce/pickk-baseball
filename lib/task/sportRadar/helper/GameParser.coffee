@@ -48,8 +48,6 @@ module.exports = class
   getLast: (plays) ->
     if plays and plays.length > 0
       plays[plays.length - 1]
-    else
-      @logger.verbose plays
 
   loopHalfs: (innings) ->
     array = _.map innings, (half) ->
