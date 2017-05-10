@@ -14,8 +14,8 @@ module.exports = class
     @currentHalf = @getLast @halfs
     @currentHalfEvents = @currentHalf['pbpDetails']
 
-    @atBats = @getAtBats @currentHalfEvents
-    @currentAtBat = @getLast @atBats
+    # @atBats = @getAtBats @currentHalfEvents
+    @currentAtBat = @getLast @currentHalfEvents
 
     if @currentAtBat
       @lastPitch = @getLast @currentAtBat['pitchDetails']
@@ -29,7 +29,7 @@ module.exports = class
       eventStatus: @game['eventStatus']
       lastCount: if @pitches then @pitches else []
       hitter: if @currentAtBat then @currentAtBat['batter'] else undefined
-      playerId: if @currentAtBat then @currentAtBat['batter']['playerId'] else undefined
+      playerId: if @currentAtBat['batter'] then @currentAtBat['batter']['playerId'] else undefined
       eventId: if @currentAtBat then @currentAtBat['pbpDetailId'] else undefined
 
     @game['old'] = @old
@@ -38,12 +38,12 @@ module.exports = class
 
   getEvents: (selector) ->  _.flatten _.pluck selector, 'pbpDetails'
 
-  getAtBats: (selector) -> _.flatten _.filter(selector, @isPlay)
-
-  isPlay: (event) ->
-    list = [96, 97, 98, 42, 35]
-    if event && event['pbpDetailId'] not in list
-      return event
+  # getAtBats: (selector) -> _.flatten _.filter(selector, @isPlay)
+  #
+  # isPlay: (event) ->
+  #   list = [96, 97, 98, 42, 35]
+  #   if event && event['pbpDetailId'] not in list
+  #     return event
 
   getLast: (plays) ->
     if plays and plays.length > 0
@@ -64,3 +64,10 @@ module.exports = class
         playText: if event.playText then event.playText
 
     return  _.toArray array
+
+  findSpecificEvent: (game, eventNumber) ->
+    innings =  game['pbp']
+    halfs = @loopHalfs innings
+    totalEvents = @getEvents halfs
+    # @logger.verbose "Following event... ", totalEvents[eventNumber + 1]
+    return totalEvents[eventNumber]

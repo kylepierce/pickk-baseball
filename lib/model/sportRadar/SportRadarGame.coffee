@@ -17,7 +17,7 @@ module.exports = class
     @home_team = home.teamId
     @away = away
     @away_team = away.teamId
-    @scheduled =  new Date(@['startDate'][1]['full']).toISOString()
+    @scheduled = moment(@['startDate'][1]['full']).toDate()
     @iso =  new Date(@['startDate'][1]['full']).toISOString()
     @name = "#{home.nickname} vs #{away.nickname}"
     @sport = "MLB"
@@ -25,11 +25,8 @@ module.exports = class
     # @period = @['eventStatus']['inning']
     @live = @['eventStatus']['name'] is "In-Progress"
     @status = @['eventStatus']['name']
-    @completed = @status in ['complete', 'closed']
+    @completed = @status in ['Complete', 'Closed']
     @commercial = false
-    # @users = []
-    # @nonActive = []
-    # @registered = []
 
   getSelector: ->
     "eventId": @['eventId']
