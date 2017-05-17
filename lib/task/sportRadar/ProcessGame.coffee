@@ -74,16 +74,26 @@ module.exports = class extends Task
         diff.push key
 
     if (diff.length > 0 || pitchDiff > 0) && onIgnoreList is -1
-      if (diff.indexOf "innings") > -1 || (diff.indexOf "inningDivision") > -1
-        Promise.bind @
+      # if (diff.indexOf "innings") > -1 || (diff.indexOf "inningDivision") > -1
+      #   Promise.bind @
           # .then -> @createPitch old, result, diff, 0
           # .then -> @createAtBat old, result, diff
-
-      else if (diff.indexOf "currentBatter") > -1 || (diff.indexOf "outs") > -1 || (diff.indexOf "runnersOnBase") > -1
+      console.log diff
+      if (diff.indexOf "currentBatter") > -1 || (diff.indexOf "outs") > -1 || (diff.indexOf "runnersOnBase") > -1
+        @logger.verbose "New playyyyyerrrrr"
         player = result['old']['player']
+        inningDivision = result['eventStatus']['inningDivision']
+        @logger.verbose player
+
+        if inningDivision is "Top"
+          player = result['teams'][0]['liveState']['nextUpBatters'][0]
+        else if inningDivision is "Bottom"
+          player = result['teams'][1]['liveState']['nextUpBatters'][0]
+
+        @logger.verbose player
         Promise.bind @
-        .then -> @createAtBat old, result, player
-        .then -> @createPitch old, result, player, 0
+          .then -> @createAtBat old, result, player
+          .then -> @createPitch old, result, player, 0
 
       else if pitchDiff isnt 0
         pitchNumber = (result['old']['lastCount'].length)
@@ -366,6 +376,7 @@ module.exports = class extends Task
         # .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
   createAtBat: (old, update, player) ->
+    console.log player
     # player = update['eventStatus']['currentBatter']
     playerId = if player then player['playerId']
     atBatId = old['_id'] + "-" + update['eventStatus']['inning'] + "-" + update['old']["eventCount"] + "-" + playerId
@@ -482,7 +493,6 @@ module.exports = class extends Task
       strikes += 1
     else if strikes is 2 && (strikesArray.indexOf result) > -1
       @closeInactivePitches old, update, atBatId, pitchNumber
-      @closeInactiveAtBats old, update, atBatId
       @logger.verbose "Strikeout!"
       return
 
@@ -493,13 +503,11 @@ module.exports = class extends Task
       balls += 1
     else if balls is 3 && (ballArray.indexOf result) > -1
       @closeInactivePitches old, update, atBatId, pitchNumber
-      @closeInactiveAtBats old, update, atBatId
       @logger.verbose "Walk!"
       return
 
     if (hitArray.indexOf result) > -1
       @closeInactivePitches old, update, atBatId, pitchNumber
-      @closeInactiveAtBats old, update, atBatId
       @logger.verbose "Hit!"
       return
 
