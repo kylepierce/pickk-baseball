@@ -1,7 +1,6 @@
 Match = require "mtr-match"
 _ = require "underscore"
 moment = require "moment"
-sid = require "shortid"
 
 module.exports = class
   constructor: (data) ->
