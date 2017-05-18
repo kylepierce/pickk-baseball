@@ -1,11 +1,25 @@
 {
+  "isDebug": true,
   "logger": {
     "transports": {
       "Console": {
-        "silent": false
+        "silent": false,
+        "level": "verbose",
+        "timestamp": false,
+        "handleExceptions": false,
+        "prettyPrint": true,
+        "colorize": true,
+        "showLevel": false
       },
       "File": {
-        "silent": false
+        "silent": false,
+        "level": "verbose",
+        "timestamp": false,
+        "handleExceptions": false,
+        "prettyPrint": true,
+        "colorize": true,
+        "showLevel": true,
+        "filename": "/tmp/pickk/logs"
       }
     }
   },
