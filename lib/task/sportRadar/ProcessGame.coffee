@@ -83,7 +83,6 @@ module.exports = class extends Task
         player = result['old']['player']
         inningDivision = result['eventStatus']['inningDivision']
         @logger.verbose player
-
         # if inningDivision is "Top"
         #   player = result['teams'][0]['liveState']['nextUpBatters'][0]
         # else if inningDivision is "Bottom"
@@ -93,6 +92,14 @@ module.exports = class extends Task
         Promise.bind @
           .then -> @createAtBat old, result, player
           .then -> @createPitch old, result, player, 0
+
+      else if (diff.indexOf "balls") > -1 || (diff.indexOf "strikes") > -1
+        @logger.verbose "Diff Change!"
+        pitchNumber = (result['old']['lastCount'].length)
+        player = result['old']['player']
+        promiseRetry {retries: 1000, factor: 1}, (retry) =>
+          Promise.bind @
+            .then -> @createPitch old, result, player, pitchNumber
 
       else if pitchDiff isnt 0
         pitchNumber = (result['old']['lastCount'].length)
