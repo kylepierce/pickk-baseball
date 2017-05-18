@@ -31,7 +31,7 @@
   "deploy": {
     "prod": {
       "user": "root",
-      "host": "do.pickk-prod",
+      "host": "do.pickk-baseball",
       "ref": "origin/master",
       "repo": "git@bitbucket.org:pickk/pickk-import.git",
       "path": "/opt/pickk-import",
