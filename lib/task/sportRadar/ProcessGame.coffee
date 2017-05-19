@@ -76,10 +76,9 @@ module.exports = class extends Task
         diff.push key
 
     if oldPlayer['playerId'] isnt newPlayer['playerId']
-      console.log "Change in batter"
       inningDivision = result['eventStatus']['inningDivision']
       @createPitch old, result, newPlayer, 0
-      @createAtBat old, result, newPlayer
+      # @createAtBat old, result, newPlayer
       # Promise.bind @
       #   .then -> @createPitch old, result, newPlayer, 0
       #   .then -> @createAtBat old, result, newPlayer
