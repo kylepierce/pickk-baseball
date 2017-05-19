@@ -80,13 +80,13 @@ module.exports = class extends Task
       inningDivision = result['eventStatus']['inningDivision']
       @createPitch old, result, newPlayer, 0
       @createAtBat old, result, newPlayer
-      Promise.bind @
-        .then -> @createPitch old, result, newPlayer, 0
-        .then -> @createAtBat old, result, newPlayer
+      # Promise.bind @
+      #   .then -> @createPitch old, result, newPlayer, 0
+      #   .then -> @createAtBat old, result, newPlayer
 
     if (diff.length > 0 || pitchDiff > 0) && onIgnoreList is -1
       if (diff.indexOf "innings") > -1 || (diff.indexOf "inningDivision") > -1
-        Promise.bind @
+        # Promise.bind @
           # .then -> @handleCommercialBreak game, result
           # .then -> @createPitch old, result, diff, 0
           # .then -> @createAtBat old, result, diff
