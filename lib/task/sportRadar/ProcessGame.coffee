@@ -75,12 +75,11 @@ module.exports = class extends Task
       if not compare
         diff.push key
 
-    # if oldPlayer['playerId'] isnt newPlayer['playerId']
-    #   inningDivision = result['eventStatus']['inningDivision']
-      # # @createPitch old, result, newPlayer, 0
-      # # @createAtBat old, result, newPlayer
-      # Promise.bind @
-      #   .then -> @createPitch old, result, newPlayer, 0
+    if oldPlayer['playerId'] isnt newPlayer['playerId']
+      inningDivision = result['eventStatus']['inningDivision']
+      @createAtBat old, result, newPlayer
+      Promise.bind @
+        .then -> @createPitch old, result, newPlayer, 0
       #   .then -> @createAtBat old, result, newPlayer
 
     if (diff.length > 0 || pitchDiff > 0) && onIgnoreList is -1
