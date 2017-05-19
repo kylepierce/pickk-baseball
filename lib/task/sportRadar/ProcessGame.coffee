@@ -58,6 +58,8 @@ module.exports = class extends Task
   detectChange: (old, result) ->
     oldStuff = old['eventStatus']
     newStuff = result['eventStatus']
+    oldPlayer = old["old"]['eventStatus']['currentBatter']
+    newPlayer = result["old"]['eventStatus']['currentBatter']
     list = ["strikes", "balls", "outs", "currentBatter", "eventStatusId", "innings", "inningDivision", "runnersOnBase"]
 
     ignoreList =  [35, 42, 89, 96, 97, 98]
@@ -73,29 +75,21 @@ module.exports = class extends Task
       if not compare
         diff.push key
 
+    if oldPlayer['playerId'] isnt newPlayer['playerId']
+      console.log "Change in batter"
+      inningDivision = result['eventStatus']['inningDivision']
+      @createPitch old, result, newPlayer, 0
+      @createAtBat old, result, newPlayer
+      # Promise.bind @
+      #   .then -> @createPitch old, result, newPlayer, 0
+      #   .then -> @createAtBat old, result, newPlayer
+
     if (diff.length > 0 || pitchDiff > 0) && onIgnoreList is -1
-      @logger.verbose 'lastUpdated:', result['old']['lastUpdate']
       if (diff.indexOf "innings") > -1 || (diff.indexOf "inningDivision") > -1
         Promise.bind @
-          .then -> @createPitch old, result, diff, 0
-          .then -> @createAtBat old, result, diff
-
-      if (diff.indexOf "currentBatter") > -1 || (diff.indexOf "outs") > -1 || (diff.indexOf "runnersOnBase") > -1
-        @logger.verbose "New playyyyyerrrrr"
-        lastPlayer = @findSpecificEvent old, old['old']['eventId']
-        player = result['old']['player']
-        inningDivision = result['eventStatus']['inningDivision']
-        @logger.verbose lastPlayer, player
-        if lastPlayer is player
-          if inningDivision is "Top"
-            player = result['teams'][0]['liveState']['nextUpBatters'][0]
-          else if inningDivision is "Bottom"
-            player = result['teams'][1]['liveState']['nextUpBatters'][0]
-
-        @logger.verbose player
-        Promise.bind @
-          .then -> @createAtBat old, result, player
-          .then -> @createPitch old, result, player, 0
+          .then -> @handleCommercialBreak game, result
+          # .then -> @createPitch old, result, diff, 0
+          # .then -> @createAtBat old, result, diff
 
       else if (diff.indexOf "balls") > -1 || (diff.indexOf "strikes") > -1
         @logger.verbose "Diff Change!"
@@ -386,7 +380,6 @@ module.exports = class extends Task
         # .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
 
   createAtBat: (old, update, player) ->
-    console.log player
     # player = update['eventStatus']['currentBatter']
     playerId = if player then player['playerId']
     atBatId = old['_id'] + "-" + update['eventStatus']['inning'] + "-" + update['old']["eventCount"] + "-" + playerId
@@ -444,13 +437,11 @@ module.exports = class extends Task
     .then -> @Questions.find {commercial: false, gameId: gameId, active: true, atBatQuestion: true, atBatId: {$ne: atBatId}}
     .map (question) ->
       @Questions.update {_id: question['_id']}, $set: {active: false}
-      @logger.verbose question
       questionEventCount = question['eventCount']
       eventCount = update['old']['eventCount']
       compareEventCount = eventCount - questionEventCount
 
       event = @gameParser.findSpecificEvent update, questionEventCount
-      @logger.verbose event
       outcome = @eventTitle event['pbpDetailId']
 
       map = _.invert _.mapObject question['options'], (option) -> option['title']
