@@ -75,10 +75,10 @@ module.exports = class extends Task
       if not compare
         diff.push key
 
-    if oldPlayer['playerId'] isnt newPlayer['playerId']
-      inningDivision = result['eventStatus']['inningDivision']
-      @createPitch old, result, newPlayer, 0
-      # @createAtBat old, result, newPlayer
+    # if oldPlayer['playerId'] isnt newPlayer['playerId']
+    #   inningDivision = result['eventStatus']['inningDivision']
+      # # @createPitch old, result, newPlayer, 0
+      # # @createAtBat old, result, newPlayer
       # Promise.bind @
       #   .then -> @createPitch old, result, newPlayer, 0
       #   .then -> @createAtBat old, result, newPlayer
