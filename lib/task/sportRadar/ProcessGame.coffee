@@ -78,22 +78,22 @@ module.exports = class extends Task
       #   Promise.bind @
           # .then -> @createPitch old, result, diff, 0
           # .then -> @createAtBat old, result, diff
-      if (diff.indexOf "currentBatter") > -1 || (diff.indexOf "outs") > -1 || (diff.indexOf "runnersOnBase") > -1
-        @logger.verbose "New playyyyyerrrrr"
-        player = result['old']['player']
-        inningDivision = result['eventStatus']['inningDivision']
-        @logger.verbose player
-        # if inningDivision is "Top"
-        #   player = result['teams'][0]['liveState']['nextUpBatters'][0]
-        # else if inningDivision is "Bottom"
-        #   player = result['teams'][1]['liveState']['nextUpBatters'][0]
-        #
-        # @logger.verbose player
-        Promise.bind @
-          .then -> @createAtBat old, result, player
-          .then -> @createPitch old, result, player, 0
+      # if (diff.indexOf "currentBatter") > -1 || (diff.indexOf "outs") > -1 || (diff.indexOf "runnersOnBase") > -1
+      #   @logger.verbose "New playyyyyerrrrr"
+      #   player = result['old']['player']
+      #   inningDivision = result['eventStatus']['inningDivision']
+      #   @logger.verbose player
+      #   # if inningDivision is "Top"
+      #   #   player = result['teams'][0]['liveState']['nextUpBatters'][0]
+      #   # else if inningDivision is "Bottom"
+      #   #   player = result['teams'][1]['liveState']['nextUpBatters'][0]
+      #   #
+      #   # @logger.verbose player
+      #   Promise.bind @
+      #     .then -> @createAtBat old, result, player
+      #     .then -> @createPitch old, result, player, 0
 
-      else if (diff.indexOf "balls") > -1 || (diff.indexOf "strikes") > -1
+      if (diff.indexOf "balls") > -1 || (diff.indexOf "strikes") > -1
         @logger.verbose "Diff Change!"
         pitchNumber = (result['old']['lastCount'].length)
         player = result['old']['player']
