@@ -32,6 +32,7 @@ module.exports = class
       player: if @currentAtBat['batter'] then @currentAtBat['batter'] else undefined
       playerId: if @currentAtBat['batter'] then @currentAtBat['batter']['playerId'] else undefined
       eventId: if @currentAtBat then @currentAtBat['pbpDetailId'] else undefined
+      lastUpdate: new Date
 
     @game['old'] = @old
     result = @game
