@@ -4,7 +4,7 @@
       "name": "ImportGames",
       "script": "./bin/worker",
       "args": [
-        "--settings", "settings/dev.json",
+        "--settings", "settings/dev2.json",
         "--delay=1000",
         "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
       ],
@@ -17,7 +17,7 @@
       "name": "ImportFutureGames",
       "script": "./bin/worker",
       "args": [
-        "--settings", "settings/dev.json",
+        "--settings", "settings/dev2.json",
         "--delay=86400000",
         "lib/strategy/sportRadar/ImportFutureGamesStrategy.coffee"
       ],

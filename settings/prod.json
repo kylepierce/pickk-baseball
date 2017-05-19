@@ -24,7 +24,7 @@
     }
   },
   "mongodb": {
-    "url": "mongodb://getpickk:Imonaboat118@candidate.11.mongolayer.com:11179/pickk-production?ssl=true"
+    "url": "mongodb://getpickk:Imonaboat118@candidate.43.mongolayer.com:11034,candidate.11.mongolayer.com:11179/pickk-production?replicaSet=set-55dbc8150df18460e00000cf"
   },
   "sportRadar": {
     "apiKey": "5fae94f4yj6qyjqbpaw8g9n7",

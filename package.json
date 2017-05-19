@@ -23,6 +23,7 @@
     "bluebird": "^2.9.33",
     "chance": "^1.0.4",
     "cheerio": "^0.20.0",
+    "coffee": "^3.3.1",
     "dargs": "^4.0.1",
     "dateformat": "^1.0.12",
     "errors": "^0.3.0",
