@@ -47,7 +47,6 @@ module.exports = class extends Task
       .then -> @enrichGame old, result
       .then -> @detectChange old, result
       # .then -> @handleAtBat game, result
-      # .then -> @handleCommercialBreak game, result
       # .then -> @resolveCommercialQuestions game, result
       # .then -> @processClosingState game, result
 
@@ -58,8 +57,10 @@ module.exports = class extends Task
   detectChange: (old, result) ->
     oldStuff = old['eventStatus']
     newStuff = result['eventStatus']
-    oldPlayer = old["old"]['eventStatus']['currentBatter']
-    newPlayer = result["old"]['eventStatus']['currentBatter']
+    oldPlayer = if old['old'] then old["old"]['eventStatus']['currentBatter']['playerId']  else 0
+    if !newStuff or result['eventStatus']['eventStatusId'] isnt 2
+      return
+    newPlayer = result['eventStatus']['currentBatter']
     list = ["strikes", "balls", "outs", "currentBatter", "eventStatusId", "innings", "inningDivision", "runnersOnBase"]
 
     ignoreList =  [35, 42, 89, 96, 97, 98]
@@ -75,11 +76,12 @@ module.exports = class extends Task
       if not compare
         diff.push key
 
-    if oldPlayer['playerId'] isnt newPlayer['playerId']
+    if oldPlayer isnt newPlayer['playerId'] && @newPitch is 0
       inningDivision = result['eventStatus']['inningDivision']
       @createAtBat old, result, newPlayer
-      Promise.bind @
-        .then -> @createPitch old, result, newPlayer, 0
+      @createPitch old, result, newPlayer, 0
+      # Promise.bind @
+      #   .then -> @createPitch old, result, newPlayer, 0
       #   .then -> @createAtBat old, result, newPlayer
 
     if (diff.length > 0 || pitchDiff > 0) && onIgnoreList is -1
@@ -414,7 +416,7 @@ module.exports = class extends Task
               period: 0
               type: "atBat"
               active: true
-              background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('/bball2.png'); height: 75px; background-position-x: 46%; background-position-y: 100%; "
+              background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('https://image.shutterstock.com/z/stock-photo-baseball-field-at-first-base-95091214.jpg'); height: 75px; background-position-x: 46%; background-position-y: 0%; "
               commercial: false
               que: question
               options: options
@@ -563,7 +565,7 @@ module.exports = class extends Task
                 active: true
                 commercial: false
                 que: question
-                background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('/bball2.png'); height: 75px; background-position-x: 46%; background-position-y: 100%; "
+                background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('/baseball-background.png'); height: 75px; background-position-x: 46%; background-position-y: 100%; "
                 options: options
                 usersAnswered: []
             .tap (result) ->
