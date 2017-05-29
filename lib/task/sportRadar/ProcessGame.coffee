@@ -284,8 +284,8 @@ module.exports = class extends Task
           text = "Will #{name} #{template.title} in the #{inning} inning?"
 
           options =
-            option1: {title: "True"}
-            option2: {title: "False"}
+            option1: {title: "True", number: 1, multiplier: 4}
+            option2: {title: "False",  number: 1, multiplier: 4}
 
           Promise.bind @
           .then ->
@@ -477,8 +477,6 @@ module.exports = class extends Task
     ballArray = ['B', 'L', 'M', '#', 'P']
     hitArray = ['I', 'H']
 
-    @logger.verbose "1) #{player['firstName']} #{player['lastName']} Creating question with ... ", balls, strikes, pitchNumber
-
     if pitchNumber is 0
       balls = 0
       strikes = 0
@@ -511,8 +509,6 @@ module.exports = class extends Task
       @logger.verbose event
       @logger.verbose "Hit!"
       # return
-
-    @logger.verbose "2) #{player['firstName']} #{player['lastName']} Creating question with ... ", balls, strikes, pitchNumber
 
     question = "#{player['firstName']} #{player['lastName']}: " + balls + " - " + strikes + " (##{pitchNumber})"
     createDate = new Date()
