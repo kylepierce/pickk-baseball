@@ -46,26 +46,22 @@ module.exports = class extends Task
       Promise.bind @
       .then -> @enrichGame old, result
       .then -> @detectChange old, result
-      # .then -> @handleAtBat game, result
-      # .then -> @resolveCommercialQuestions game, result
-      # .then -> @processClosingState game, result
 
   enrichGame: (old, update) ->
     if !old['old']
       @SportRadarGames.update {_id: update.eventId}, {$set: update}
-
-  detectChange: (old, result) ->
-    if result['eventStatus']['eventStatusId'] isnt 2
+    else if update['eventStatus']['eventStatusId'] isnt 2
       console.log "Something is wrong. Shutting this whole thing down..."
       return
 
+  detectChange: (old, result) ->
     oldStuff = old['eventStatus']
     newStuff = result['eventStatus']
-    oldInning = old['old']['inningDivision']
+
+    oldInning = if old['old'] then old['old']['inningDivision'] else "Top"
     newInning = result['old']['inningDivision']
+
     oldPlayer = if old['old'] then old["old"]['eventStatus']['currentBatter']['playerId']  else 0
-    if !newStuff or result['eventStatus']['eventStatusId'] isnt 2
-      return
     newPlayer = result['eventStatus']['currentBatter']
     list = ["strikes", "balls", "outs", "currentBatter", "eventStatusId", "innings", "inningDivision", "runnersOnBase"]
 
@@ -84,26 +80,28 @@ module.exports = class extends Task
 
     Promise.bind @
       .then -> @SportRadarGames.find {eventId: old['eventId'] }
-      .then (result) -> @checkCommericalStatus result[0]
+      .then (result) -> @checkCommericalStatus result[0], old, result, newPlayer
 
     if oldInning isnt newInning
       console.log "---------------------------"
       console.log "New inning!!!!!!"
       console.log "---------------------------\n"
-      Promise.bind @
-        .then -> @handleCommercialBreak old, result
-        # .then -> @resolveCommercialQuestions old, result
+      promiseRetry {retries: 1000, factor: 1}, (retry) =>
+        Promise.bind @
+          .then -> @handleCommercialBreak old, result
+          .then -> @resolveCommercialQuestions old, result, true
+          # .then -> @closeInactiveAtBats
+          # .then -> @closeInactivePitches
 
     else if oldPlayer isnt newPlayer['playerId']
       console.log "---------------------------"
       console.log "New Player!!!!!"
       console.log "---------------------------\n"
       inningDivision = result['eventStatus']['inningDivision']
-      @createAtBat old, result, newPlayer
-      # @createPitch old, result, newPlayer, 0
-      Promise.bind @
-        .then -> @createPitch old, result, newPlayer, 0
-      #   .then -> @createAtBat old, result, newPlayers
+      promiseRetry {retries: 1000, factor: 1}, (retry) =>
+        Promise.bind @
+          .then -> @createPitch old, result, newPlayer, 0
+          .then -> @createAtBat old, result, newPlayer
 
     else if (diff.length > 0 || pitchDiff > 0) && onIgnoreList is -1
       if (diff.indexOf "balls") > -1 || (diff.indexOf "strikes") > -1
@@ -115,6 +113,7 @@ module.exports = class extends Task
             .then -> @createPitch old, result, player, pitchNumber
 
       else if pitchDiff isnt 0
+        # @logger.verbose "pitchDiff Change!"
         pitchNumber = (result['old']['lastCount'].length)
         player = result['old']['player']
         promiseRetry {retries: 1000, factor: 1}, (retry) =>
@@ -130,7 +129,7 @@ module.exports = class extends Task
       @SportRadarGames.update {_id: old['_id']}, {$set: update}
       return
 
-  checkCommericalStatus: (game) ->
+  checkCommericalStatus: (game, old, update, newPlayer) ->
     if not game.commercialStartedAt
       return
     now = moment()
@@ -140,6 +139,9 @@ module.exports = class extends Task
       Promise.bind @
       .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
       .then -> @closeActiveCommercialQuestions game
+      # .tap -> @logger.verbose "Creating first player questions."
+      # .then -> @createAtBat old, update, newPlayer
+      # .then -> @createPitch old, update, newPlayer, 0
 
   processClosingState: (game) ->
     return if game.close_processed isnt false
@@ -231,54 +233,34 @@ module.exports = class extends Task
       )
 
   handleCommercialBreak: (game, result) ->
-    @logger.verbose "Commercial break is active"
-    # it's time to start commercial break
-    # It's necessary to check commercialStartedAt is undefined so it means
-    # that "commercial" hasn't been unset because of timeout
-    # && not game.commercialStartedAt
     if not game.commercial
       Promise.bind @
       .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: true, commercialStartedAt: new Date()}}
       .tap -> @logger.verbose "Commercial flag has been set for game (#{game.name})"
       .then -> @createCommercialQuestions game, result
-      # so here a commercial break is active and commercialStartedAt is set
-      # It's necessary to calculate if time interval for a break is finished or not
-
-
-      # if timeout >= @dependencies.settings['common']['commercialTime']
-      #   Promise.bind @
-      #   .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}} # do NOT unset "commercialStartedAt" here!
-      #   .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name}) because of timeout", {gameId: game._id}
-
-      # the game is in progress. Clear "commercial" flag if it's been set earlier.
-      # else if game.commercial or game.commercialStartedAt
-      #   Promise.bind @
-      #
-      #   .tap -> @logger.verbose "Commercial flag has been clear for game (#{game.name})", {gameId: game._id}
-        # .then -> @closeActiveCommercialQuestions game
 
   createCommercialQuestions: (game, result) ->
     templates = [
-      title: "Out"
-      outcomes: [15, 16, 17, 18, 26, 27, 28, 30, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 56, 57, 59, 65, 67, 68, 69, 70, 71, 72, 73, 77, 78, 82, 85, 91, 92, 93, 94, 126, 127, 136]
+      # title: "Out"
+      # outcomes: [15, 16, 17, 18, 26, 27, 28, 30, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 56, 57, 59, 65, 67, 68, 69, 70, 71, 72, 73, 77, 78, 82, 85, 91, 92, 93, 94, 126, 127, 136]
     # ,
-    #   title: "Hit a Single"
-    #   outcomes: [1, 2, 3, 4, 5, 6, 122]
-    # ,
-    #   title: "Hit a Double"
-    #   outcomes: [7, 8, 9, 10, 11, 123]
-    # ,
-    #   title: "Hit a Triple"
-    #   outcomes: [12, 13, 124]
-    # ,
-    #   title: "Hit a Home Run"
-    #   outcomes: [15, 16, 17, 18]
-    # ,
-    #   title: "Steal a Base"
-    #   outcomes: [15, 16, 17, 18]
-    # ,
-    #   title: "Get Hit by a Pitch"
-    #   outcomes: ["61"]
+      title: "Hit a Single"
+      outcomes: [1, 2, 3, 4, 5, 6, 122]
+    ,
+      title: "Hit a Double"
+      outcomes: [7, 8, 9, 10, 11, 123]
+    ,
+      title: "Hit a Triple"
+      outcomes: [12, 13, 124]
+    ,
+      title: "Hit a Home Run"
+      outcomes: [15, 16, 17, 18]
+    ,
+      title: "Steal a Base"
+      outcomes: [15, 16, 17, 18]
+    ,
+      title: "Get Hit by a Pitch"
+      outcomes: ["61"]
     ]
     inning =  result['eventStatus']['inning']
     inningDivision = result['eventStatus']['inningDivision']
@@ -308,7 +290,7 @@ module.exports = class extends Task
               type: "freePickk"
               game_id: game._id
               gameId: game._id
-              teamId: team.id
+              teamId: team.teamId
               inningDivision: inningDivision
               inning: inning
               period: 0
@@ -322,7 +304,6 @@ module.exports = class extends Task
               usersAnswered: []
           .tap ->
             @logger.verbose "Create commercial question '#{text}' for the game (#{game.name})"
-            # @logger.verbose "Create commercial question '#{text}' for the game (#{game.name})", {gameId: game._id}
       )
 
   closeActiveCommercialQuestions: (game) ->
@@ -330,56 +311,57 @@ module.exports = class extends Task
     .then -> @Questions.find {commercial: true, game_id: game._id, active: true}
     .map (question) ->
       Promise.bind @
-      .then -> @Questions.update {_id: question._id}, {$set: {active: null}}
+      .then -> @Questions.update {_id: question._id}, {$set: {active: null, lastUpdated: new Date()}}
       .tap ->
         @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name})"
 
-  resolveCommercialQuestions: (game, event) ->
+  resolveCommercialQuestions: (game, event, completed) ->
+    console.log "Resolving commercial questions. Is the inning completed?... ", completed
     Promise.bind @
-    .then -> @Questions.find {gameId: game['_id'], commercial: true, processed: false, active: null, inning: game['old']['inning'], inningDivision: game['old']['inningDivision']}
-    .map (result) ->
-      list = result['outcomes']
-      onList = list.indexOf event['pbpDetailId']
-      if (onList) > -1
-        @rewardForCommercialQuestion game, result, true
-        console.log "THIS EVENT IS LIT!"
-      else
-        console.log "Not a good event"
+      .then -> @Questions.find {gameId: game['_id'], commercial: true, processed: false, active: null, inning: game['old']['inning'], inningDivision: game['old']['inningDivision']}
+      .map (result) ->
+        list = result['outcomes']
+        onList = list.indexOf event['pbpDetailId']
+        if (onList) > -1
+          @rewardForCommercialQuestion game, result, true
+        else if completed is true
+          @rewardForCommercialQuestion game, result, false
 
   rewardForCommercialQuestion: (game, question, correct) ->
-    console.log "commercial question answered. Awarding users"
     if correct
       outcome = "option1"
     else if !correct
       outcome = "option2"
 
     Promise.bind @
-    .then -> @Questions.update {questionId: question._id}, $set: {active: false, outcome: outcome, processed: true}
-    .then -> @Answers.update {questionId: question._id, answered: {$ne: outcome}}, {$set: {outcome: "lose"}}, {multi: true}
-    .then -> @Answers.find {questionId: question._id, answered: outcome}
-    .map (answer) ->
-      reward = @dependencies.settings['common']['commercialReward']
-      Promise.bind @
-      .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
-      .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
-      .then ->
-        notificationId = chance.guid()
-        @Notifications.insert
-          _id: notificationId
-          userId: answer['userId']
-          gameId: game.id
-          type: "coins"
-          value: reward
-          read: false
-          notificationId: notificationId
-          dateCreated: new Date()
-          message: "Nice Pickk! You got #{reward} Coins!"
-          sharable: false
-          shareMessage: ""
-      .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
+      .then -> @Questions.update {_id: question._id}, {$set: {active: false, outcome: outcome, processed: true, lastUpdated: new Date()}}
+      .then -> @Questions.find {_id: question._id}
+      .tap (result) -> console.log result
+      .then -> @Answers.update {questionId: question._id, answered: {$ne: outcome}}, {$set: {outcome: "lose"}}, {multi: true}
+      .then -> @Answers.find {questionId: question._id, answered: outcome}
+      .map (answer) ->
+        reward = @dependencies.settings['common']['commercialReward']
+        Promise.bind @
+        .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
+        .then -> @GamePlayed.update {userId: answer['userId'], gameId: game.id}, {$inc: {coins: reward}}
+        .then ->
+          notificationId = chance.guid()
+          @Notifications.insert
+            _id: notificationId
+            userId: answer['userId']
+            gameId: game.id
+            type: "coins"
+            value: reward
+            read: false
+            notificationId: notificationId
+            dateCreated: new Date()
+            message: "Nice Pickk! You got #{reward} Coins!"
+            sharable: false
+            shareMessage: ""
+        .tap -> @logger.verbose "Reward user (#{answer['userId']}) with coins (#{reward}) for question (#{question['que']})"
+        .tap -> @logger.verbose "Outcome of the question... ", question
 
   createAtBat: (old, update, player) ->
-    # player = update['eventStatus']['currentBatter']
     playerId = if player then player['playerId']
     atBatId = old['_id'] + "-" + update['eventStatus']['inning'] + "-" + update['old']["eventCount"] + "-" + playerId
     question = "End of #{player['firstName']} #{player['lastName']}'s at bat."
@@ -422,7 +404,7 @@ module.exports = class extends Task
               usersAnswered: []
           .tap (result) ->
             questionId = result.upserted?[0]?._id
-            @logger.verbose "Create atBat question (#{question})"
+            # @logger.verbose "Create atBat question (#{question})"
 
   closeInactiveAtBats: (old, update, atBatId) ->
     ignoreList =  [35, 42, 89, 96, 97, 98]
@@ -435,7 +417,7 @@ module.exports = class extends Task
     Promise.bind @
     .then -> @Questions.find {commercial: false, gameId: gameId, active: true, atBatQuestion: true, atBatId: {$ne: atBatId}}
     .map (question) ->
-      @Questions.update {_id: question['_id']}, $set: {active: false}
+      @Questions.update {_id: question['_id']}, $set: {active: false, lastUpdated: new Date()}
       questionEventCount = question['eventCount']
       eventCount = update['old']['eventCount']
       compareEventCount = eventCount - questionEventCount
@@ -445,11 +427,11 @@ module.exports = class extends Task
       map = _.invert _.mapObject question['options'], (option) -> option['title']
       outcomeOption = map[outcome] #could fail here
 
-      @logger.verbose "The play outcome...", update['old']['eventId'], outcome, outcomeOption
+      # @logger.verbose "The play outcome...", update['old']['eventId'], outcome, outcomeOption
 
       Promise.bind @
-      .then -> @resolveCommercialQuestions old, event
-      .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
+      .then -> @resolveCommercialQuestions old, event, false
+      .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()}
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true}
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
       .map (answer) ->
@@ -539,7 +521,7 @@ module.exports = class extends Task
 
       options = {option1, option2, option3, option4}
       options.option5 = option5 if option5
-      @logger.verbose question
+      # @logger.verbose question
 
       Promise.bind @
       .then -> @closeInactivePitches old, update, atBatId, pitchNumber
@@ -576,8 +558,8 @@ module.exports = class extends Task
     Promise.bind @
     .then -> @Questions.find {commercial: false, gameId: old['_id'], active: true, atBatQuestion: {$exists: false}, $or: [{atBatId: {$ne: atBatId}}, {pitchNumber: {$ne: pitchNumber}}]}
     .map (question) ->
-      @logger.verbose "Closing #{question['que']} with current count: #{pitchNumber}"
-      @Questions.update {_id: question['_id']}, $set: {active: false}
+      # @logger.verbose "Closing #{question['que']} with current count: #{pitchNumber}"
+      @Questions.update {_id: question['_id']}, $set: {active: false, lastUpdated: new Date()}
 
       questionEventCount = question['eventCount']
       eventCount = update['old']['eventCount']
@@ -623,7 +605,7 @@ module.exports = class extends Task
       outcomeOption = map[outcomeTitle]
 
       Promise.bind @
-      .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption}
+      .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()}
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true}
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
       .map (answer) ->
