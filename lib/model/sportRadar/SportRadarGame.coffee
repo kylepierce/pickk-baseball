@@ -25,7 +25,6 @@ module.exports = class
     @live = @['eventStatus']['name'] is "In-Progress"
     @status = @['eventStatus']['name']
     @completed = @status in ['Complete', 'Closed']
-    @commercial = false
-
+    
   getSelector: ->
     "eventId": @['eventId']

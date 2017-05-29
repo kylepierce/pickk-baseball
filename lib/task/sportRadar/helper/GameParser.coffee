@@ -19,12 +19,16 @@ module.exports = class
 
     if @currentAtBat
       @lastPitch = @getLast @currentAtBat['pitchDetails']
-      @pitches = @currentAtBat['pitchDetails']
+      if @currentAtBat['pitchDetails']
+        @pitches = @currentAtBat['pitchDetails']
+      else
+        @pitches = []
 
     @old =
       outs: @game['eventStatus']['outs']
       halfs: @halfs.length
       inning: @game['eventStatus']['inning']
+      inningDivision: @game['eventStatus']['inningDivision']
       eventCount: @totalEvents.length
       eventStatus: @game['eventStatus']
       lastCount: if @pitches then @pitches else []
@@ -72,4 +76,5 @@ module.exports = class
     halfs = @loopHalfs innings
     totalEvents = @getEvents halfs
     # @logger.verbose "Following event... ", totalEvents[eventNumber + 1]
+    # console.log totalEvents[eventNumber]
     return totalEvents[eventNumber]
