@@ -86,12 +86,13 @@ module.exports = class extends Task
       console.log "---------------------------"
       console.log "New inning!!!!!!"
       console.log "---------------------------\n"
+      atBatId = old['_id'] + "-" + result['eventStatus']['inning'] + "-" + result['old']["eventCount"] + "-" + oldPlayer
       promiseRetry {retries: 1000, factor: 1}, (retry) =>
         Promise.bind @
           .then -> @handleCommercialBreak old, result
           .then -> @resolveCommercialQuestions old, result, true
-          # .then -> @closeInactiveAtBats
-          # .then -> @closeInactivePitches
+          .then -> @closeInactiveAtBats old, result, atBatId
+          .then -> @closeInactivePitches old, result, atBatId, 0
 
     else if oldPlayer isnt newPlayer['playerId']
       console.log "---------------------------"
@@ -101,7 +102,9 @@ module.exports = class extends Task
       promiseRetry {retries: 1000, factor: 1}, (retry) =>
         Promise.bind @
           .then -> @createPitch old, result, newPlayer, 0
+          .tap -> @logger.verbose "Created 0-0"
           .then -> @createAtBat old, result, newPlayer
+          .tap -> @logger.verbose "Created New At Bat"
 
     else if (diff.length > 0 || pitchDiff > 0) && onIgnoreList is -1
       if (diff.indexOf "balls") > -1 || (diff.indexOf "strikes") > -1
@@ -137,11 +140,13 @@ module.exports = class extends Task
     commercialTime = @dependencies.settings['common']['commercialTime']
     if timeout >= commercialTime
       Promise.bind @
-      .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
-      .then -> @closeActiveCommercialQuestions game
-      # .tap -> @logger.verbose "Creating first player questions."
-      # .then -> @createAtBat old, update, newPlayer
-      # .then -> @createPitch old, update, newPlayer, 0
+        .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
+        .then -> @closeActiveCommercialQuestions game
+        .tap -> @logger.verbose "Creating first player questions."
+        .then -> @createPitch old, update, newPlayer, 0
+        .tap -> @logger.verbose "Created 0-0"
+        .then -> @createAtBat old, update, newPlayer
+        .tap -> @logger.verbose "Created New At Bat After Commercial"
 
   processClosingState: (game) ->
     return if game.close_processed isnt false
@@ -316,7 +321,6 @@ module.exports = class extends Task
         @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name})"
 
   resolveCommercialQuestions: (game, event, completed) ->
-    console.log "Resolving commercial questions. Is the inning completed?... ", completed
     Promise.bind @
       .then -> @Questions.find {gameId: game['_id'], commercial: true, processed: false, active: null, inning: game['old']['inning'], inningDivision: game['old']['inningDivision']}
       .map (result) ->
@@ -335,8 +339,8 @@ module.exports = class extends Task
 
     Promise.bind @
       .then -> @Questions.update {_id: question._id}, {$set: {active: false, outcome: outcome, processed: true, lastUpdated: new Date()}}
-      .then -> @Questions.find {_id: question._id}
-      .tap (result) -> console.log result
+      # .then -> @Questions.find {_id: question._id}
+      # .tap (result) -> console.log result
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcome}}, {$set: {outcome: "lose"}}, {multi: true}
       .then -> @Answers.find {questionId: question._id, answered: outcome}
       .map (answer) ->
@@ -404,7 +408,7 @@ module.exports = class extends Task
               usersAnswered: []
           .tap (result) ->
             questionId = result.upserted?[0]?._id
-            # @logger.verbose "Create atBat question (#{question})"
+            @logger.verbose "Create atBat question (#{question})"
 
   closeInactiveAtBats: (old, update, atBatId) ->
     ignoreList =  [35, 42, 89, 96, 97, 98]
@@ -456,10 +460,12 @@ module.exports = class extends Task
             shareMessage: ""
 
   createPitch: (old, update, player, pitchNumber) ->
-    player = update['eventStatus']['currentBatter']
+    if !update
+      console.log "No update????????"
+      return
     playerId = player['playerId']
     gameId = old['_id']
-    eventCount = update['old']["eventCount"]
+    eventCount = old['old']["eventCount"]
     inning = update['eventStatus']['inning']
     atBatId = gameId + "-" + inning + "-" + eventCount + "-" + playerId
     last = _.last update['old']['lastCount'], 1
@@ -471,31 +477,42 @@ module.exports = class extends Task
     ballArray = ['B', 'L', 'M', '#', 'P']
     hitArray = ['I', 'H']
 
-    if strikes < 2 && (strikesArray.indexOf result) > -1
-      strikes += 1
-    else if strikes is 2 && (strikesArray.indexOf result) > -1
-      @closeInactivePitches old, update, atBatId, pitchNumber
-      @logger.verbose "Strikeout!"
-      return
-
-    if strikes < 2 && (foulArray.indexOf result) > -1
-      strikes += 1
-
-    if balls < 3 && (ballArray.indexOf result) > -1
-      balls += 1
-    else if balls is 3 && (ballArray.indexOf result) > -1
-      @closeInactivePitches old, update, atBatId, pitchNumber
-      @logger.verbose "Walk!"
-      return
-
-    if (hitArray.indexOf result) > -1
-      @closeInactivePitches old, update, atBatId, pitchNumber
-      @logger.verbose "Hit!"
-      return
+    @logger.verbose "1) #{player['firstName']} #{player['lastName']} Creating question with ... ", balls, strikes, pitchNumber
 
     if pitchNumber is 0
       balls = 0
       strikes = 0
+
+    if strikes > 0
+      if strikes < 2 && (strikesArray.indexOf result) > -1
+        strikes += 1
+      else if strikes is 2 && (strikesArray.indexOf result) > -1
+        @closeInactivePitches old, update, atBatId, pitchNumber
+        event = @gameParser.findSpecificEvent update, eventCount - 1
+        @logger.verbose event
+        @logger.verbose "Strikeout!"
+        # return
+      else if strikes < 2 && (foulArray.indexOf result) > -1
+        strikes += 1
+
+    if balls > 0
+      if balls < 3 && (ballArray.indexOf result) > -1
+        balls += 1
+      else if balls is 3 && (ballArray.indexOf result) > -1
+        @closeInactivePitches old, update, atBatId, pitchNumber
+        event = @gameParser.findSpecificEvent update, eventCount - 1
+        @logger.verbose event
+        @logger.verbose "Walk!"
+        # return
+
+    if (hitArray.indexOf result) > -1
+      @closeInactivePitches old, update, atBatId, pitchNumber
+      event = @gameParser.findSpecificEvent update, eventCount - 1
+      @logger.verbose event
+      @logger.verbose "Hit!"
+      # return
+
+    @logger.verbose "2) #{player['firstName']} #{player['lastName']} Creating question with ... ", balls, strikes, pitchNumber
 
     question = "#{player['firstName']} #{player['lastName']}: " + balls + " - " + strikes + " (##{pitchNumber})"
     createDate = new Date()
@@ -573,7 +590,10 @@ module.exports = class extends Task
         pitchCount = event['pitchDetails']
 
       pitch = _.last pitchCount
-
+      if !pitch
+        console.log update['old']
+        console.log pitchCount
+        console.log question
       pitchOutcome = @pitchTitle pitch['result']
 
       strikes = pitch.strikes
@@ -598,7 +618,6 @@ module.exports = class extends Task
         pitchOutcome = @eventTitle eventId
         if pitchOutcome isnt "Out"
           pitchOutcome = "Hit"
-        # pitchOutcome = "Hit"
 
       map = _.invert _.mapObject question['options'], (option) -> option['title']
       outcomeTitle = pitchOutcome

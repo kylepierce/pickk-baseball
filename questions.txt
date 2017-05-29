@@ -1,3 +1,6 @@
 Questions:
 - Does "4B/Error" mean the batter got home run on an error?
 - Which play id is review / change?
+
+"apiKey": "br6vw6nkeqs2cvy8g4rv57dx",
+"secret": "DD8XjUCHAT"
