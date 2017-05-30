@@ -285,7 +285,7 @@ module.exports = class extends Task
 
           options =
             option1: {title: "True", number: 1, multiplier: 4}
-            option2: {title: "False",  number: 1, multiplier: 4}
+            option2: {title: "False",  number: 2, multiplier: 4}
 
           Promise.bind @
           .then ->
