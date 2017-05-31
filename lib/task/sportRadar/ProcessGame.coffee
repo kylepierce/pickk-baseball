@@ -142,11 +142,11 @@ module.exports = class extends Task
       Promise.bind @
         .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
         .then -> @closeActiveCommercialQuestions game
-        .tap -> @logger.verbose "Creating first player questions."
-        .then -> @createPitch old, update, newPlayer, 0
-        .tap -> @logger.verbose "Created 0-0"
-        .then -> @createAtBat old, update, newPlayer
-        .tap -> @logger.verbose "Created New At Bat After Commercial"
+        # .tap -> @logger.verbose "Creating first player questions."
+        # .then -> @createPitch old, update, newPlayer, 0
+        # .tap -> @logger.verbose "Created 0-0"
+        # .then -> @createAtBat old, update, newPlayer
+        # .tap -> @logger.verbose "Created New At Bat After Commercial"
 
   processClosingState: (game) ->
     return if game.close_processed isnt false
@@ -460,8 +460,8 @@ module.exports = class extends Task
             shareMessage: ""
 
   createPitch: (old, update, player, pitchNumber) ->
-    if !update
-      console.log "No update????????"
+    if !update || !old
+      console.log "No old or update????????"
       return
     playerId = player['playerId']
     gameId = old['_id']
