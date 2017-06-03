@@ -50,6 +50,9 @@ module.exports = class extends Task
   enrichGame: (old, update) ->
     if !old['old']
       @SportRadarGames.update {_id: update.eventId}, {$set: update}
+    else if !update['old'] || !old['old']
+      console.log "[Global] No old or update????????"
+      return
     else if update['eventStatus']['eventStatusId'] isnt 2
       console.log "Something is wrong. Shutting this whole thing down..."
       return
@@ -131,6 +134,7 @@ module.exports = class extends Task
       update['live'] = false
       @SportRadarGames.update {_id: old['_id']}, {$set: update}
       return
+    # elseif update
 
   checkCommericalStatus: (game, old, update, newPlayer) ->
     if not game.commercialStartedAt
@@ -143,9 +147,9 @@ module.exports = class extends Task
         .then -> @SportRadarGames.update {_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
         .then -> @closeActiveCommercialQuestions game
         .tap -> @logger.verbose "Creating first player questions."
-        .then -> @createPitch old, update, newPlayer, 0
+        .then -> @createPitch old, update[0], newPlayer, 0
         .tap -> @logger.verbose "Created 0-0"
-        .then -> @createAtBat old, update, newPlayer
+        .then -> @createAtBat old, update[0], newPlayer
         .tap -> @logger.verbose "Created New At Bat After Commercial"
 
   processClosingState: (game) ->
@@ -246,9 +250,6 @@ module.exports = class extends Task
 
   createCommercialQuestions: (game, result) ->
     templates = [
-      # title: "Out"
-      # outcomes: [15, 16, 17, 18, 26, 27, 28, 30, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 56, 57, 59, 65, 67, 68, 69, 70, 71, 72, 73, 77, 78, 82, 85, 91, 92, 93, 94, 126, 127, 136]
-    # ,
       title: "Hit a Single"
       outcomes: [1, 2, 3, 4, 5, 6, 122]
     ,
@@ -340,8 +341,6 @@ module.exports = class extends Task
 
     Promise.bind @
       .then -> @Questions.update {_id: question._id}, {$set: {active: false, outcome: outcome, processed: true, lastUpdated: new Date()}}
-      # .then -> @Questions.find {_id: question._id}
-      # .tap (result) -> console.log result
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcome}}, {$set: {outcome: "lose"}}, {multi: true}
       .then -> @Answers.find {questionId: question._id, answered: outcome}
       .map (answer) ->
@@ -368,7 +367,8 @@ module.exports = class extends Task
 
   createAtBat: (old, update, player) ->
     playerId = if player then player['playerId']
-    atBatId = old['_id'] + "-" + update['eventStatus']['inning'] + "-" + update['old']["eventCount"] + "-" + playerId
+    console.log update['old']
+    atBatId = old['_id'] + "-" + update['old']['inning'] + "-" + update['old']["eventCount"] + "-" + playerId
     question = "End of #{player['firstName']} #{player['lastName']}'s at bat."
 
     Promise.bind @
@@ -402,7 +402,7 @@ module.exports = class extends Task
               period: 0
               type: "atBat"
               active: true
-              background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('https://image.shutterstock.com/z/stock-photo-baseball-field-at-first-base-95091214.jpg'); height: 75px; background-position-x: 46%; background-position-y: 0%; "
+              background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('https://image.shutterstock.com/z/stock-photo-queens-ny-april-the-game-between-the-new-york-mets-and-florida-marlins-about-to-begin-at-57937108.jpg'); height: 75px; background-position-x: 46%; background-position-y: 0%; "
               commercial: false
               que: question
               options: options
@@ -432,8 +432,6 @@ module.exports = class extends Task
       map = _.invert _.mapObject question['options'], (option) -> option['title']
       outcomeOption = map[outcome] #could fail here
 
-      # @logger.verbose "The play outcome...", update['old']['eventId'], outcome, outcomeOption
-
       Promise.bind @
       .then -> @resolveCommercialQuestions update, false, event
       .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()}
@@ -461,16 +459,19 @@ module.exports = class extends Task
             shareMessage: ""
 
   createPitch: (old, update, player, pitchNumber) ->
-    if !update || !old
+    if !update['old'] || !old['old']
       console.log "No old or update????????"
-      return
+      update = update[0]
+      console.log update['old']
+
     playerId = player['playerId']
     gameId = old['_id']
-    eventCount = old['old']["eventCount"]
-    inning = old['old']['inning']
+    eventCount = update['old']["eventCount"]
+    if !update['old']['inning']
+      console.log update['old']
+    inning = update['old']['inning']
     atBatId = gameId + "-" + inning + "-" + eventCount + "-" + playerId
     last = _.last update['old']['lastCount'], 1
-    console.log last
     result =  if last[0] then last[0].result
     balls = if last[0] then last[0].balls else 0
     strikes = if last[0] then last[0].strikes else 0
@@ -591,6 +592,7 @@ module.exports = class extends Task
 
       pitch = _.last pitchCount
       if !pitch
+        console.log "No Pitch"
         console.log update['old']
         console.log pitchCount
         console.log question
