@@ -31,11 +31,12 @@ module.exports = class
       inningDivision: @game['eventStatus']['inningDivision']
       eventCount: @totalEvents.length
       eventStatus: @game['eventStatus']
+      eventId: if @currentAtBat then @currentAtBat['pbpDetailId'] else undefined
       lastCount: if @pitches then @pitches else []
       hitter: if @currentAtBat then @currentAtBat['batter'] else undefined
       player: if @currentAtBat['batter'] then @currentAtBat['batter'] else undefined
       playerId: if @currentAtBat['batter'] then @currentAtBat['batter']['playerId'] else undefined
-      eventId: if @currentAtBat then @currentAtBat['pbpDetailId'] else undefined
+
       lastUpdate: new Date
 
     @game['old'] = @old

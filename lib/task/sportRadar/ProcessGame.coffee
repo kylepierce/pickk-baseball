@@ -459,16 +459,15 @@ module.exports = class extends Task
             shareMessage: ""
 
   createPitch: (old, update, player, pitchNumber) ->
-    if !update['old'] || !old['old']
+    if !update['old']
       console.log "No old or update????????"
       update = update[0]
-      console.log update['old']
 
     playerId = player['playerId']
     gameId = old['_id']
     eventCount = update['old']["eventCount"]
     if !update['old']['inning']
-      console.log update['old']
+      console.log "No inning?? : ", update['old']
     inning = update['old']['inning']
     atBatId = gameId + "-" + inning + "-" + eventCount + "-" + playerId
     last = _.last update['old']['lastCount'], 1
