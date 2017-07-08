@@ -1,6 +1,7 @@
 _ = require "underscore"
 Match = require "mtr-match"
 Promise = require "bluebird"
+Colors = require "colors"
 Task = require "../Task"
 SportRadarGame = require "../../model/sportRadar/SportRadarGame"
 Team = require "../../model/Team"
@@ -30,14 +31,16 @@ module.exports = class extends Task
     @gameParser = new GameParser dependencies
 
   execute: (old, update) ->
-    promiseRetry (retry) =>
-      Promise.bind @
+  # promiseRetry (retry) =>
+    Promise.bind @
       .then -> @checkGameStatus old, update
+      .catch (error) =>
+        @logger.verbose error
       .then -> @handleGame old, update
       .return true
       .catch (error) =>
         @logger.error error.message, _.extend({stack: error.stack}, error.details)
-        retry(error)
+        # retry(error)
 
   handleGame: (old, update) ->
     result = @gameParser.getPlay update
@@ -58,24 +61,25 @@ module.exports = class extends Task
       return
 
   detectChange: (old, result) ->
+    #Look at this.
     oldStuff = old['eventStatus']
-    newStuff = result['eventStatus']
-
     oldInning = if old['old'] then old['old']['inningDivision'] else "Top"
-    newInning = result['old']['inningDivision']
-
     oldPlayer = if old['old'] then old["old"]['eventStatus']['currentBatter']['playerId']  else 0
+    @oldPitch = if old['old'] then old["old"]['lastCount'].length else 0
+
+    newStuff = result['eventStatus']
+    newInning = result['old']['inningDivision'] #This is strange
     newPlayer = result['eventStatus']['currentBatter']
-    list = ["strikes", "balls", "outs", "currentBatter", "eventStatusId", "innings", "inningDivision", "runnersOnBase"]
+    @newPitch = result["old"]['lastCount'].length #This is strange
 
     ignoreList =  [35, 42, 89, 96, 97, 98]
     onIgnoreList = ignoreList.indexOf result['old']['eventId']
 
-    @oldPitch = if old['old'] then old["old"]['lastCount'].length else 0
-    @newPitch = result["old"]['lastCount'].length
     pitchDiff = @newPitch - @oldPitch
 
     diff = []
+    list = ["strikes", "balls", "outs", "currentBatter", "eventStatusId", "innings", "inningDivision", "runnersOnBase"]
+
     _.map list, (key) ->
       compare = _.isEqual oldStuff[key], newStuff[key]
       if not compare
@@ -84,57 +88,21 @@ module.exports = class extends Task
     Promise.bind @
       .then -> @SportRadarGames.find {eventId: old['eventId'] }
       .then (result) -> @checkCommericalStatus result[0], old, result, newPlayer
-
-    if oldInning isnt newInning
-      console.log "---------------------------"
-      console.log "New inning!!!!!!"
-      console.log "---------------------------\n"
-      atBatId = old['_id'] + "-" + result['eventStatus']['inning'] + "-" + result['old']["eventCount"] + "-" + oldPlayer
-      promiseRetry {retries: 1000, factor: 1}, (retry) =>
-        Promise.bind @
-          .then -> @handleCommercialBreak old, result
-          .then -> @resolveCommercialQuestions old, true
-          .then -> @closeInactiveAtBats old, result, atBatId
-          .then -> @closeInactivePitches old, result, atBatId, 0
-
-    else if oldPlayer isnt newPlayer['playerId']
-      console.log "---------------------------"
-      console.log "New Player!!!!!"
-      console.log "---------------------------\n"
-      inningDivision = result['eventStatus']['inningDivision']
-      promiseRetry {retries: 1000, factor: 1}, (retry) =>
-        Promise.bind @
-          .then -> @createPitch old, result, newPlayer, 0
-          .tap -> @logger.verbose "Created 0-0"
-          .then -> @createAtBat old, result, newPlayer
-          .tap -> @logger.verbose "Created New At Bat"
-
-    else if (diff.length > 0 || pitchDiff > 0) && onIgnoreList is -1
-      if (diff.indexOf "balls") > -1 || (diff.indexOf "strikes") > -1
-        # @logger.verbose "Diff Change!"
-        pitchNumber = (result['old']['lastCount'].length)
-        player = result['old']['player']
-        promiseRetry {retries: 1000, factor: 1}, (retry) =>
-          Promise.bind @
-            .then -> @createPitch old, result, player, pitchNumber
-
-      else if pitchDiff isnt 0
-        # @logger.verbose "pitchDiff Change!"
-        pitchNumber = (result['old']['lastCount'].length)
-        player = result['old']['player']
-        promiseRetry {retries: 1000, factor: 1}, (retry) =>
-          Promise.bind @
-            .then -> @createPitch old, result, player, pitchNumber
+      .then -> @checkInning old, result, oldInning, newInning, oldPlayer
+      .then -> @checkPlayer old, result, oldPlayer, newPlayer
+      .then -> @checkPitchCount old, result, diff, pitchDiff, onIgnoreList
 
   checkGameStatus: (old, update) ->
     if update['eventStatus']['eventStatusId'] is 4
       #This should be a method!
+      @logger.verbose "This game is completed"
       update['status'] = "completed"
       update['close_processed'] = true
       update['live'] = false
       @SportRadarGames.update {_id: old['_id']}, {$set: update}
       return
-    # elseif update
+    else if update['eventStatus']['eventStatusId'] isnt 2
+      @logger.verbose "Game is over"
 
   checkCommericalStatus: (game, old, update, newPlayer) ->
     if not game.commercialStartedAt
@@ -151,6 +119,45 @@ module.exports = class extends Task
         .tap -> @logger.verbose "Created 0-0"
         .then -> @createAtBat old, update[0], newPlayer
         .tap -> @logger.verbose "Created New At Bat After Commercial"
+
+  checkInning: (old, result, oldInning, newInning, oldPlayer) ->
+    atBatId = old['_id'] + "-" + result['eventStatus']['inning'] + "-" + result['old']["eventCount"] + "-" + oldPlayer
+
+    if oldInning isnt newInning
+      console.log "---------------------------"
+      console.log "New inning!!!!!!"
+      console.log "---------------------------\n"
+
+      Promise.bind @
+        .then -> @handleCommercialBreak old, result
+        .then -> @resolveCommercialQuestions old, true
+        .then -> @closeInactiveAtBats old, result, atBatId
+        .then -> @closeInactivePitches old, result, atBatId, 0
+
+  checkPlayer: (old, result, oldPlayer, newPlayer) ->
+    if oldPlayer isnt newPlayer['playerId']
+      console.log "---------------------------"
+      console.log "New Player!!!!!"
+      console.log "---------------------------\n"
+
+      inningDivision = result['eventStatus']['inningDivision']
+      Promise.bind @
+        .then -> @createPitch old, result, newPlayer, 0
+        .then -> @createAtBat old, result, newPlayer
+
+  checkPitchCount: (old, result, diff, pitchDiff, onIgnoreList, player, pitchNumber) ->
+    if (diff.length > 0 || pitchDiff > 0) && onIgnoreList is -1
+      if (diff.indexOf "balls") > -1 || (diff.indexOf "strikes") > -1
+        pitchNumber = (result['old']['lastCount'].length)
+        player = result['old']['player']
+        Promise.bind @
+          .then -> @createPitch old, result, player, pitchNumber
+
+      else if pitchDiff isnt 0
+        pitchNumber = (result['old']['lastCount'].length)
+        player = result['old']['player']
+        Promise.bind @
+          .then -> @createPitch old, result, player, pitchNumber
 
   processClosingState: (game) ->
     return if game.close_processed isnt false
@@ -322,16 +329,19 @@ module.exports = class extends Task
         @logger.info "Close commercial question '#{question['que']}' for the game (#{game.name})"
 
   resolveCommercialQuestions: (game, completed, event) ->
-    Promise.bind @
-      .then -> @Questions.find {gameId: game['_id'], commercial: true, processed: false, active: null, inning: game['old']['inning'], inningDivision: game['old']['inningDivision']}
-      .map (result) ->
-        if completed is true
-          @rewardForCommercialQuestion game, result, false
-        else
-          list = result['outcomes']
-          onList = list.indexOf event['pbpDetailId']
-          if (onList) > -1
-            @rewardForCommercialQuestion game, result, true
+    if !game['old']['inning']
+      console.log "no game"
+    else
+      Promise.bind @
+        .then -> @Questions.find {gameId: game['_id'], commercial: true, processed: false, active: null, inning: game['old']['inning'], inningDivision: game['old']['inningDivision']}
+        .map (result) ->
+          if completed is true
+            @rewardForCommercialQuestion game, result, false
+          else
+            list = result['outcomes']
+            onList = list.indexOf event['pbpDetailId']
+            if (onList) > -1
+              @rewardForCommercialQuestion game, result, true
 
   rewardForCommercialQuestion: (game, question, correct) ->
     if correct
@@ -367,7 +377,6 @@ module.exports = class extends Task
 
   createAtBat: (old, update, player) ->
     playerId = if player then player['playerId']
-    console.log update['old']
     atBatId = old['_id'] + "-" + update['old']['inning'] + "-" + update['old']["eventCount"] + "-" + playerId
     question = "End of #{player['firstName']} #{player['lastName']}'s at bat."
 
@@ -483,14 +492,12 @@ module.exports = class extends Task
       balls = 0
       strikes = 0
 
-      # if strikes > 0
     if strikes < 2 && (strikesArray.indexOf result) > -1
       strikes += 1
     else if strikes is 2 && (strikesArray.indexOf result) > -1
       @closeInactivePitches old, update, atBatId, pitchNumber
       event = @gameParser.findSpecificEvent update, eventCount - 1
-      @logger.verbose event
-      @logger.verbose "Strikeout!"
+      @logger.verbose "Strikeout!", event['pitchSequence']
       # return
     else if strikes < 2 && (foulArray.indexOf result) > -1
       strikes += 1
@@ -501,16 +508,18 @@ module.exports = class extends Task
     else if balls is 3 && (ballArray.indexOf result) > -1
       @closeInactivePitches old, update, atBatId, pitchNumber
       event = @gameParser.findSpecificEvent update, eventCount - 1
-      @logger.verbose event
-      @logger.verbose "Walk!"
+      # @logger.verbose
+      @logger.verbose "Walk!", event['pitchSequence']
       # return
 
     if (hitArray.indexOf result) > -1
       @closeInactivePitches old, update, atBatId, pitchNumber
       event = @gameParser.findSpecificEvent update, eventCount - 1
-      @logger.verbose event
-      @logger.verbose "Hit!"
-      # return
+      # @logger.verbose event
+      @logger.verbose "Hit!", event['pitchSequence']
+      if event['playText'] isnt undefined
+        @logger.verbose "Actually hit the ball!"
+        return
 
     pitchNumber = pitchNumber + 1
 
@@ -538,7 +547,7 @@ module.exports = class extends Task
 
       options = {option1, option2, option3, option4}
       options.option5 = option5 if option5
-      # @logger.verbose question
+      @logger.verbose question
 
       Promise.bind @
       .then -> @closeInactivePitches old, update, atBatId, pitchNumber
@@ -592,9 +601,9 @@ module.exports = class extends Task
       pitch = _.last pitchCount
       if !pitch
         console.log "No Pitch"
-        console.log update['old']
-        console.log pitchCount
-        console.log question
+        # console.log update['old']
+        # console.log pitchCount
+        # console.log question
       pitchOutcome = @pitchTitle pitch['result']
 
       strikes = pitch.strikes

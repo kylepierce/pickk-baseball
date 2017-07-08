@@ -5,8 +5,9 @@ path = require "path"
 sanitize = require "./sanitize"
 
 winston.addColors
-  verbose: "grey"
+  verbose: "red"
   info: "green"
+  log: "red"
 
 module.exports = (options) ->
   transports = (new winston.transports[name](config) for name, config of options.transports)
