@@ -45,13 +45,6 @@ module.exports = class
 
   getEvents: (selector) ->  _.flatten _.pluck selector, 'pbpDetails'
 
-  # getAtBats: (selector) -> _.flatten _.filter(selector, @isPlay)
-  #
-  # isPlay: (event) ->
-  #   list = [96, 97, 98, 42, 35]
-  #   if event && event['pbpDetailId'] not in list
-  #     return event
-
   getLast: (plays) ->
     if plays and plays.length > 0
       plays[plays.length - 1]
