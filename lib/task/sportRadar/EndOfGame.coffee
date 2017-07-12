@@ -22,8 +22,8 @@ module.exports = class extends Task
     @Notifications = dependencies.mongodb.collection("notifications")
     @SportRadarGames = dependencies.mongodb.collection("games")
 
-  execute: (gameId) ->
-    return if game.close_processed isnt false
+  execute: (gameId, processed) ->
+    return if processed isnt false
 
     Promise.bind @
       .then -> @exchangeCoins gameId
