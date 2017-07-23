@@ -75,11 +75,11 @@ module.exports = class extends Task
         options = _.invert _.mapObject result['options'], (option) -> option['title']
         outcomeOption = options[outcomeTitle]
         Promise.bind @
+          .then -> @Questions.update {_id: result._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()} # Close and add outcome string
           .then -> @awardUsers result, outcomeOption
 
   awardUsers: (question, outcomeOption) ->
     Promise.bind @
-      .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()} # Close and add outcome string
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true} # Losers
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption} # Find the winners
       .map (answer) ->
@@ -145,10 +145,10 @@ module.exports = class extends Task
     if balls is 3 && (ballArray.indexOf result) > -1
       pitchOutcome = "Walk"
 
-    # if (hitArray.indexOf result) > -1
-    #   pitchOutcome = @eventTitle eventId
-    #   if pitchOutcome isnt "Out"
-    #     pitchOutcome = "Hit"
+    if (hitArray.indexOf result) > -1
+      # pitchOutcome = @eventTitle eventId
+      # if pitchOutcome isnt "Out"
+      pitchOutcome = "Hit"
 
     return pitchOutcome
 
