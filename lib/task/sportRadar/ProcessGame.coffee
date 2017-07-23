@@ -38,19 +38,19 @@ module.exports = class extends Task
     @Pitches = new Pitches dependencies
 
   execute: (old, update) ->
-    Promise.bind @
-      .then -> @checkGameStatus old, update
-      .then -> @handleGame old, update
-      .return true
-      .catch (error) =>
-        @logger.error error.message, _.extend({stack: error.stack}, error.details)
-
-  handleGame: (old, update) ->
     result = @gameParser.getPlay update
 
     if result
       Promise.bind @
+        .then -> @checkGameStatus old, result
+        .then -> @updateOld old, result
         .then -> @detectChange old, result
+        .return true
+        .catch (error) =>
+          @logger.error error.message, _.extend({stack: error.stack}, error.details)
+
+  updateOld: (old, update) ->
+    @SportRadarGames.update {_id: old["_id"]}, {$set: update}
 
   checkGameStatus: (old, update) ->
     # If there is no old. Got to update that.
@@ -80,6 +80,7 @@ module.exports = class extends Task
     #   pitchCount = event['pitchDetails']
 
     if !old['old']
+      console.log "[Global] No old????????"
       @SportRadarGames.update {_id: update.eventId}, {$set: update}
 
     else if !update
@@ -111,13 +112,13 @@ module.exports = class extends Task
       inning: result['eventStatus']['inning']
       inningDivision: result['eventStatus']['inningDivision']
       lastCount: result['old']['lastCount']
-      oldStuff: old['eventStatus']
-      newStuff: result['eventStatus']
-      newInning: result['eventStatus']['inningDivision']
-      newPlayer: result['eventStatus']['currentBatter']
+      oldStuff: old['old']['eventStatus']
+      newStuff: result['old']['eventStatus']
+      newInning: result['old']['inningDivision']
+      newPlayer: result['old']['player']
       newEventId: result['old']['eventId']
       oldInning: if old['old'] then old['old']['inningDivision'] else "Top"
-      oldPlayer: if old['old'] then old["old"]['eventStatus']['currentBatter'] else 0
+      oldPlayer: if old['old'] then old["old"]['player'] else 0
       oldEventId: if old['old'] then old['old']['eventId'] else 0
       oldPitch: if old['old'] then old["old"]['lastCount'].length else 0
       newPitch: result["old"]['lastCount'].length
@@ -136,30 +137,35 @@ module.exports = class extends Task
     parms.eventCount = result['old']["eventCount"]
     parms.eventId = result['old']['eventId']
     parms.diff = diff
-    parms.atBatId = parms.gameId + "-" + parms.inning + "-" + parms.eventCount + "-" + parms.oldPlayer.playerId
+    parms.atBatId = parms.gameId + "-" + parms.inning + "-" + parms.eventCount + "-" + parms['newPlayer']['playerId']
     parms.pitchDiff = parms.newPitch - parms.oldPitch
 
     Promise.bind @
       # .then -> @checkCommericalStatus parms
       # .then -> @Inning.execute parms
-      .then -> @AtBat.execute  parms
+      .then -> @AtBat.execute parms
       .then -> @Pitches.execute parms
       # .then -> @endOfGame.execute parms.gameId, game['close_processed']
 
-  checkCommericalStatus: (parms) ->
+  checkCommericalStatus: (game) ->
     # Add something to kick out of commerical if a play is active.
-    # gameId, gameName,
-    if game && not game['commercialStartedAt']
-      @SportRadarGames.update {_id: parms.gameId}, {$set: {commercial: false}, $set: {commercialStartedAt: 1}}
-      return
+    # if game
+    #   Promise.bind @
+    #     .then -> @SportRadarGames.update {_id: game['_id']}, {$set: {commercial: false}, $set: {commercialStartedAt: 1}}
+    #     .then -> @SportRadarGames.find {_id: game['_id']}
+    #     .tap (result) -> console.log result['commercial']
+      # console.log "commercial not set", game['gameId']
 
-    now = moment()
-    timeout = now.diff(game.commercialStartedAt, 'minute')
-    commercialTime = @dependencies.settings['common']['commercialTime']
-    if timeout >= commercialTime
-      Promise.bind @
-        .then -> @SportRadarGames.update {_id: parms.gameId}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
-        .then -> @inning.closeActiveCommercialQuestions parms.gameId, parms.gameName
+      # thisGame = @SportRadarGames.find {_id: game['gameId']}
+      # console.log thisGame
+
+    # now = moment()
+    # timeout = now.diff(game.commercialStartedAt, 'minute')
+    # commercialTime = @dependencies.settings['common']['commercialTime']
+    # if timeout >= commercialTime
+    #   Promise.bind @
+    #     .then -> @SportRadarGames.update {_id: game['gameId']}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}}
+    #     .then -> @inning.closeActiveCommercialQuestions game['gameId'], game['gameName']
         # .tap -> @logger.verbose "Creating first player questions."
         # .then -> @createPitch old, update[0], newPlayer, 0
         # .tap -> @logger.verbose "Created 0-0"

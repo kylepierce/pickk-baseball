@@ -12,6 +12,7 @@ module.exports = class
     home = @['teams'][0]
 
     @id =  @['eventId']
+    @commercial = false
     @home = home
     @home_team = home.teamId
     @away = away
@@ -25,6 +26,6 @@ module.exports = class
     @live = @['eventStatus']['name'] is "In-Progress"
     @status = @['eventStatus']['name']
     @completed = @status in ['Complete', 'Closed']
-    
+
   getSelector: ->
     "eventId": @['eventId']

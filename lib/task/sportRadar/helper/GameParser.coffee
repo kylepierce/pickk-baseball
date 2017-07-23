@@ -1,9 +1,18 @@
 _ = require "underscore"
+Match = require "mtr-match"
+Promise = require "bluebird"
 moment = require "moment"
+Task = require "../../Task"
 
-module.exports = class
+module.exports = class extends Task
   constructor: (dependencies) ->
-    @logger = dependencies.logger
+    super
+
+    Match.check dependencies, Match.ObjectIncluding
+      mongodb: Match.Any
+
+    @logger = @dependencies.logger
+    @SportRadarGames = dependencies.mongodb.collection("games")
 
   getPlay: (game) ->
     @game = game
@@ -62,13 +71,28 @@ module.exports = class
         pitchSequence: if event.pitchSequence then event.pitchSequence
         pitchDetails: if event.pitchDetails then event.pitchDetails
         playText: if event.playText then event.playText
-
     return  _.toArray array
 
-  findSpecificEvent: (game, eventNumber) ->
-    innings =  game['pbp']
-    halfs = @loopHalfs innings
-    totalEvents = @getEvents halfs
+  findSpecificEvent: (parms, eventNumber) ->
+    Promise.bind @
+      .then -> @SportRadarGames.find {_id: parms.gameId}
+      .then (game) -> @loopHalfs game[0]['pbp']
+      .then (halfs) -> @getEvents halfs
+      .then (events) -> events[eventNumber]
+      .then (result) -> return result
+
+
+      # .then (game) ->
+      #   console.log game[0]
+      #   innings = @loopHalfs game[0]['pbp']
+      #   halfs = @loopHalfs innings
+      #   totalEvents = @getEvents halfs
+      #   console.log totalEvents
+
+    # console.log parms.gameId
+    # innings =  game['pbp']
+    # halfs = @loopHalfs innings
+    # totalEvents = @getEvents halfs
     # @logger.verbose "Following event... ", totalEvents[eventNumber + 1]
     # console.log totalEvents[eventNumber]
-    return totalEvents[eventNumber]
+    # return totalEvents[eventNumber]

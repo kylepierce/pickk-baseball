@@ -6,6 +6,7 @@ SportRadarGame = require "../../model/sportRadar/SportRadarGame"
 Team = require "../../model/Team"
 Player = require "../../model/Player"
 GameParser = require "./helper/GameParser"
+Multipliers = require "./Multiplier"
 moment = require "moment"
 promiseRetry = require 'promise-retry'
 chance = new (require 'chance')
@@ -28,61 +29,64 @@ module.exports = class extends Task
     @Users = dependencies.mongodb.collection("users")
     @Notifications = dependencies.mongodb.collection("notifications")
     @gameParser = new GameParser dependencies
+    @multipliers = new Multipliers dependencies
 
   execute: (parms) ->
-    #gameId, inning, inningDivision, oldPlayer, newPlayer, game, eventCount, pitchNumber, pitch
     # Requirements: gameId, player, inning, inningDivision, newPlayer, game, eventCount, pitchNumber, pitch
     if parms.oldPlayer['playerId'] isnt parms.newPlayer['playerId']
-      console.log "---------------------------\n",  "New Player!!!!!", "---------------------------\n"
+      console.log parms.oldPlayer['playerId']
+      console.log parms.newPlayer['playerId']
+      console.log "---------------------------\n", "New Player!!!!!", "\n---------------------------\n"
 
       Promise.bind @
-        # .then -> @closeInactiveAtBats parms
-        # .then -> @createAtBat parms
+        .then -> @closeInactiveAtBats parms
+        .then -> @createAtBat parms
 
   closeInactiveAtBats: (parms) ->
     # Requirements: update, gameId, inning, inningDivision, currentEventCount, atBatId, updatedEventId
-
     Promise.bind @
     .then -> @Questions.find {commercial: false, gameId: parms.gameId, active: true, atBatQuestion: true, atBatId: {$ne: parms.atBatId}} #Find open at bats
     .map (question) ->
+      # console.log question
+      # console.log parms
       # compareEventCount = eventCount - question['eventCount']
-      # event = @gameParser.findSpecificEvent update, question['eventCount'] - 1
-      outcome = @eventTitle event['pbpDetailId']
-      map = _.invert _.mapObject question['options'], (option) -> option['title']
-      outcomeOption = map[outcome] #could fail here
+      event = @gameParser.findSpecificEvent parms, question['eventCount'] - 1
+      # outcome = @eventTitle event['pbpDetailId']
+      # map = _.invert _.mapObject question['options'], (option) -> option['title']
+      # outcomeOption = map[outcome] #could fail here
 
-      Promise.bind @
-        .then -> @resolveCommercialQuestions parms, false, event
-        .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()}
-        .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true}
-        .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
-        .map (answer) ->
-          reward = Math.floor answer['wager'] * answer['multiplier']
-          Promise.bind @
-          .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
-          .then -> @GamePlayed.update {userId: answer['userId'], gameId: parms.gameId}, {$inc: {coins: reward}}
-          .tap -> @logger.verbose "Awarding correct users!"
-          .then ->
-            notificationId = chance.guid()
-            @Notifications.insert
-              _id: notificationId
-              userId: answer['userId']
-              gameId: parms.gameId
-              type: "coins"
-              value: reward
-              read: false
-              notificationId: notificationId
-              dateCreated: new Date()
-              message: "Nice Pickk! You got #{reward} Coins!"
-              sharable: false
-              shareMessage: ""
+      # Promise.bind @
+      #   .then -> @resolveCommercialQuestions parms, false, event
+      #   .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()}
+      #   .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true}
+      #   .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
+      #   .map (answer) ->
+      #     reward = Math.floor answer['wager'] * answer['multiplier']
+      #     Promise.bind @
+      #     .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
+      #     .then -> @GamePlayed.update {userId: answer['userId'], gameId: parms.gameId}, {$inc: {coins: reward}}
+      #     .tap -> @logger.verbose "Awarding correct users!"
+      #     .then ->
+      #       notificationId = chance.guid()
+      #       @Notifications.insert
+      #         _id: notificationId
+      #         userId: answer['userId']
+      #         gameId: parms.gameId
+      #         type: "coins"
+      #         value: reward
+      #         read: false
+      #         notificationId: notificationId
+      #         dateCreated: new Date()
+      #         message: "Nice Pickk! You got #{reward} Coins!"
+      #         sharable: false
+      #         shareMessage: ""
 
   createAtBat: (parms) ->
     player = parms.newPlayer
     question = "End of #{player['firstName']} #{player['lastName']}'s at bat."
 
     Promise.bind @
-    .then -> @getGenericMultipliersForPlay() #bases, playerId
+    .then -> @multipliers.getGenericMultipliersForPlay() #bases, playerId
     .then (multipliers) ->
       options =
         option1: {title: "Out", number: 1, multiplier: multipliers['out'] }
@@ -103,15 +107,13 @@ module.exports = class extends Task
               dateCreated: new Date()
               gameId: parms.gameId
               playerId: player['playerId']
-              game_id: parms.gameId
-              player_id: player['playerId']
               atBatQuestion: true
               inning: parms.inning
               eventCount: parms.eventCount
               period: 0
               type: "atBat"
               active: true
-              background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('https://image.shutterstock.com/z/stock-photo-queens-ny-april-the-game-between-the-new-york-mets-and-florida-marlins-about-to-begin-at-57937108.jpg'); height: 75px; background-position-x: 46%; background-position-y: 0%; "
+              # background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('https://image.shutterstock.com/z/stock-photo-queens-ny-april-the-game-between-the-new-york-mets-and-florida-marlins-about-to-begin-at-57937108.jpg'); height: 75px; background-position-x: 46%; background-position-y: 0%; "
               commercial: false
               que: question
               options: options

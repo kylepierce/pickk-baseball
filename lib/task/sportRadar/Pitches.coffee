@@ -66,10 +66,10 @@ module.exports = class extends Task
   closeInactivePitches: (parms) ->
     # Requirements: gameId, atBatId, pitchNumber, pitch
     outcomeTitle = @getPitchOutcome parms.pitch
-    @logger.verbose "Close Pitch Result:", outcomeTitle
+    pitchNumber = parms.pitchNumber + 1
 
     Promise.bind @
-      .then -> @Questions.find { commercial: false, gameId: parms.gameId, active: true, atBatQuestion: {$exists: false}, $or: [{atBatId: {$ne: parms.atBatId}}, {pitchNumber: {$ne: parms.pitchNumber}}] # Find the open questions
+      .then -> @Questions.find { commercial: false, gameId: parms.gameId, active: true, atBatQuestion: {$exists: false}, $or: [{atBatId: {$ne: parms.atBatId}}, {pitchNumber: {$ne: pitchNumber}}] # Find the open questions
       }
       .map (result) ->
         options = _.invert _.mapObject result['options'], (option) -> option['title']
@@ -122,7 +122,6 @@ module.exports = class extends Task
     result = ""
     for item in results
       if (item['outcomes'].indexOf pitchTitle) > -1
-        console.log item['title']
         return item['title']
 
   getPitchOutcome: (pitch) ->
@@ -149,12 +148,14 @@ module.exports = class extends Task
       # pitchOutcome = @eventTitle eventId
       # if pitchOutcome isnt "Out"
       pitchOutcome = "Hit"
+      console.log "hit"
+      return
 
     return pitchOutcome
 
   createPitch: (parms) ->
     # Requirements: gameId, player, inning, pitch, pitchNumber, atBatId
-    count = @getCurrentCount parms.pitch, parms.pitchNumber # Idk if this will work. It might be too slow.
+    count = @getCurrentCount parms.pitch, parms.pitchNumber
     strikes = count.strikes
     balls = count.balls
     pitchNumber = parms.pitchNumber + 1 #Most people dont start counting at zero
@@ -162,7 +163,7 @@ module.exports = class extends Task
     question = "#{player['firstName']} #{player['lastName']}: " + balls + " - " + strikes + " (##{pitchNumber})"
 
     Promise.bind @
-      .then -> @Questions.count {commercial: false, gameId: parms.gameId, playerId: parms.playerId, atBatQuestion: {$exists: false}, atBatId: parms.atBatId, pitchNumber: parms.pitchNumber}
+      .then -> @Questions.count {commercial: false, gameId: parms.gameId, playerId: player['playerId'], atBatQuestion: {$exists: false}, atBatId: parms.atBatId, pitchNumber: pitchNumber}
       .then (found) ->
         if not found
           Promise.bind @
@@ -187,7 +188,7 @@ module.exports = class extends Task
             .tap (result) ->
               questionId = result.upserted?[0]?._id
               @logger.verbose "Create pitch question (#{question})"
-              # {gameId: parms.gameId, playerId: player.playerId, atBatId: parms.atBatId, pitchNumber: pitchNumber}
+              {gameId: parms.gameId, playerId: player.playerId, atBatId: parms.atBatId, pitchNumber: pitchNumber}
 
   getCurrentCount: (pitch, pitchNumber) ->
     foulArray = ['F', 'G', 'R', 'V']
@@ -195,9 +196,9 @@ module.exports = class extends Task
     ballArray = ['B', 'L', 'M', '#', 'P']
     hitArray = ['I', 'H']
 
-    result =  if pitch[0] then pitch[0].result else null
-    balls = if pitch[0] then pitch[0].balls else 0
-    strikes = if pitch[0] then pitch[0].strikes else 0
+    result =  if pitch then pitch.result else null
+    balls = if pitch then pitch.balls else 0
+    strikes = if pitch then pitch.strikes else 0
 
     if pitchNumber is 0
       balls = 0
@@ -239,5 +240,4 @@ module.exports = class extends Task
 
       options = {option1, option2, option3, option4}
       options.option5 = option5 if option5
-
       return options
