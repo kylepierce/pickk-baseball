@@ -36,8 +36,8 @@ module.exports = class extends Task
       console.log "---------------------------\n",  "New Player!!!!!", "---------------------------\n"
 
       Promise.bind @
-        .then -> @closeInactiveAtBats parms
-        .then -> @createAtBat parms
+        # .then -> @closeInactiveAtBats parms
+        # .then -> @createAtBat parms
 
   closeInactiveAtBats: (parms) ->
     # Requirements: update, gameId, inning, inningDivision, currentEventCount, atBatId, updatedEventId

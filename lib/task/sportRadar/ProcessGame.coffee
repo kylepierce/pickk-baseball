@@ -142,7 +142,7 @@ module.exports = class extends Task
     Promise.bind @
       # .then -> @checkCommericalStatus parms
       # .then -> @Inning.execute parms
-      # .then -> @AtBat.execute  parms
+      .then -> @AtBat.execute  parms
       .then -> @Pitches.execute parms
       # .then -> @endOfGame.execute parms.gameId, game['close_processed']
 
