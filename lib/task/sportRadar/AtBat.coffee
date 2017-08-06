@@ -39,7 +39,7 @@ module.exports = class extends Task
 
     if newBatter
       Promise.bind @
-        # .then -> @closeInactiveAtBats parms
+        .then -> @closeInactiveAtBats parms
         .then -> @createAtBat parms
         # .then -> @pitches.createPitch parms, true
 
@@ -54,7 +54,7 @@ module.exports = class extends Task
   closeInactiveAtBats: (parms) ->
     # Requirements: update, gameId, inning, inningDivision, currentEventCount, atBatId, updatedEventId
     Promise.bind @
-      .then -> @getLastAtBat parms
+      .then -> @getLastAtBat parms.gameId
       .then (atBatId) -> @Questions.find {commercial: false, gameId: parms.gameId, active: true, atBatQuestion: true, atBatId: {$ne: atBatId}}
       .map (question) ->
         Promise.bind @
