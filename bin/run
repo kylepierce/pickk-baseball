@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -eux
+
+ENV=${1:-}
+if [ -z $ENV ]; then
+  echo "Usage: $0 ENV"
+  echo "ENV = [dev, prod]"
+  exit 1
+else
+  shift
+fi
+
+pm2 start pm2/actors.$ENV.json && pm2 logs -f

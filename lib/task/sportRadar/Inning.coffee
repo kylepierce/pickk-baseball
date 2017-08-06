@@ -37,7 +37,7 @@ module.exports = class extends Task
       Promise.bind @
         .then -> @handleCommercialBreak parms
         .then -> @resolveCommercialQuestions parms, true
-        .then -> @createCommercialQuestions gameId, inning, team
+        .then -> @createCommercialQuestions parms.gameId, parms.inning, parms.team
 
   handleCommercialBreak: (parms) ->
     #Requirements: gameId, gameName
@@ -50,7 +50,8 @@ module.exports = class extends Task
     # Requirements: gameId, inning, inningDivision, inningCompleted, event
     Promise.bind @
       .then -> @Questions.find {gameId: parms.gameId, commercial: true, processed: false, active: null, inning: parms.inning, inningDivision: parms.inningDivision
-      }.map (question) ->
+      }
+      .map (question) ->
         if inningCompleted is true
           @rewardForCommercialQuestion parms.gameId, question, false
         else

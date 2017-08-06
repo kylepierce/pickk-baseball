@@ -16,7 +16,7 @@ module.exports = class extends Task
 
   getPlay: (game) ->
     @game = game
-    @innings =  @game['pbp']
+    @innings = @game['pbp']
     @halfs = @loopHalfs @innings
 
     @totalEvents = @getEvents @halfs

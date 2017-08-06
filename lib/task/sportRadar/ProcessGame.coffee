@@ -45,9 +45,10 @@ module.exports = class extends Task
         .then -> @checkGameStatus old, result
         .then -> @updateOld old, result
         .then -> @detectChange old, result
-        .return true
-        .catch (error) =>
-          @logger.error error.message, _.extend({stack: error.stack}, error.details)
+        .then (parms) -> @generateQuestions parms
+        # .return true
+        # .catch (error) =>
+        #   @logger.error error.message, _.extend({stack: error.stack}, error.details)
 
   updateOld: (old, update) ->
     @SportRadarGames.update {_id: old["_id"]}, {$set: update}
@@ -91,6 +92,7 @@ module.exports = class extends Task
     else if update['eventStatus']['eventStatusId'] isnt 2
       console.log "Something is wrong. Shutting this whole thing down..."
       return
+
     #
     # if update['eventStatus']['eventStatusId'] is 4
     #   #This should be a method!
@@ -101,7 +103,7 @@ module.exports = class extends Task
     #   @SportRadarGames.update {_id: old['_id']}, {$set: update}
     #   return
     # else if update['eventStatus']['eventStatusId'] isnt 2
-    #   @logger.verbose "Game is over"
+      # @logger.verbose "Game is over"
 
   detectChange: (old, result) ->
     ignoreList =  [35, 42, 89, 96, 97, 98]
@@ -116,6 +118,7 @@ module.exports = class extends Task
       newStuff: result['old']['eventStatus']
       newInning: result['old']['inningDivision']
       newPlayer: result['old']['player']
+      nextPlayer: result['home']['liveState']['nextUpBatters'][0]
       newEventId: result['old']['eventId']
       oldInning: if old['old'] then old['old']['inningDivision'] else "Top"
       oldPlayer: if old['old'] then old["old"]['player'] else 0
@@ -137,14 +140,18 @@ module.exports = class extends Task
     parms.eventCount = result['old']["eventCount"]
     parms.eventId = result['old']['eventId']
     parms.diff = diff
-    parms.atBatId = parms.gameId + "-" + parms.inning + "-" + parms.eventCount + "-" + parms['newPlayer']['playerId']
+    # Strange it throws an error if there isnt a player. Seems when the switch its blank for 5 seconds.
+    if parms['newPlayer'] then parms.atBatId = parms.gameId + "-" + parms.inning + "-" + parms.eventCount + "-" + parms['newPlayer']['playerId']
     parms.pitchDiff = parms.newPitch - parms.oldPitch
 
+    return parms
+
+  generateQuestions: (parms) ->
     Promise.bind @
       # .then -> @checkCommericalStatus parms
       # .then -> @Inning.execute parms
       .then -> @AtBat.execute parms
-      .then -> @Pitches.execute parms
+      # .then -> @Pitches.execute parms
       # .then -> @endOfGame.execute parms.gameId, game['close_processed']
 
   checkCommericalStatus: (game) ->

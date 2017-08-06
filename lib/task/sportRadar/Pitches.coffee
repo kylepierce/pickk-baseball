@@ -23,7 +23,6 @@ module.exports = class extends Task
     @Teams = dependencies.mongodb.collection("teams")
     @Players = dependencies.mongodb.collection("players")
     @Questions = dependencies.mongodb.collection("questions")
-    @AtBats = dependencies.mongodb.collection("atBat")
     @Answers = dependencies.mongodb.collection("answers")
     @GamePlayed = dependencies.mongodb.collection("gamePlayed")
     @Users = dependencies.mongodb.collection("users")
@@ -32,12 +31,15 @@ module.exports = class extends Task
     @multipliers = new Multipliers dependencies
 
   execute: (parms) ->
-    pitchIncrease = @didPitchClose parms
+    pitchClosed = @didPitchClose parms
+    if !parms.pitch
+      return
+    outcome = @getPitchOutcome parms.pitch
 
-    if pitchIncrease
+    if pitchClosed
       Promise.bind @
-        .then -> @closeInactivePitches parms
-        .then -> @createPitch parms
+        .then -> @closeInactivePitches parms, outcome
+        .then -> @createPitch parms, false, outcome
 
   didPitchClose: (parms) ->
     if (parms.diff.length > 0 || parms.pitchDiff > 0)
@@ -46,63 +48,50 @@ module.exports = class extends Task
       else if parms.pitchDiff isnt 0
         return true
 
-    # else if strikes is 2 && (strikesArray.indexOf result) > -1
-    #   @logger.verbose "Strikeout!"
-    #   return
-    #
-    # else if balls is 3 && (ballArray.indexOf result) > -1
-    #   # @logger.verbose
-    #   @logger.verbose "Walk!", event['pitchSequence']
-    #   # return
-    #
-    # if (hitArray.indexOf result) > -1
-    #   # @logger.verbose event
-    #   @logger.verbose "Hit!", event['pitchSequence']
-    #   if event['playText'] isnt undefined
-    #     @logger.verbose "Actually hit the ball!"
-    #     return
-    #
-
-  closeInactivePitches: (parms) ->
+  closeInactivePitches: (parms, outcome) ->
     # Requirements: gameId, atBatId, pitchNumber, pitch
-    outcomeTitle = @getPitchOutcome parms.pitch
     pitchNumber = parms.pitchNumber + 1
 
     Promise.bind @
-      .then -> @Questions.find { commercial: false, gameId: parms.gameId, active: true, atBatQuestion: {$exists: false}, $or: [{atBatId: {$ne: parms.atBatId}}, {pitchNumber: {$ne: pitchNumber}}] # Find the open questions
+      # .then -> @getLastAtBat parms
+      .then -> @Questions.find {
+        commercial: false,
+        gameId: parms.gameId,
+        active: true,
+        atBatQuestion: {$exists: false}, $or: [{atBatId: {$ne: parms.atBatId}}, {pitchNumber: {$ne: pitchNumber}}] # Find the open questions
       }
       .map (result) ->
         options = _.invert _.mapObject result['options'], (option) -> option['title']
-        outcomeOption = options[outcomeTitle]
+        outcomeOption = options[outcome]
         Promise.bind @
           .then -> @Questions.update {_id: result._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()} # Close and add outcome string
-          .then -> @awardUsers result, outcomeOption
+          .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true} # Losers
+          .then -> @Answers.find {questionId: question._id, answered: outcomeOption} # Find the winners
+          .map (answer) ->
+            Promise.bind @
+              .then -> @awardUsers answer, outcomeOption
 
   awardUsers: (question, outcomeOption) ->
+    reward = Math.floor answer['wager'] * answer['multiplier']
     Promise.bind @
-      .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true} # Losers
-      .then -> @Answers.find {questionId: question._id, answered: outcomeOption} # Find the winners
-      .map (answer) ->
-        reward = Math.floor answer['wager'] * answer['multiplier']
-        Promise.bind @
-          .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}} #
-          .then -> @GamePlayed.update {userId: answer['userId'], gameId: question.gameId}, {$inc: {coins: reward}}
-          .tap -> @logger.verbose "Awarding correct users!"
-          .then ->
-            notificationId = chance.guid()
-            @Notifications.insert
-              _id: notificationId
-              dateCreated: new Date()
-              question: question._id
-              userId: answer['userId']
-              gameId: question.gameId
-              type: "coins"
-              value: reward
-              read: false
-              notificationId: notificationId
-              message: "Nice Pickk! You got #{reward} Coins!"
-              sharable: false
-              shareMessage: ""
+      .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}} #
+      .then -> @GamePlayed.update {userId: answer['userId'], gameId: question.gameId}, {$inc: {coins: reward}}
+      .tap -> @logger.verbose "Awarding correct users!"
+      .then ->
+        notificationId = chance.guid()
+        @Notifications.insert
+          _id: notificationId
+          dateCreated: new Date()
+          question: question._id
+          userId: answer['userId']
+          gameId: question.gameId
+          type: "coins"
+          value: reward
+          read: false
+          notificationId: notificationId
+          message: "Nice Pickk! You got #{reward} Coins!"
+          sharable: false
+          shareMessage: ""
 
   pitchTitle: (pitchTitle) ->
     results = [
@@ -145,24 +134,34 @@ module.exports = class extends Task
       pitchOutcome = "Walk"
 
     if (hitArray.indexOf result) > -1
-      # pitchOutcome = @eventTitle eventId
-      # if pitchOutcome isnt "Out"
       pitchOutcome = "Hit"
-      console.log "hit"
-      return
 
     return pitchOutcome
 
-  createPitch: (parms) ->
+  createPitch: (parms, newBatter, outcome) ->
+    ignoreList = ["Hit", "Walk", "Out", "Strike Out"]
+    if (ignoreList.indexOf outcome) > -1
+      return false
+
     # Requirements: gameId, player, inning, pitch, pitchNumber, atBatId
     count = @getCurrentCount parms.pitch, parms.pitchNumber
     strikes = count.strikes
     balls = count.balls
-    pitchNumber = parms.pitchNumber + 1 #Most people dont start counting at zero
+    pitchNumber = parms.pitchNumber + 1
     player = parms['newPlayer']
+
+    # If there is a new batter we are going to set count to 0-0, pitchNumber to 1, change the AtBatId
+    if newBatter
+      strikes = 0
+      balls = 0
+      pitchNumber = 1
+      player = parms['nextPlayer']
+
     question = "#{player['firstName']} #{player['lastName']}: " + balls + " - " + strikes + " (##{pitchNumber})"
 
     Promise.bind @
+      # .then -> atBatId = @getLastAtBat parms
+      # .then -> console.log atBatId
       .then -> @Questions.count {commercial: false, gameId: parms.gameId, playerId: player['playerId'], atBatQuestion: {$exists: false}, atBatId: parms.atBatId, pitchNumber: pitchNumber}
       .then (found) ->
         if not found
@@ -174,7 +173,7 @@ module.exports = class extends Task
                 dateCreated: new Date()
                 gameId: parms.gameId
                 playerId: player['playerId']
-                atBatId: parms.atBatId
+                atBatId: atBatId
                 pitchNumber: pitchNumber
                 eventCount: parms.eventCount
                 inning: parms.inning
@@ -241,3 +240,8 @@ module.exports = class extends Task
       options = {option1, option2, option3, option4}
       options.option5 = option5 if option5
       return options
+
+  # getLastAtBat: (parms) ->
+  #   Promise.bind @
+  #     .then -> @Questions.find({commercial: false, gameId: parms.gameId, atBatQuestion: true}).sort({dateCreated: -1}).limit(1)
+  #     .then (result) -> return parms.gameId + "-" + parms.inning + "-" + parms.eventCount + "-" + result[0].playerId

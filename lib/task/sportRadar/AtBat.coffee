@@ -7,6 +7,7 @@ Team = require "../../model/Team"
 Player = require "../../model/Player"
 GameParser = require "./helper/GameParser"
 Multipliers = require "./Multiplier"
+Pitches = require "./Pitches"
 moment = require "moment"
 promiseRetry = require 'promise-retry'
 chance = new (require 'chance')
@@ -30,97 +31,121 @@ module.exports = class extends Task
     @Notifications = dependencies.mongodb.collection("notifications")
     @gameParser = new GameParser dependencies
     @multipliers = new Multipliers dependencies
+    @pitches = new Pitches dependencies
 
   execute: (parms) ->
     # Requirements: gameId, player, inning, inningDivision, newPlayer, game, eventCount, pitchNumber, pitch
-    if parms.oldPlayer['playerId'] isnt parms.newPlayer['playerId']
-      console.log parms.oldPlayer['playerId']
-      console.log parms.newPlayer['playerId']
-      console.log "---------------------------\n", "New Player!!!!!", "\n---------------------------\n"
+    newBatter = @newBatter parms
 
+    if newBatter
       Promise.bind @
-        .then -> @closeInactiveAtBats parms
+        # .then -> @closeInactiveAtBats parms
         .then -> @createAtBat parms
+        # .then -> @pitches.createPitch parms, true
+
+  newBatter: (parms) ->
+    if (parms.diff.length > 0) && (parms.diff.indexOf "currentBatter") > -1
+      if parms.oldPlayer isnt parms.newPlayer
+        console.log "---------------------------\n", ">>> New Player"
+        console.log "New", parms.newPlayer.firstName, parms.newPlayer.lastName
+        console.log "Next", parms.nextPlayer.firstName, parms.nextPlayer.lastName
+        return parms.nextPlayer
 
   closeInactiveAtBats: (parms) ->
     # Requirements: update, gameId, inning, inningDivision, currentEventCount, atBatId, updatedEventId
     Promise.bind @
-    .then -> @Questions.find {commercial: false, gameId: parms.gameId, active: true, atBatQuestion: true, atBatId: {$ne: parms.atBatId}} #Find open at bats
-    .map (question) ->
-      # console.log question
-      # console.log parms
-      # compareEventCount = eventCount - question['eventCount']
-      event = @gameParser.findSpecificEvent parms, question['eventCount'] - 1
-      # outcome = @eventTitle event['pbpDetailId']
-      # map = _.invert _.mapObject question['options'], (option) -> option['title']
-      # outcomeOption = map[outcome] #could fail here
+      .then -> @getLastAtBat parms
+      .then (atBatId) -> @Questions.find {commercial: false, gameId: parms.gameId, active: true, atBatQuestion: true, atBatId: {$ne: atBatId}}
+      .map (question) ->
+        Promise.bind @
+          .then -> @closeAtBat parms, question
+          .then (result) ->
+            @awardUsers question, result['option']
+            @pitches.closeInactivePitches parms, result['title']
 
-      # Promise.bind @
-      #   .then -> @resolveCommercialQuestions parms, false, event
-      #   .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()}
-      #   .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true}
-      #   .then -> @Answers.find {questionId: question._id, answered: outcomeOption}
-      #   .map (answer) ->
-      #     reward = Math.floor answer['wager'] * answer['multiplier']
-      #     Promise.bind @
-      #     .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}}
-      #     .then -> @GamePlayed.update {userId: answer['userId'], gameId: parms.gameId}, {$inc: {coins: reward}}
-      #     .tap -> @logger.verbose "Awarding correct users!"
-      #     .then ->
-      #       notificationId = chance.guid()
-      #       @Notifications.insert
-      #         _id: notificationId
-      #         userId: answer['userId']
-      #         gameId: parms.gameId
-      #         type: "coins"
-      #         value: reward
-      #         read: false
-      #         notificationId: notificationId
-      #         dateCreated: new Date()
-      #         message: "Nice Pickk! You got #{reward} Coins!"
-      #         sharable: false
-      #         shareMessage: ""
+  closeAtBat: (parms, question) ->
+    map = _.invert _.mapObject question['options'], (option) -> option['title']
+
+    Promise.bind @
+      .then -> @gameParser.findSpecificEvent parms, question['eventCount'] - 1
+      .then (event) -> @eventTitle event['pbpDetailId']
+      .then (eventTitle) ->
+        outcome =
+          option: map[eventTitle]
+          title: eventTitle
+        return outcome
+
+  awardUsers: (question, outcomeOption) ->
+    Promise.bind @
+      .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()}
+      .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true} # Losers
+      .then -> @Answers.find {questionId: question._id, answered: outcomeOption} # Find the winners
+      .map (answer) ->
+        reward = Math.floor answer['wager'] * answer['multiplier']
+        Promise.bind @
+          .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}} #
+          .then -> @GamePlayed.update {userId: answer['userId'], gameId: question.gameId}, {$inc: {coins: reward}}
+          .tap -> @logger.verbose "Awarding correct users!"
+          .then ->
+            notificationId = chance.guid()
+            @Notifications.insert
+              _id: notificationId
+              dateCreated: new Date()
+              question: question._id
+              userId: answer['userId']
+              gameId: question.gameId
+              type: "coins"
+              value: reward
+              read: false
+              notificationId: notificationId
+              message: "Nice Pickk! You got #{reward} Coins!"
+              sharable: false
+              shareMessage: ""
 
   createAtBat: (parms) ->
-    player = parms.newPlayer
+    player = parms.nextPlayer
+    # if parms['newPlayer'] then parms.atBatId = parms.gameId + "-" + parms.inning + "-" + parms.eventCount + "-" + parms['newPlayer']['playerId']
     question = "End of #{player['firstName']} #{player['lastName']}'s at bat."
 
     Promise.bind @
-    .then -> @multipliers.getGenericMultipliersForPlay() #bases, playerId
-    .then (multipliers) ->
-      options =
-        option1: {title: "Out", number: 1, multiplier: multipliers['out'] }
-        option2: {title: "Walk", number: 2, multiplier: multipliers['walk'] }
-        option3: {title: "Single", number: 3, multiplier: multipliers['single'] }
-        option4: {title: "Double", number: 4, multiplier: multipliers['double'] }
-        option5: {title: "Triple", number: 5, multiplier: multipliers['triple'] }
-        option6: {title: "Home Run", number: 6, multiplier: multipliers['homerun'] }
+      .then -> @multipliers.getGenericMultipliersForPlay() #bases, playerId
+      .then (multipliers) ->
+        options =
+          option1: {title: "Out", number: 1, multiplier: multipliers['out'] }
+          option2: {title: "Walk", number: 2, multiplier: multipliers['walk'] }
+          option3: {title: "Single", number: 3, multiplier: multipliers['single'] }
+          option4: {title: "Double", number: 4, multiplier: multipliers['double'] }
+          option5: {title: "Triple", number: 5, multiplier: multipliers['triple'] }
+          option6: {title: "Home Run", number: 6, multiplier: multipliers['homerun'] }
 
-      Promise.bind @
-      .then -> @Questions.count {commercial: false, game_id: parms.gameId, player_id: player['playerId'], atBatQuestion: true, atBatId: parms.atBatId}
-      .then (found) ->
-        if not found
-          Promise.bind @
-          .then ->
-            @Questions.insert
-              _id: @Questions.db.ObjectId().toString()
-              dateCreated: new Date()
-              gameId: parms.gameId
-              playerId: player['playerId']
-              atBatQuestion: true
-              inning: parms.inning
-              eventCount: parms.eventCount
-              period: 0
-              type: "atBat"
-              active: true
-              # background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('https://image.shutterstock.com/z/stock-photo-queens-ny-april-the-game-between-the-new-york-mets-and-florida-marlins-about-to-begin-at-57937108.jpg'); height: 75px; background-position-x: 46%; background-position-y: 0%; "
-              commercial: false
-              que: question
-              options: options
-              usersAnswered: []
-          .tap (result) ->
-            questionId = result.upserted?[0]?._id
-            @logger.verbose "Create atBat question (#{question})"
+        Promise.bind @
+          .then -> @insertAtBat(parms)
+          .then (atBat) -> @Questions.count {commercial: false, game_id: parms.gameId, player_id: player['playerId'], atBatQuestion: true, atBatId: atBat._id}
+          .then (found) ->
+            if not found
+              Promise.bind @
+              .then -> @getLastAtBat parms.gameId
+              .then (atBatId) ->
+                @Questions.insert
+                  _id: @Questions.db.ObjectId().toString()
+                  dateCreated: new Date()
+                  gameId: parms.gameId
+                  atBatId: atBatId
+                  playerId: player['playerId']
+                  atBatQuestion: true
+                  inning: parms.inning
+                  eventCount: parms.eventCount
+                  period: 0
+                  type: "atBat"
+                  active: true
+                  # background: "background: linear-gradient(rgba(34, 44, 49, .0), rgba(34, 44, 49, .5)), url('https://image.shutterstock.com/z/stock-photo-queens-ny-april-the-game-between-the-new-york-mets-and-florida-marlins-about-to-begin-at-57937108.jpg'); height: 75px; background-position-x: 46%; background-position-y: 0%; "
+                  commercial: false
+                  que: question
+                  options: options
+                  usersAnswered: []
+              .tap (result) ->
+                questionId = result.upserted?[0]?._id
+                @logger.verbose "Create atBat question (#{question})"
 
   eventTitle: (eventStatusId) ->
     results = [
@@ -148,3 +173,18 @@ module.exports = class extends Task
       if (item['outcomes'].indexOf eventStatusId) > -1
         result = item['title']
     return result
+
+  insertAtBat: (parms) ->
+    Promise.bind @
+      .then -> @AtBats.insert
+        _id:  @AtBats.db.ObjectId().toString()
+        dateCreated: new Date()
+        gameId: parms.gameId
+        playerId: parms.nextPlayer.playerId
+        inning: parms.inning
+        eventCount: parms.eventCount
+
+  getLastAtBat: (gameId) ->
+    Promise.bind @
+      .then -> @AtBats.find({gameId: gameId}).sort({dateCreated: -1}).limit(1)
+      .then (result) -> return result[0]._id
