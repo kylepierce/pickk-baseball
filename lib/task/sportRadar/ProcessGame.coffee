@@ -54,32 +54,6 @@ module.exports = class extends Task
     @SportRadarGames.update {_id: old["_id"]}, {$set: update}
 
   checkGameStatus: (old, update) ->
-    # If there is no old. Got to update that.
-
-    # If there is an old, but no old property.
-
-    # If there is an update but no old.
-
-    # If there is no update. Close the game.
-
-    # @logger.verbose old
-    # @logger.verbose update
-
-    # if !update['old']
-    #   console.log "No old or update????????"
-    #   update = update[0]
-    #
-    # if !update['old']['inning']
-    #   console.log "No inning?? : ", update['old']
-    #
-
-    # if !pitch
-    #   console.log "No Pitch"
-    #
-    # if pitchCount.length is 0
-    #   event = @gameParser.findSpecificEvent update, questionEventCount - 1
-    #   pitchCount = event['pitchDetails']
-
     if !old['old']
       console.log "[Global] No old????????"
       @SportRadarGames.update {_id: update.eventId}, {$set: update}
@@ -92,18 +66,6 @@ module.exports = class extends Task
     else if update['eventStatus']['eventStatusId'] isnt 2
       console.log "Something is wrong. Shutting this whole thing down..."
       return
-
-    #
-    # if update['eventStatus']['eventStatusId'] is 4
-    #   #This should be a method!
-    #   @logger.verbose "This game is completed"
-    #   update['status'] = "completed"
-    #   update['close_processed'] = true
-    #   update['live'] = false
-    #   @SportRadarGames.update {_id: old['_id']}, {$set: update}
-    #   return
-    # else if update['eventStatus']['eventStatusId'] isnt 2
-      # @logger.verbose "Game is over"
 
   detectChange: (old, result) ->
     ignoreList =  [35, 42, 89, 96, 97, 98]
@@ -151,7 +113,7 @@ module.exports = class extends Task
       # .then -> @checkCommericalStatus parms
       # .then -> @Inning.execute parms
       .then -> @AtBat.execute parms
-      # .then -> @Pitches.execute parms
+      .then -> @Pitches.execute parms
       # .then -> @endOfGame.execute parms.gameId, game['close_processed']
 
   checkCommericalStatus: (game) ->

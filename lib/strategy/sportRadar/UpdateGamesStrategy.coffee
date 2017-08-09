@@ -24,7 +24,7 @@ module.exports = class extends Strategy
     @logger = dependencies.logger
 
   execute: ->
-    promiseRetry {retries: 1000, factor: 1}, (retry) =>
+    # promiseRetry {retries: 1000, factor: 1}, (retry) =>
       Promise.bind @
       .then -> @importGames.execute()
       .then -> @getActiveGames.execute()
@@ -35,4 +35,4 @@ module.exports = class extends Strategy
       , {concurrency: 1}
       .catch (error) =>
         @logger.verbose error.message, _.extend({stack: error.stack}, error.details)
-        retry error
+        # retry error

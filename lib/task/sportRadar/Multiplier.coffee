@@ -1,7 +1,6 @@
 _ = require "underscore"
 Match = require "mtr-match"
 Promise = require "bluebird"
-
 Task = require "../Task"
 SportRadarGame = require "../../model/sportRadar/SportRadarGame"
 Team = require "../../model/Team"
