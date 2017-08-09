@@ -240,8 +240,3 @@ module.exports = class extends Task
       options = {option1, option2, option3, option4}
       options.option5 = option5 if option5
       return options
-
-  # getLastAtBat: (parms) ->
-  #   Promise.bind @
-  #     .then -> @Questions.find({commercial: false, gameId: parms.gameId, atBatQuestion: true}).sort({dateCreated: -1}).limit(1)
-  #     .then (result) -> return parms.gameId + "-" + parms.inning + "-" + parms.eventCount + "-" + result[0].playerId

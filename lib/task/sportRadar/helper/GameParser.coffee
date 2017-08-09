@@ -81,18 +81,13 @@ module.exports = class extends Task
       .then (events) -> events[eventNumber]
       .then (result) -> return result
 
-
-      # .then (game) ->
-      #   console.log game[0]
-      #   innings = @loopHalfs game[0]['pbp']
-      #   halfs = @loopHalfs innings
-      #   totalEvents = @getEvents halfs
-      #   console.log totalEvents
-
-    # console.log parms.gameId
-    # innings =  game['pbp']
-    # halfs = @loopHalfs innings
-    # totalEvents = @getEvents halfs
-    # @logger.verbose "Following event... ", totalEvents[eventNumber + 1]
-    # console.log totalEvents[eventNumber]
-    # return totalEvents[eventNumber]
+  findAtBat: (question) ->
+    Promise.bind @
+      .then -> @SportRadarGames.find {_id: question.gameId}
+      .then (game) -> @loopHalfs game[0]['pbp']
+      .then (halfs) -> @getEvents halfs
+      .then (events) -> return events.reverse()
+      .then (events) -> # Get all the events.
+        for event in events
+          if event.batter && question.playerId is event.batter.playerId
+            return event.pbpDetailId

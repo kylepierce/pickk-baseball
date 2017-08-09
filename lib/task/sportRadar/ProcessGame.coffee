@@ -117,8 +117,7 @@ module.exports = class extends Task
       oldStuff: old['old']['eventStatus']
       newStuff: result['old']['eventStatus']
       newInning: result['old']['inningDivision']
-      newPlayer: result['old']['player']
-      nextPlayer: result['home']['liveState']['nextUpBatters'][0]
+      newPlayer: result['eventStatus']['currentBatter']
       newEventId: result['old']['eventId']
       oldInning: if old['old'] then old['old']['inningDivision'] else "Top"
       oldPlayer: if old['old'] then old["old"]['player'] else 0
@@ -140,9 +139,10 @@ module.exports = class extends Task
     parms.eventCount = result['old']["eventCount"]
     parms.eventId = result['old']['eventId']
     parms.diff = diff
+    # parms.nextPlayer = if parms.inningDivision is "Top" then result['away']['liveState']['nextUpBatters'][0] else result['home']['liveState']['nextUpBatters'][0]
     # Strange it throws an error if there isnt a player. Seems when the switch its blank for 5 seconds.
-    if parms['newPlayer'] then parms.atBatId = parms.gameId + "-" + parms.inning + "-" + parms.eventCount + "-" + parms['newPlayer']['playerId']
-    parms.pitchDiff = parms.newPitch - parms.oldPitch
+    # if parms['newPlayer'] then parms.atBatId = parms.gameId + "-" + parms.inning + "-" + parms.eventCount + "-" + parms['newPlayer']['playerId']
+    # parms.pitchDiff = parms.newPitch - parms.oldPitch
 
     return parms
 

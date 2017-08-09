@@ -39,36 +39,38 @@ module.exports = class extends Task
 
     if newBatter
       Promise.bind @
-        .then -> @closeInactiveAtBats parms
         .then -> @createAtBat parms
+        .then -> @closeInactiveAtBats parms
         # .then -> @pitches.createPitch parms, true
 
   newBatter: (parms) ->
     if (parms.diff.length > 0) && (parms.diff.indexOf "currentBatter") > -1
       if parms.oldPlayer isnt parms.newPlayer
         console.log "---------------------------\n", ">>> New Player"
+        console.log "Old", parms.oldPlayer.firstName, parms.oldPlayer.lastName
         console.log "New", parms.newPlayer.firstName, parms.newPlayer.lastName
-        console.log "Next", parms.nextPlayer.firstName, parms.nextPlayer.lastName
-        return parms.nextPlayer
+        return parms.newPlayer
 
   closeInactiveAtBats: (parms) ->
     # Requirements: update, gameId, inning, inningDivision, currentEventCount, atBatId, updatedEventId
     Promise.bind @
       .then -> @getLastAtBat parms.gameId
       .then (atBatId) -> @Questions.find {commercial: false, gameId: parms.gameId, active: true, atBatQuestion: true, atBatId: {$ne: atBatId}}
-      .map (question) ->
-        Promise.bind @
-          .then -> @closeAtBat parms, question
-          .then (result) ->
-            @awardUsers question, result['option']
-            @pitches.closeInactivePitches parms, result['title']
+      .map (question) -> @closeSingleAtBat parms, question
 
-  closeAtBat: (parms, question) ->
+  closeSingleAtBat: (parms, question) ->
+    Promise.bind @
+      .then -> @getAtBatOutcome question
+      .then (result) ->
+        @awardUsers question, result['option']
+        @pitches.closeInactivePitches parms, result['title']
+
+  getAtBatOutcome: (question) ->
     map = _.invert _.mapObject question['options'], (option) -> option['title']
 
     Promise.bind @
-      .then -> @gameParser.findSpecificEvent parms, question['eventCount'] - 1
-      .then (event) -> @eventTitle event['pbpDetailId']
+      .then -> @gameParser.findAtBat question
+      .then (outcomeId) -> @eventTitle outcomeId
       .then (eventTitle) ->
         outcome =
           option: map[eventTitle]
@@ -80,30 +82,32 @@ module.exports = class extends Task
       .then -> @Questions.update {_id: question._id}, $set: {active: false, outcome: outcomeOption, lastUpdated: new Date()}
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcomeOption}}, {$set: {outcome: "lose"}}, {multi: true} # Losers
       .then -> @Answers.find {questionId: question._id, answered: outcomeOption} # Find the winners
-      .map (answer) ->
-        reward = Math.floor answer['wager'] * answer['multiplier']
-        Promise.bind @
-          .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}} #
-          .then -> @GamePlayed.update {userId: answer['userId'], gameId: question.gameId}, {$inc: {coins: reward}}
-          .tap -> @logger.verbose "Awarding correct users!"
-          .then ->
-            notificationId = chance.guid()
-            @Notifications.insert
-              _id: notificationId
-              dateCreated: new Date()
-              question: question._id
-              userId: answer['userId']
-              gameId: question.gameId
-              type: "coins"
-              value: reward
-              read: false
-              notificationId: notificationId
-              message: "Nice Pickk! You got #{reward} Coins!"
-              sharable: false
-              shareMessage: ""
+      .map (answer) -> @notifyWinners answer, question
+
+  notifyWinners: (answer, question) ->
+    reward = Math.floor answer['wager'] * answer['multiplier']
+    Promise.bind @
+      .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}} #
+      .then -> @GamePlayed.update {userId: answer['userId'], gameId: question.gameId}, {$inc: {coins: reward}}
+      .tap -> @logger.verbose "Awarding correct users!"
+      .then ->
+        notificationId = chance.guid()
+        @Notifications.insert
+          _id: notificationId
+          dateCreated: new Date()
+          question: question._id
+          userId: answer['userId']
+          gameId: question.gameId
+          type: "coins"
+          value: reward
+          read: false
+          notificationId: notificationId
+          message: "Nice Pickk! You got #{reward} Coins!"
+          sharable: false
+          shareMessage: ""
 
   createAtBat: (parms) ->
-    player = parms.nextPlayer
+    player = parms.newPlayer
     # if parms['newPlayer'] then parms.atBatId = parms.gameId + "-" + parms.inning + "-" + parms.eventCount + "-" + parms['newPlayer']['playerId']
     question = "End of #{player['firstName']} #{player['lastName']}'s at bat."
 
@@ -180,7 +184,7 @@ module.exports = class extends Task
         _id:  @AtBats.db.ObjectId().toString()
         dateCreated: new Date()
         gameId: parms.gameId
-        playerId: parms.nextPlayer.playerId
+        playerId: parms.newPlayer.playerId
         inning: parms.inning
         eventCount: parms.eventCount
 
