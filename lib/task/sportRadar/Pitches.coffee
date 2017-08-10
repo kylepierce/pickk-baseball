@@ -37,8 +37,7 @@ module.exports = class extends Task
     if pitchClosed
       Promise.bind @
         .then -> @getLastPitch parms.gameId
-        # .then (result) -> console.log result
-        .then (question) -> @closeInactivePitches parms.gameId, question.pitchNumber
+        .then (question) -> @closeInactivePitches parms.gameId, parms.pitchNumber
         .then -> @createPitch parms, false
 
   didPitchClose: (parms) ->
@@ -65,29 +64,22 @@ module.exports = class extends Task
     Promise.bind @
       .then -> @gameParser.findAtBat question #Get the entire at bat
       .then (atBat) ->
-        if atBat && atBat.pitchDetails[pitchNumber]
-          outcome = @pitchTitle atBat.pitchDetails[pitchNumber].result # Get the specific pitch
-          return outcome
-      .then -> getPitchOption question
+        if atBat.pitchDetails && atBat.pitchDetails[pitchNumber]
+          return @pitchTitle atBat.pitchDetails[pitchNumber].result # Get the specific pitch
+        else
+          @logger.verbose "Cant find specific question. It was probably mistakenly made."
+        #   @deleteQuestion question._id
+      .then (outcome) -> @getPitchOption question, outcome
+      .then (option) -> @updateQuestion question._id, option
+      .catch (e) ->
+        console.log e
 
-      # outcomeOption = options[outcome] outcome
-      # .then (outcome) -> updateQuestion question._id, outcome
-
-        # else
-        #   console.log "Cannot Find", pitchNumber, ":", atBat.pitchDetails
-        #   # @deleteQuestion question._id
-        #   throw error
-      # .then (outcome) -> console.log outcome
-      # .catch (e) ->
-      #   console.log e
-
-  getPitchOption: (question) ->
+  getPitchOption: (question, outcome) ->
     Promise.bind @
       .then -> _.invert _.mapObject question['options'], (option) -> option['title']
-      .then (options) -> console.log options
+      .then (options) -> return options[outcome]
 
   updateQuestion: (questionId, outcome) ->
-
     Promise.bind @
       .then -> @Questions.update {_id: questionId}, $set: {active: false, outcome: outcome, lastUpdated: new Date()} # Close and add outcome string
       .then -> @Answers.update {questionId: questionId, answered: {$ne: outcome}}, {$set: {outcome: "lose"}}, {multi: true} # Losers
@@ -101,9 +93,8 @@ module.exports = class extends Task
       .then -> @GamePlayed.update {userId: answer['userId'], gameId: question.gameId}, {$inc: {coins: reward}}
       .tap -> @logger.verbose "Awarding correct users!"
       .then ->
-        notificationId = chance.guid()
         @Notifications.insert
-          _id: notificationId
+          _id: @Notifications.db.ObjectId().toString()
           dateCreated: new Date()
           question: question._id
           userId: answer['userId']
@@ -111,7 +102,6 @@ module.exports = class extends Task
           type: "coins"
           value: reward
           read: false
-          notificationId: notificationId
           message: "Nice Pickk! You got #{reward} Coins!"
           sharable: false
           shareMessage: ""
@@ -142,16 +132,6 @@ module.exports = class extends Task
       .then (question) ->
         @Questions.remove {_id: id}
       .then -> @Questions.find {_id: id}
-      .then (question) -> console.log question
-      # .then (question) ->
-      #    {
-      #     _id: id
-      #     status: "Deleted"
-      #     active: false
-      #   }, {upsert: true}
-      # .tap (result) ->
-      #   questionId = result.upserted?[0]?._id
-      #   @logger.verbose "Updated", id
 
   # getPitchOutcome: (pitch) ->
   #   pitchOutcome = @pitchTitle pitch['result']
@@ -178,8 +158,10 @@ module.exports = class extends Task
   #
   #   return pitchOutcome
 
-  createPitch: (parms, newBatter) ->
+  createPitch: (parms) ->
     # Requirements: gameId, player, inning, pitch, pitchNumber, atBatId
+    newBatter = @newBatter parms
+
     count = @getCurrentCount parms.pitch, parms.pitchNumber
     details =
       strikes: if newBatter then 0 else count.strikes
@@ -192,8 +174,6 @@ module.exports = class extends Task
     Promise.bind @
       .then -> @getLastAtBat parms.gameId
       .then (atBatId) -> @insertPitch parms, question, details, atBatId
-
-  getFuturePitchDetails: (pitch, pitchNumber, newBatter) ->
 
   insertPitch: (parms, question, details, atBatId) ->
     Promise.bind @
@@ -218,7 +198,7 @@ module.exports = class extends Task
       .tap (result) ->
         questionId = result.upserted?[0]?._id
         @logger.verbose "Create pitch question (#{question})"
-        {gameId: parms.gameId, playerId: details.player.playerId, atBatId: parms.atBatId, pitchNumber: details.pitchNumber}
+        # {gameId: parms.gameId, playerId: details.player.playerId, atBatId: parms.atBatId, pitchNumber: details.pitchNumber}
 
   getCurrentCount: (pitch, pitchNumber) ->
     foulArray = ['F', 'G', 'R', 'V']
@@ -272,12 +252,26 @@ module.exports = class extends Task
       options.option5 = option5 if option5
       return options
 
+  # Cant call at bat file for some reason. Move these last three.
+  newBatter: (parms) ->
+    if (parms.diff.length > 0) && (parms.diff.indexOf "currentBatter") > -1
+      if parms.oldPlayer isnt parms.newPlayer
+        return true
+
+  # Cant call at bat file for some reason. Move these last three.
   getLastAtBat: (gameId) ->
     Promise.bind @
       .then -> @AtBats.find({gameId: gameId}).sort({dateCreated: -1}).limit(1)
       .then (result) -> return result[0]._id
 
+  # Cant call at bat file for some reason. Move these last three.
   getLastPitch: (gameId) ->
     Promise.bind @
       .then -> @Questions.find({gameId: gameId, type: "pitch"}).sort({dateCreated: -1}).limit(1)
-      .then (result) -> return result[0]
+      .then (result) ->
+        if result
+          return result[0]
+        else
+          throw new Error("No question?")
+      .catch (e) ->
+          return false

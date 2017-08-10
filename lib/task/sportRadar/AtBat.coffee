@@ -41,15 +41,12 @@ module.exports = class extends Task
       Promise.bind @
         .then -> @createAtBat parms
         .then -> @closeInactiveAtBats parms.gameId
-        .then -> @pitches.getLastPitch parms.gameId
-        # .then (question) -> @pitches.closeSinglePitch question
-        # .then -> @pitches.createPitch parms, true
 
   newBatter: (parms) ->
     if (parms.diff.length > 0) && (parms.diff.indexOf "currentBatter") > -1
       if parms.oldPlayer isnt parms.newPlayer
-        console.log "---------------------------\n", ">>> New Player \n", parms.newPlayer.firstName, parms.newPlayer.lastName
-        return parms.newPlayer
+        @logger.verbose "---------------------------\n", ">>> New Player", parms.newPlayer.firstName, parms.newPlayer.lastName
+        return true
 
   closeInactiveAtBats: (gameId) ->
     Promise.bind @
@@ -131,7 +128,11 @@ module.exports = class extends Task
           playerId: parms.newPlayer.playerId
           inning: parms.inning
           eventCount: parms.eventCount
-      .then (atBatId) ->
+      .then (atBat) -> @insertAtBatQuestion parms, atBat._id, player, question, options
+
+  insertAtBatQuestion: (parms, atBatId, player, question, options) ->
+    Promise.bind @
+      .then ->
         @Questions.insert
           _id: @Questions.db.ObjectId().toString()
           dateCreated: new Date()
@@ -149,7 +150,6 @@ module.exports = class extends Task
           options: options
           usersAnswered: []
       .tap (result) ->
-        questionId = result.upserted?[0]?._id
         @logger.verbose "Create atBat question (#{question})"
 
   eventTitle: (eventStatusId) ->
