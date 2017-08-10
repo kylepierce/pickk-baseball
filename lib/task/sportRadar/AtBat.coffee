@@ -2,9 +2,6 @@ _ = require "underscore"
 Match = require "mtr-match"
 Promise = require "bluebird"
 Task = require "../Task"
-SportRadarGame = require "../../model/sportRadar/SportRadarGame"
-Team = require "../../model/Team"
-Player = require "../../model/Player"
 GameParser = require "./helper/GameParser"
 Multipliers = require "./Multiplier"
 Pitches = require "./Pitches"
@@ -20,32 +17,26 @@ module.exports = class extends Task
       mongodb: Match.Any
 
     @logger = @dependencies.logger
-    @SportRadarGames = dependencies.mongodb.collection("games")
-    @Teams = dependencies.mongodb.collection("teams")
-    @Players = dependencies.mongodb.collection("players")
     @Questions = dependencies.mongodb.collection("questions")
     @AtBats = dependencies.mongodb.collection("atBat")
     @Answers = dependencies.mongodb.collection("answers")
     @GamePlayed = dependencies.mongodb.collection("gamePlayed")
-    @Users = dependencies.mongodb.collection("users")
     @Notifications = dependencies.mongodb.collection("notifications")
     @gameParser = new GameParser dependencies
     @multipliers = new Multipliers dependencies
     @pitches = new Pitches dependencies
 
-  execute: (parms) ->
-    # Requirements: gameId, player, inning, inningDivision, newPlayer, game, eventCount, pitchNumber, pitch
-    newBatter = @newBatter parms
+  execute: (gameId, inning, oldPlayer, newPlayer, eventCount, diff) ->
+    newBatter = @newBatter diff, oldPlayer, newPlayer
 
     if newBatter
       Promise.bind @
-        .then -> @createAtBat parms
-        .then -> @closeInactiveAtBats parms.gameId
+        .then -> @createAtBat newPlayer, gameId, inning, eventCount
+        .then -> @closeInactiveAtBats gameId
 
-  newBatter: (parms) ->
-    if (parms.diff.length > 0) && (parms.diff.indexOf "currentBatter") > -1
-      if parms.oldPlayer isnt parms.newPlayer
-        @logger.verbose "---------------------------\n", ">>> New Player", parms.newPlayer.firstName, parms.newPlayer.lastName
+  newBatter: (diff, oldPlayer, newPlayer) ->
+    if (diff.length > 0) && (diff.indexOf "currentBatter") > -1
+      if oldPlayer isnt newPlayer
         return true
 
   closeInactiveAtBats: (gameId) ->
@@ -59,7 +50,6 @@ module.exports = class extends Task
       .then -> @getAtBatOutcome question
       .then (result) ->
         @awardUsers question, result['option']
-        # @pitches.closeInactivePitches parms, result['title']
 
   getAtBatOutcome: (question) ->
     map = _.invert _.mapObject question['options'], (option) -> option['title']
@@ -87,7 +77,6 @@ module.exports = class extends Task
       .then -> @GamePlayed.update {userId: answer['userId'], gameId: question.gameId}, {$inc: {coins: reward}}
       .tap -> @logger.verbose "Awarding correct users!"
       .then ->
-        notificationId = chance.guid()
         @Notifications.insert
           _id: @Notifications.db.ObjectId().toString()
           dateCreated: new Date()
@@ -101,7 +90,7 @@ module.exports = class extends Task
           sharable: false
           shareMessage: ""
 
-  createAtBat: (parms) ->
+  createAtBat: (player, gameId, inning, eventCount) ->
     Promise.bind @
       .then -> @multipliers.getGenericMultipliersForPlay() #bases, playerId
       .then (multipliers) ->
@@ -113,35 +102,34 @@ module.exports = class extends Task
           option5: {title: "Triple", number: 5, multiplier: multipliers['triple'] }
           option6: {title: "Home Run", number: 6, multiplier: multipliers['homerun'] }
         return options
-      .then (options) -> @insertAtBat(parms, options)
+      .then (options) -> @insertAtBat player, gameId, inning, eventCount, options
 
-  insertAtBat: (parms, options) ->
-    player = parms.newPlayer
-    question = "End of #{player['firstName']} #{player['lastName']}'s at bat."
-
+  insertAtBat: (player, gameId, inning, eventCount, options) ->
     Promise.bind @
       .then ->
         @AtBats.insert
           _id:  @AtBats.db.ObjectId().toString()
           dateCreated: new Date()
-          gameId: parms.gameId
-          playerId: parms.newPlayer.playerId
-          inning: parms.inning
-          eventCount: parms.eventCount
-      .then (atBat) -> @insertAtBatQuestion parms, atBat._id, player, question, options
+          gameId: gameId
+          player: player
+          playerId: player.playerId
+          inning: inning
+          eventCount: eventCount
+      .then (atBat) -> @insertAtBatQuestion atBat, options
 
-  insertAtBatQuestion: (parms, atBatId, player, question, options) ->
+  insertAtBatQuestion: (atBat, options) ->
+    question = "End of #{atBat.player.firstName} #{atBat.player.lastName}'s at bat."
     Promise.bind @
       .then ->
         @Questions.insert
           _id: @Questions.db.ObjectId().toString()
           dateCreated: new Date()
-          gameId: parms.gameId
-          atBatId: atBatId
-          playerId: player['playerId']
+          gameId: atBat.gameId
+          atBatId: atBat._id
+          playerId: atBat.playerId
           atBatQuestion: true
-          inning: parms.inning
-          eventCount: parms.eventCount
+          inning: atBat.inning
+          eventCount: atBat.eventCount
           period: 0
           type: "atBat"
           active: true

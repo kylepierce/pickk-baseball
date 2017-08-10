@@ -2,9 +2,6 @@ _ = require "underscore"
 Match = require "mtr-match"
 Promise = require "bluebird"
 Task = require "../Task"
-SportRadarGame = require "../../model/sportRadar/SportRadarGame"
-Team = require "../../model/Team"
-Player = require "../../model/Player"
 GameParser = require "./helper/GameParser"
 Multipliers = require "./Multiplier"
 moment = require "moment"
@@ -19,20 +16,17 @@ module.exports = class extends Task
       mongodb: Match.Any
 
     @logger = @dependencies.logger
-    @SportRadarGames = dependencies.mongodb.collection("games")
-    @Teams = dependencies.mongodb.collection("teams")
-    @Players = dependencies.mongodb.collection("players")
     @Questions = dependencies.mongodb.collection("questions")
     @AtBats = dependencies.mongodb.collection("atBat")
     @Answers = dependencies.mongodb.collection("answers")
     @GamePlayed = dependencies.mongodb.collection("gamePlayed")
-    @Users = dependencies.mongodb.collection("users")
     @Notifications = dependencies.mongodb.collection("notifications")
     @gameParser = new GameParser dependencies
     @multipliers = new Multipliers dependencies
 
   execute: (parms) ->
-    pitchClosed = @didPitchClose parms
+    #diff, pitchDiff, gameId, pitchNumber
+    pitchClosed = @didPitchClose parms.diff, parms.pitchDiff
 
     if pitchClosed
       Promise.bind @
@@ -40,11 +34,11 @@ module.exports = class extends Task
         .then (question) -> @closeInactivePitches parms.gameId, parms.pitchNumber
         .then -> @createPitch parms, false
 
-  didPitchClose: (parms) ->
-    if (parms.diff.length > 0 || parms.pitchDiff > 0)
-      if (parms.diff.indexOf "balls") > -1 || (parms.diff.indexOf "strikes") > -1
+  didPitchClose: (diff, pitchDiff) ->
+    if (diff.length > 0 || pitchDiff > 0)
+      if (diff.indexOf "balls") > -1 || (diff.indexOf "strikes") > -1
         return true
-      else if parms.pitchDiff isnt 0
+      else if pitchDiff isnt 0
         return true
 
   closeInactivePitches: (gameId, pitchNumber) ->
@@ -158,36 +152,34 @@ module.exports = class extends Task
   #
   #   return pitchOutcome
 
-  createPitch: (parms) ->
-    # Requirements: gameId, player, inning, pitch, pitchNumber, atBatId
-    newBatter = @newBatter parms
+  createPitch: (gameId, pitch, pitchNumber, diff, oldPlayer, newPlayer) ->
+    newBatter = @newBatter diff, oldPlayer, newPlayer
 
-    count = @getCurrentCount parms.pitch, parms.pitchNumber
+    count = @getCurrentCount pitch, pitchNumber
     details =
       strikes: if newBatter then 0 else count.strikes
       balls: if newBatter then 0 else count.balls
-      pitchNumber: if newBatter then 1 else parms.pitchNumber + 1
-      player: if newBatter then parms['newPlayer'] else parms['newPlayer']
-
-    question = "#{details.player['firstName']} #{details.player['lastName']}: " + details.balls + " - " + details.strikes + " (##{details.pitchNumber})"
+      pitchNumber: if newBatter then 1 else pitchNumber + 1
 
     Promise.bind @
-      .then -> @getLastAtBat parms.gameId
-      .then (atBatId) -> @insertPitch parms, question, details, atBatId
+      .then -> @getLastAtBat gameId
+      .then (atBat) -> @insertPitch atBat, details
 
-  insertPitch: (parms, question, details, atBatId) ->
+  insertPitch: (atBat, details) ->
+    question = "#{details.player['firstName']} #{details.player['lastName']}: " + details.balls + " - " + details.strikes + " (##{details.pitchNumber})"
+
     Promise.bind @
       .then -> @createPitchOptions details.balls, details.strikes
       .then (options) ->
         @Questions.insert
           _id: @Questions.db.ObjectId().toString()
           dateCreated: new Date()
-          gameId: parms.gameId
-          playerId: details.player['playerId']
-          atBatId: atBatId
+          gameId: atBat.gameId
+          playerId: atBat.player['playerId']
+          atBatId: atBat._id
           pitchNumber: details.pitchNumber
-          eventCount: parms.eventCount
-          inning: parms.inning
+          eventCount: atBat.eventCount
+          inning: atBat.inning
           type: "pitch"
           period: 0
           active: true
@@ -253,16 +245,16 @@ module.exports = class extends Task
       return options
 
   # Cant call at bat file for some reason. Move these last three.
-  newBatter: (parms) ->
-    if (parms.diff.length > 0) && (parms.diff.indexOf "currentBatter") > -1
-      if parms.oldPlayer isnt parms.newPlayer
+  newBatter: (diff, oldPlayer, newPlayer) ->
+    if (diff.length > 0) && (diff.indexOf "currentBatter") > -1
+      if oldPlayer isnt newPlayer
         return true
 
   # Cant call at bat file for some reason. Move these last three.
   getLastAtBat: (gameId) ->
     Promise.bind @
       .then -> @AtBats.find({gameId: gameId}).sort({dateCreated: -1}).limit(1)
-      .then (result) -> return result[0]._id
+      .then (result) -> return result[0]
 
   # Cant call at bat file for some reason. Move these last three.
   getLastPitch: (gameId) ->

@@ -109,11 +109,12 @@ module.exports = class extends Task
     return parms
 
   generateQuestions: (parms) ->
+    #gameId, inning, oldPlayer, newPlayer, eventCount, diff, pitch, pitchNumber,
     Promise.bind @
       # .then -> @checkCommericalStatus parms
       # .then -> @Inning.execute parms
-      .then -> @AtBat.execute parms
-      .then -> @Pitches.execute parms
+      .then -> @AtBat.execute parms.gameId, parms.inning, parms.oldPlayer, parms.newPlayer, parms.eventCount, parms.diff
+      .then -> @Pitches.execute parms.gameId, parms.pitch, parms.pitchNumber, parms.diff, parms.oldPlayer, parms.newPlayer
       # .then -> @endOfGame.execute parms.gameId, game['close_processed']
 
   checkCommericalStatus: (game) ->
