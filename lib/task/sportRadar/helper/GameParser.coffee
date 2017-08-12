@@ -90,4 +90,5 @@ module.exports = class extends Task
       .then (events) -> # Get all the events.
         for event in events
           if event.batter && question.playerId is event.batter.playerId
+            console.log event.pitchDetails, event.playText
             return event

@@ -24,15 +24,15 @@ module.exports = class extends Task
     @gameParser = new GameParser dependencies
     @multipliers = new Multipliers dependencies
 
-  execute: (parms) ->
+  execute: (gameId, pitch, pitchNumber, diff, pitchDiff, oldPlayer, newPlayer) ->
     #diff, pitchDiff, gameId, pitchNumber
-    pitchClosed = @didPitchClose parms.diff, parms.pitchDiff
+    pitchClosed = @didPitchClose diff, pitchDiff
 
     if pitchClosed
       Promise.bind @
-        .then -> @getLastPitch parms.gameId
-        .then (question) -> @closeInactivePitches parms.gameId, parms.pitchNumber
-        .then -> @createPitch parms, false
+        .then -> @closeInactivePitches gameId, pitchNumber, true
+        .then -> @createPitch gameId, pitch, pitchNumber, diff, oldPlayer, newPlayer
+        # .then -> @closeInactivePitches gameId, pitchNumber, false # Close questions that are missed some how...
 
   didPitchClose: (diff, pitchDiff) ->
     if (diff.length > 0 || pitchDiff > 0)
@@ -41,37 +41,49 @@ module.exports = class extends Task
       else if pitchDiff isnt 0
         return true
 
-  closeInactivePitches: (gameId, pitchNumber) ->
+  closeInactivePitches: (gameId, pitchNumber, active) ->
     Promise.bind @
       .then -> @getLastAtBat gameId
       .then (atBatId) -> @Questions.find {
         commercial: false,
         gameId: gameId,
-        active: true,
+        active: active,
+        outcome: null,
         atBatQuestion: {$exists: false}, $or: [{atBatId: {$ne: atBatId}}, {pitchNumber: {$ne: pitchNumber}}] # Find the open questions
       }
       .map (question) -> @closeSinglePitch question
 
   closeSinglePitch: (question) ->
-    pitchNumber = question.pitchNumber
+    pitchNumber = question.pitchNumber - 1
     # Find the event
     Promise.bind @
       .then -> @gameParser.findAtBat question #Get the entire at bat
       .then (atBat) ->
-        if atBat.pitchDetails && atBat.pitchDetails[pitchNumber]
+        if pitchNumber >= atBat.pitches.total
+          @Questions.remove {_id: question._id}
+          throw new Error("Play doesnt exist... Maybe made by mistake.")
+        else if atBat
           return @pitchTitle atBat.pitchDetails[pitchNumber].result # Get the specific pitch
-        else
-          @logger.verbose "Cant find specific question. It was probably mistakenly made."
-        #   @deleteQuestion question._id
-      .then (outcome) -> @getPitchOption question, outcome
-      .then (option) -> @updateQuestion question._id, option
       .catch (e) ->
         console.log e
+      .then (outcome) -> @getPitchOption question, outcome
+      .then (option) -> @updateQuestion question._id, option
+      .then (result) -> console.log "- Closing Question:", question.que, result
 
   getPitchOption: (question, outcome) ->
     Promise.bind @
       .then -> _.invert _.mapObject question['options'], (option) -> option['title']
-      .then (options) -> return options[outcome]
+      .then (options) ->
+        if (Object.keys(options).length) is 4
+          if outcome is "Foul Ball"
+            outcome = "Strike"
+        else if (Object.keys(options).length) is 5
+          if outcome is "Strike" && options[0] is "Strike Out"
+            outcome = "Strike Out"
+          else if outcome is "Ball" && options[1] is "Walk"
+            outcome = "Walk"
+        outcome = options[outcome]
+        return outcome
 
   updateQuestion: (questionId, outcome) ->
     Promise.bind @
@@ -79,6 +91,7 @@ module.exports = class extends Task
       .then -> @Answers.update {questionId: questionId, answered: {$ne: outcome}}, {$set: {outcome: "lose"}}, {multi: true} # Losers
       .then -> @Answers.find {questionId: questionId, answered: outcome} # Find the winners
       .map (answer) -> @awardUsers answer, outcome
+      .then -> return outcome
 
   awardUsers: (question, outcomeOption) ->
     reward = Math.floor answer['wager'] * answer['multiplier']
@@ -116,41 +129,42 @@ module.exports = class extends Task
     ]
 
     result = ""
+
     for item in results
       if (item['outcomes'].indexOf pitchId) > -1
         return item['title']
 
-  deleteQuestion: (id) ->
-    Promise.bind @
-      .then -> @Questions.find {_id: id}
-      .then (question) ->
-        @Questions.remove {_id: id}
-      .then -> @Questions.find {_id: id}
+  # deleteQuestion: (id) ->
+  #   Promise.bind @
+  #     .then -> @Questions.find {_id: id}
+  #     .then (question) ->
+  #     .then -> @Questions.find {_id: id}
 
-  # getPitchOutcome: (pitch) ->
-  #   pitchOutcome = @pitchTitle pitch['result']
-  #
-  #   strikes = pitch.strikes
-  #   balls = pitch.balls
-  #   result = pitch.result
-  #   foulArray = ['F', 'G', 'R', 'V']
-  #   strikesArray = ['S', 'T', 'J', 'U', 'O']
-  #   ballArray = ['B', 'L', 'M', '#', 'P']
-  #   hitArray = ['I', 'H']
-  #
-  #   if strikes < 2 && (foulArray.indexOf result) > -1
-  #     pitchOutcome = "Foul Ball"
-  #
-  #   if strikes is 2 && (strikesArray.indexOf result) > -1
-  #     pitchOutcome = "Strike Out"
-  #
-  #   if balls is 3 && (ballArray.indexOf result) > -1
-  #     pitchOutcome = "Walk"
-  #
-  #   if (hitArray.indexOf result) > -1
-  #     pitchOutcome = "Hit"
-  #
-  #   return pitchOutcome
+#   getPitchOutcome: (result) ->
+#     console.log result
+#     pitchOutcome = @pitchTitle result
+#     console.log pitchOutcome
+#
+#     strikes = pitch.strikes
+#     balls = pitch.balls
+#     result = pitch.result
+#     foulArray = ['F', 'G', 'R', 'V']
+#     strikesArray = ['S', 'T', 'J', 'U', 'O']
+#     ballArray = ['B', 'L', 'M', '#', 'P']
+#     hitArray = ['I', 'H']
+#
+# #
+#
+#     if strikes is 2 && (strikesArray.indexOf result) > -1
+#       pitchOutcome = "Strike Out"
+#
+#     if balls is 3 && (ballArray.indexOf result) > -1
+#       pitchOutcome = "Walk"
+#
+#     if (hitArray.indexOf result) > -1
+#       pitchOutcome = "Hit"
+#
+#     return pitchOutcome
 
   createPitch: (gameId, pitch, pitchNumber, diff, oldPlayer, newPlayer) ->
     newBatter = @newBatter diff, oldPlayer, newPlayer
@@ -166,7 +180,7 @@ module.exports = class extends Task
       .then (atBat) -> @insertPitch atBat, details
 
   insertPitch: (atBat, details) ->
-    question = "#{details.player['firstName']} #{details.player['lastName']}: " + details.balls + " - " + details.strikes + " (##{details.pitchNumber})"
+    question = "#{atBat.player['firstName']} #{atBat.player['lastName']}: " + details.balls + " - " + details.strikes + " (##{details.pitchNumber})"
 
     Promise.bind @
       .then -> @createPitchOptions details.balls, details.strikes
@@ -189,7 +203,7 @@ module.exports = class extends Task
           usersAnswered: []
       .tap (result) ->
         questionId = result.upserted?[0]?._id
-        @logger.verbose "Create pitch question (#{question})"
+        @logger.verbose "+ Create pitch question (#{question})"
         # {gameId: parms.gameId, playerId: details.player.playerId, atBatId: parms.atBatId, pitchNumber: details.pitchNumber}
 
   getCurrentCount: (pitch, pitchNumber) ->

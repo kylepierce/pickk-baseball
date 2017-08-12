@@ -114,7 +114,7 @@ module.exports = class extends Task
       # .then -> @checkCommericalStatus parms
       # .then -> @Inning.execute parms
       .then -> @AtBat.execute parms.gameId, parms.inning, parms.oldPlayer, parms.newPlayer, parms.eventCount, parms.diff
-      .then -> @Pitches.execute parms.gameId, parms.pitch, parms.pitchNumber, parms.diff, parms.oldPlayer, parms.newPlayer
+      .then -> @Pitches.execute parms.gameId, parms.pitch, parms.pitchNumber, parms.diff, parms.pitchDiff, parms.oldPlayer, parms.newPlayer
       # .then -> @endOfGame.execute parms.gameId, game['close_processed']
 
   checkCommericalStatus: (game) ->
