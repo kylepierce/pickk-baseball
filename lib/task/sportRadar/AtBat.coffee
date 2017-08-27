@@ -80,7 +80,7 @@ module.exports = class extends Task
         @Notifications.insert
           _id: @Notifications.db.ObjectId().toString()
           dateCreated: new Date()
-          question: question._id
+          questionId: question._id
           userId: answer['userId']
           gameId: question.gameId
           type: "coins"

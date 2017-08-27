@@ -1,0 +1,29 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/Users/Kyle/.nvm/versions/node/v5.8.0/bin/node',
+1 verbose cli   '/Users/Kyle/.nvm/versions/node/v5.8.0/bin/npm',
+1 verbose cli   'run',
+1 verbose cli   'test' ]
+2 info using npm@1.4.3
+3 info using node@v5.8.0
+4 verbose run-script [ 'pretest', 'test', 'posttest' ]
+5 info pretest pickk-import@1.0.0
+6 info test pickk-import@1.0.0
+7 verbose unsafe-perm in lifecycle true
+8 info pickk-import@1.0.0 Failed to exec test script
+9 error pickk-import@1.0.0 test: `mocha`
+9 error Exit status 10
+10 error Failed at the pickk-import@1.0.0 test script.
+10 error This is most likely a problem with the pickk-import package,
+10 error not with npm itself.
+10 error Tell the author that this fails on your system:
+10 error     mocha
+10 error You can get their info via:
+10 error     npm owner ls pickk-import
+10 error There is likely additional logging output above.
+11 error System Darwin 16.5.0
+12 error command "/Users/Kyle/.nvm/versions/node/v5.8.0/bin/node" "/Users/Kyle/.nvm/versions/node/v5.8.0/bin/npm" "run" "test"
+13 error cwd /Users/Kyle/Desktop/pickk-import
+14 error node -v v5.8.0
+15 error npm -v 1.4.3
+16 error code ELIFECYCLE
+17 verbose exit [ 1, true ]

@@ -76,7 +76,7 @@ module.exports = class extends Task
       .then -> @Questions.update {_id: question._id}, {$set: {active: false, outcome: outcome, processed: true, lastUpdated: new Date()}}
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcome}}, {$set: {outcome: "lose"}}, {multi: true}
       .then -> @Answers.find {questionId: question._id, answered: outcome}
-      .map (answer) -> @notifyWinners answer, gameId
+      .map (answer) -> @notifyWinners answer, gameId,
 
   notifyWinners: (answer, gameId) ->
     reward = @dependencies.settings['common']['commercialReward']
@@ -87,6 +87,7 @@ module.exports = class extends Task
       .then ->
         @Notifications.insert
           _id: @Notifications.db.ObjectId().toString()
+          questionId: answer.questionId
           userId: answer['userId']
           gameId: gameId
           type: "coins"

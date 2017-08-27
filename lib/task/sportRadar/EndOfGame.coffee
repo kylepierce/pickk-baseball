@@ -45,7 +45,7 @@ module.exports = class extends Task
         @GamePlayed.update {userId: player['userId'], gameId: gameId}, {$inc: {diamonds: diamonds}}
       .then ->
         @Notifications.insert
-          _id: notificationId
+          _id: @Notifications.db.ObjectId().toString()
           userId: player['userId']
           type: "diamonds"
           source: "Exchange"

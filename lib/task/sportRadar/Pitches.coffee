@@ -68,7 +68,7 @@ module.exports = class extends Task
         console.log e
       .then (outcome) -> @getPitchOption question, outcome
       .then (option) -> @updateQuestion question._id, option
-      .then (result) -> console.log "- Closing Question:", question.que, result
+      .then (result) -> console.log "- Closing Question:", question.que
 
   getPitchOption: (question, outcome) ->
     Promise.bind @
@@ -93,19 +93,19 @@ module.exports = class extends Task
       .map (answer) -> @awardUsers answer, outcome
       .then -> return outcome
 
-  awardUsers: (question, outcomeOption) ->
+  awardUsers: (answer, outcomeOption) ->
     reward = Math.floor answer['wager'] * answer['multiplier']
     Promise.bind @
       .then -> @Answers.update {_id: answer._id}, {$set: {outcome: "win"}} #
-      .then -> @GamePlayed.update {userId: answer['userId'], gameId: question.gameId}, {$inc: {coins: reward}}
+      .then -> @GamePlayed.update {userId: answer['userId'], gameId: answer.gameId}, {$inc: {coins: reward}}
       .tap -> @logger.verbose "Awarding correct users!"
       .then ->
         @Notifications.insert
           _id: @Notifications.db.ObjectId().toString()
           dateCreated: new Date()
-          question: question._id
+          questionId: answer.questionId
           userId: answer['userId']
-          gameId: question.gameId
+          gameId: answer.gameId
           type: "coins"
           value: reward
           read: false

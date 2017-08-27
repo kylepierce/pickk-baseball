@@ -46,9 +46,9 @@ module.exports = class extends Task
         .then -> @updateOld old, result
         .then -> @detectChange old, result
         .then (parms) -> @generateQuestions parms
-        # .return true
-        # .catch (error) =>
-        #   @logger.error error.message, _.extend({stack: error.stack}, error.details)
+        .return true
+        .catch (error) =>
+          @logger.error error.message, _.extend({stack: error.stack}, error.details)
 
   updateOld: (old, update) ->
     @SportRadarGames.update {_id: old["_id"]}, {$set: update}

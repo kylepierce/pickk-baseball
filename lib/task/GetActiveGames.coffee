@@ -16,4 +16,4 @@ module.exports = class extends Task
 
   execute: ->
     Promise.bind @
-    .then -> @Games.find {manual: {$exists: false}, $or: [{status: "In-Progress"}, {close_processed: false}]}
+      .then -> @Games.find {sport: "MLB", manual: {$exists: false}, $or: [{status: "In-Progress"}, {close_processed: false}]}

@@ -5,7 +5,6 @@
       "script": "./bin/worker",
       "args": [
         "--settings", "settings/prod.json",
-        "--max-loops=50",
         "--delay=5000",
         "lib/strategy/sportRadar/UpdateGamesStrategy.coffee"
       ],
