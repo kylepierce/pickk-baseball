@@ -36,14 +36,14 @@ module.exports = class extends Task
       console.log "---------------------------\n", "New inning!!!!!!", "---------------------------\n"
 
       Promise.bind @
-        .then -> @handleCommercialBreak parms.gameId, parms.commercial
+        .then -> @SportRadarGames.update {_id: parms.gameId}, {$set: {commercial: true, commercialStartedAt: new Date()}}
         .then -> @resolveCommercialQuestions parms.gameId, parms.inning, parms.inningDivision, true
         .then -> @createCommercialQuestions parms.gameId, parms.inning, parms.inningDivision
 
-  handleCommercialBreak: (gameId, commercial) ->
-    if not commercial
-      Promise.bind @
-      .then -> @SportRadarGames.update {_id: gameId}, {$set: {commercial: true, commercialStartedAt: new Date()}}
+  # handleCommercialBreak: (gameId, commercial) ->
+  #   if not commercial
+  #     Promise.bind @
+  #       .then ->
 
   resolveCommercialQuestions: (gameId, inning, inningDivision, inningCompleted) ->
     Promise.bind @

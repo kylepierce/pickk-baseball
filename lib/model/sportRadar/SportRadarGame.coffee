@@ -12,7 +12,6 @@ module.exports = class
     home = @['teams'][0]
 
     @id =  @['eventId']
-    # @commercial = false
     @home = home
     @home_team = home.teamId
     @away = away

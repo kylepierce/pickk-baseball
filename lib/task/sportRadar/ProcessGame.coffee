@@ -38,6 +38,12 @@ module.exports = class extends Task
     @Pitches = new Pitches dependencies
 
   execute: (old, update) ->
+    Promise.bind @
+      .then -> @SportRadarGames.findOne({eventId: update.eventId})
+      .then (result) -> @other old, update, result
+
+  other: (old, update, game) ->
+    @checkCommercialStatus game
     result = @gameParser.getPlay update
 
     if result
@@ -117,7 +123,23 @@ module.exports = class extends Task
       .then -> @Pitches.execute parms.gameId, parms.pitch, parms.pitchNumber, parms.diff, parms.pitchDiff, parms.oldPlayer, parms.newPlayer
       # .then -> @endOfGame.execute parms.gameId, game['close_processed']
 
-  checkCommericalStatus: (game) ->
+  checkCommercialStatus: (game) ->
+    newTime =  moment(new Date).toISOString()
+    commercialBreak = @dependencies.settings['common']['commercialTime']
+    if game.commercialStartedAt
+      oldTime = moment(game.commercialStartedAt).add(commercialBreak, 'seconds').toISOString()
+      if newTime > oldTime
+        console.log "Time to close this commercial"
+        Promise.bind @
+          .then -> @endCommercialBreak game
+
+  endCommercialBreak: (game) ->
+    console.log game.commercial
+    Promise.bind @
+      .then -> @SportRadarGames.update({_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}})
+      .then -> @Questions.update({gameId: game._id, period: game.period, active: true, commercial: false}, {$set: {dateCreated: new Date()}})
+
+  # checkCommericalStatus: (game) ->
     # Add something to kick out of commerical if a play is active.
     # if game
     #   Promise.bind @
