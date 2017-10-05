@@ -12,7 +12,7 @@ module.exports = class
     home = @['teams'][0]
 
     @id =  @['eventId']
-    @commercial = false
+    # @commercial = false
     @home = home
     @home_team = home.teamId
     @away = away
@@ -22,7 +22,6 @@ module.exports = class
     @name = "#{home.nickname} vs #{away.nickname}"
     @sport = "MLB"
     @period = 0
-    # @period = @['eventStatus']['inning']
     @live = @['eventStatus']['name'] is "In-Progress"
     @status = @['eventStatus']['name']
     @completed = @status in ['Complete', 'Closed']

@@ -43,8 +43,7 @@ module.exports = class extends Task
   handleCommercialBreak: (gameId, commercial) ->
     if not commercial
       Promise.bind @
-      .then -> @SportRadarGames.update {_id: parms.gameId}, {$set: {commercial: true, commercialStartedAt: new Date()}}
-      .then (result) -> @logger.verbose "Handle commercial", result
+      .then -> @SportRadarGames.update {_id: gameId}, {$set: {commercial: true, commercialStartedAt: new Date()}}
 
   resolveCommercialQuestions: (gameId, inning, inningDivision, inningCompleted) ->
     Promise.bind @
@@ -106,7 +105,7 @@ module.exports = class extends Task
 
     Promise.bind @
       .then -> @createTemplate
-      .map (template) -> @insertCommericalQuestion team, gameId, inning, inningDivision
+      # .map (template) -> @insertCommericalQuestion team, gameId, inning, inningDivision
 
   createTemplate: () ->
     templates = [
@@ -130,6 +129,7 @@ module.exports = class extends Task
     ]
 
     templates = _.sample templates, 2
+    console.log templates
     return templates
 
   insertCommericalQuestion: (team, gameId, inning, inningDivision) ->
