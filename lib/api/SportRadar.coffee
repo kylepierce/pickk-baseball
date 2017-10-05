@@ -28,13 +28,8 @@ module.exports = class
 
   _request: (path, options = {}) ->
     Match.check path, String
-
-    # get the current time
     @timeFromEpoch = moment.utc().unix();
-
-    # generate signature
     @sig = crypto.createHash('sha256').update(@key + @secret + @timeFromEpoch).digest('hex');
-
     uri = @host + path + "/?api_key=" + @key + "&sig=" + @sig
 
     _.defaults options,
@@ -49,8 +44,8 @@ module.exports = class
       Promise.bind @
       .then -> request options
       .catch (error) ->
-        # TODO @logger
-        console.log error.message #, _.extend({stack: error.stack}, error.details)
+        console.log uri
+        console.log error.message, _.extend({stack: error.stack}, error.details)
         retry(error)
 
   getScheduledGames: (days, format = "json") ->

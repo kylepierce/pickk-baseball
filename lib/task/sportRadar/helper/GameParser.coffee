@@ -1,13 +1,22 @@
 _ = require "underscore"
+Match = require "mtr-match"
+Promise = require "bluebird"
 moment = require "moment"
+Task = require "../../Task"
 
-module.exports = class
+module.exports = class extends Task
   constructor: (dependencies) ->
-    @logger = dependencies.logger
+    super
+
+    Match.check dependencies, Match.ObjectIncluding
+      mongodb: Match.Any
+
+    @logger = @dependencies.logger
+    @SportRadarGames = dependencies.mongodb.collection("games")
 
   getPlay: (game) ->
     @game = game
-    @innings =  @game['pbp']
+    @innings = @game['pbp']
     @halfs = @loopHalfs @innings
 
     @totalEvents = @getEvents @halfs
@@ -31,11 +40,12 @@ module.exports = class
       inningDivision: @game['eventStatus']['inningDivision']
       eventCount: @totalEvents.length
       eventStatus: @game['eventStatus']
+      eventId: if @currentAtBat then @currentAtBat['pbpDetailId'] else undefined
       lastCount: if @pitches then @pitches else []
       hitter: if @currentAtBat then @currentAtBat['batter'] else undefined
       player: if @currentAtBat['batter'] then @currentAtBat['batter'] else undefined
       playerId: if @currentAtBat['batter'] then @currentAtBat['batter']['playerId'] else undefined
-      eventId: if @currentAtBat then @currentAtBat['pbpDetailId'] else undefined
+
       lastUpdate: new Date
 
     @game['old'] = @old
@@ -43,13 +53,6 @@ module.exports = class
     return result
 
   getEvents: (selector) ->  _.flatten _.pluck selector, 'pbpDetails'
-
-  # getAtBats: (selector) -> _.flatten _.filter(selector, @isPlay)
-  #
-  # isPlay: (event) ->
-  #   list = [96, 97, 98, 42, 35]
-  #   if event && event['pbpDetailId'] not in list
-  #     return event
 
   getLast: (plays) ->
     if plays and plays.length > 0
@@ -68,13 +71,23 @@ module.exports = class
         pitchSequence: if event.pitchSequence then event.pitchSequence
         pitchDetails: if event.pitchDetails then event.pitchDetails
         playText: if event.playText then event.playText
-
     return  _.toArray array
 
-  findSpecificEvent: (game, eventNumber) ->
-    innings =  game['pbp']
-    halfs = @loopHalfs innings
-    totalEvents = @getEvents halfs
-    # @logger.verbose "Following event... ", totalEvents[eventNumber + 1]
-    # console.log totalEvents[eventNumber]
-    return totalEvents[eventNumber]
+  findSpecificEvent: (parms, eventNumber) ->
+    Promise.bind @
+      .then -> @SportRadarGames.find {_id: parms.gameId}
+      .then (game) -> @loopHalfs game[0]['pbp']
+      .then (halfs) -> @getEvents halfs
+      .then (events) -> events[eventNumber]
+      .then (result) -> return result
+
+  findAtBat: (question) ->
+    Promise.bind @
+      .then -> @SportRadarGames.find {_id: question.gameId}
+      .then (game) -> @loopHalfs game[0]['pbp']
+      .then (halfs) -> @getEvents halfs
+      .then (events) -> return events.reverse()
+      .then (events) -> # Get all the events.
+        for event in events
+          if event.batter && question.playerId is event.batter.playerId
+            return event

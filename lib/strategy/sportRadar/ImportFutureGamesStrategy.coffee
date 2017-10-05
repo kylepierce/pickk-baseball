@@ -9,9 +9,7 @@ moment = require 'moment'
 module.exports = class extends Strategy
   constructor: (dependencies) ->
     super
-
     @importGames = new ImportGames dependencies
-
     @logger = dependencies.logger
 
   execute: ->

@@ -12,7 +12,8 @@
     "url": "mongodb://localhost/%database%"
   },
   "sportRadar": {
-    "apiKey": "kw3k3f8n9zcy92ufe7g8gwy4"
+    "apiKey": "kw3k3f8n9zcy92ufe7g8gwy4",
+    "secret": "pau5JXWvgG"
   }
 
 }
