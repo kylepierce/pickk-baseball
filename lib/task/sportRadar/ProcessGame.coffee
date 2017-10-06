@@ -134,7 +134,6 @@ module.exports = class extends Task
           .then -> @endCommercialBreak game
 
   endCommercialBreak: (game) ->
-    console.log game.commercial
     Promise.bind @
       .then -> @SportRadarGames.update({_id: game._id}, {$set: {commercial: false}, $unset: {commercialStartedAt: 1}})
       .then -> @Questions.update({gameId: game._id, period: game.period, active: true, commercial: false}, {$set: {dateCreated: new Date()}})

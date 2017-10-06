@@ -75,7 +75,7 @@ module.exports = class extends Task
       .then -> @Questions.update {_id: question._id}, {$set: {active: false, outcome: outcome, processed: true, lastUpdated: new Date()}}
       .then -> @Answers.update {questionId: question._id, answered: {$ne: outcome}}, {$set: {outcome: "lose"}}, {multi: true}
       .then -> @Answers.find {questionId: question._id, answered: outcome}
-      .map (answer) -> @notifyWinners answer, gameId,
+      .map (answer) -> @notifyWinners answer, gameId
 
   notifyWinners: (answer, gameId) ->
     reward = @dependencies.settings['common']['commercialReward']
@@ -108,6 +108,7 @@ module.exports = class extends Task
       # .map (template) -> @insertCommericalQuestion team, gameId, inning, inningDivision
 
   createTemplate: () ->
+    console.log "Hello"
     templates = [
       title: "Hit a Single"
       outcomes: [1, 2, 3, 4, 5, 6, 122]
