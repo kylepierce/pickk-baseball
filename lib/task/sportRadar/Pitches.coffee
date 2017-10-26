@@ -195,7 +195,7 @@ module.exports = class extends Task
           eventCount: atBat.eventCount
           inning: atBat.inning
           type: "pitch"
-          period: 0
+          period: 1
           active: true
           commercial: false
           que: question

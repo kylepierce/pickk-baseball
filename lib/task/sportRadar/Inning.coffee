@@ -161,7 +161,7 @@ module.exports = class extends Task
           teamId: team.teamId
           inningDivision: parms.inningDivision
           inning: parms.inning
-          period: 0
+          period: 1
           dateCreated: new Date()
           active: true
           processed: false

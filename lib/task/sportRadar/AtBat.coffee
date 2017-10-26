@@ -130,7 +130,7 @@ module.exports = class extends Task
           atBatQuestion: true
           inning: atBat.inning
           eventCount: atBat.eventCount
-          period: 0
+          period: 1
           type: "atBat"
           active: true
           commercial: false
